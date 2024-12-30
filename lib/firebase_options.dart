@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '271665798346',
     projectId: 'event-manager-dfd26',
     storageBucket: 'event-manager-dfd26.firebasestorage.app',
-    androidClientId: '271665798346-9817smd7kv9v3baqumj0l5m12cuc38ru.apps.googleusercontent.com',
+    androidClientId: '271665798346-7fckt5cnuvtcge9vke1pgb1trdushf8d.apps.googleusercontent.com',
     iosClientId: '271665798346-cak3stfiff9ciqqn77q0lq2mdjgb5nb6.apps.googleusercontent.com',
     iosBundleId: 'com.example.eventsManager',
   );
@@ -75,8 +75,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '271665798346',
     projectId: 'event-manager-dfd26',
     storageBucket: 'event-manager-dfd26.firebasestorage.app',
-    androidClientId: '271665798346-9817smd7kv9v3baqumj0l5m12cuc38ru.apps.googleusercontent.com',
-    iosClientId: '271665798346-cak3stfiff9ciqqn77q0lq2mdjgb5nb6.apps.googleusercontent.com',
+    androidClientId:
+        '271665798346-7fckt5cnuvtcge9vke1pgb1trdushf8d.apps.googleusercontent.com',
+    iosClientId:
+        '271665798346-cak3stfiff9ciqqn77q0lq2mdjgb5nb6.apps.googleusercontent.com',
     iosBundleId: 'com.example.eventsManager',
   );
 
