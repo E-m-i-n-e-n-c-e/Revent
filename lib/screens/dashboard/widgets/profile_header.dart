@@ -43,7 +43,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             radius: 23,
             backgroundImage: user?.photoURL != null
                 ? NetworkImage(user!.photoURL!)
-                : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                : const AssetImage('assets/default_avatar.png')
+                    as ImageProvider,
           ),
         ),
         Column(

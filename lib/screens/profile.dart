@@ -1,3 +1,4 @@
+import 'package:events_manager/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -5,31 +6,31 @@ class ProfileScreen extends StatelessWidget {
   final User? user;
 
   const ProfileScreen({super.key, required this.user});
-String extractRollNumber(String email) {
-  {
-    final String username = email.split('@')[0];
-    final RegExp regExp = RegExp(r'(\d+)([a-zA-Z]+)(\d+)');
-    final match = regExp.firstMatch(username);
+  String extractRollNumber(String email) {
+    {
+      final String username = email.split('@')[0];
+      final RegExp regExp = RegExp(r'(\d+)([a-zA-Z]+)(\d+)');
+      final match = regExp.firstMatch(username);
 
-    if (match != null) {
-      final String year = match.group(1)!; 
-      final String branch = match.group(2)!.toUpperCase(); 
-      final String number = match.group(3)!.padLeft(3, '0');
-      return '20$year$branch$number';
+      if (match != null) {
+        final String year = match.group(1)!;
+        final String branch = match.group(2)!.toUpperCase();
+        final String number = match.group(3)!.padLeft(3, '0');
+        return '20$year$branch$number';
+      }
+
+      return "Unknown";
     }
-
-    return "Unknown";
-  } 
-}
+  }
 
   @override
   Widget build(BuildContext context) {
-    final rollNumber = user?.email != null ? extractRollNumber(user!.email!) : "Unknown";
+    final rollNumber =
+        user?.email != null ? extractRollNumber(user!.email!) : "Unknown";
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: Colors.black,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -40,16 +41,16 @@ String extractRollNumber(String email) {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.blue,
-                child: Text(
-                  user?.displayName != null && user!.displayName!.isNotEmpty
-                      ? user!.displayName![0].toUpperCase()
-                      : 'U',
-                  style: const TextStyle(
-                    fontSize: 40,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: user?.photoURL != null
+                    ? CircleAvatar(
+                        radius: 48,
+                        backgroundImage: NetworkImage(user!.photoURL!),
+                      )
+                    : const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.white,
+                      ),
               ),
               const SizedBox(height: 20),
               Text(
@@ -82,12 +83,14 @@ String extractRollNumber(String email) {
               ElevatedButton(
                 onPressed: () async {
                   // Perform logout
-                  await FirebaseAuth.instance.signOut();
+                  await AuthService().signOut();
+                  if (!context.mounted) return;
                   Navigator.popUntil(context, (route) => route.isFirst);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -101,7 +104,6 @@ String extractRollNumber(String email) {
           ),
         ),
       ),
-      backgroundColor: Colors.black,
     );
   }
 }
