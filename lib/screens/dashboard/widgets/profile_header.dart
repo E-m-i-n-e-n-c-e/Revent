@@ -6,14 +6,12 @@ class ProfileHeader extends StatefulWidget {
   final String userName;
   final String date;
   final String profileImage;
-  final String notificationImage;
 
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.date,
     required this.profileImage,
-    required this.notificationImage,
   });
 
   @override
@@ -53,7 +51,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello ${widget.userName}',
+              extractRollNumber(widget.userName),
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -121,5 +119,22 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         ),
       ],
     );
+  }
+}
+
+String extractRollNumber(String email) {
+  {
+    final String username = email.split('@')[0];
+    final RegExp regExp = RegExp(r'(\d+)([a-zA-Z]+)(\d+)');
+    final match = regExp.firstMatch(username);
+
+    if (match != null) {
+      final String year = match.group(1)!;
+      final String branch = match.group(2)!.toUpperCase();
+      final String number = match.group(3)!.padLeft(3, '0');
+      return '20$year$branch$number';
+    }
+
+    return "Unknown";
   }
 }

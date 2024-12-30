@@ -33,12 +33,10 @@ class DashboardScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             ProfileHeader(
-              userName: user.displayName ?? '',
+              userName: user.email ?? '',
               date: 'Today ${DateFormat('MMM d').format(DateTime.now())}',
               profileImage:
                   user.photoURL ?? '', // Replace with your image asset
-              notificationImage:
-                  "https://cdn.builder.io/api/v1/image/assets/TEMP/8c631dc645f470c140a9d1f5ef8fac2e9be09eb7f806a3637526fcf6b422e88b?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60",
             ),
             const SizedBox(height: 26),
             Padding(
