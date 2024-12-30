@@ -31,7 +31,7 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             ProfileHeader(
               userName: user.email ?? '',
               date: 'Today ${DateFormat('MMM d').format(DateTime.now())}',

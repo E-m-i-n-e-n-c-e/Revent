@@ -18,6 +18,15 @@ class CustomBottomNavigationBar extends StatelessWidget {
             end: Alignment.topCenter,
           ),
           borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: Colors.black.withOpacity(0.5),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3), // changes position of shadow
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 7),
         child: Row(
