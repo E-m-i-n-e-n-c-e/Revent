@@ -10,7 +10,8 @@ class AuthService {
       // User canceled the sign-in, return null
       return null;
     }
-    if (!googleUser.email.endsWith("iiitkottayam.ac.in")) {
+    if (!googleUser.email.endsWith("iiitkottayam.ac.in") &&
+        !googleUser.email.endsWith("gmail.com")) {
       // User is not from the IIIT Kottayam domain, return null
       await GoogleSignIn().signOut();
       return googleUser;

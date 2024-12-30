@@ -1,5 +1,5 @@
-import 'package:events_manager/event_manager.dart';
 import 'package:events_manager/firebase_options.dart';
+import 'package:events_manager/homepage.dart';
 import 'package:events_manager/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,7 +29,8 @@ class MyApp extends StatelessWidget {
             );
           }
           if (snapshot.hasData) {
-            return const EventManager();
+            var user = snapshot.data;
+            return HomePage(user: user!);
           }
           return LoginPage();
         },
