@@ -9,10 +9,17 @@ class CustomBottomNavigationBar extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 357),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1B1919),
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF203A43),
+              Color(0xFF0F2027),
+            ],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
           borderRadius: BorderRadius.circular(35),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 7),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

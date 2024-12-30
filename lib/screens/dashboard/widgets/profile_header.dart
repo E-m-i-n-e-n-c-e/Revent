@@ -27,7 +27,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         GestureDetector(
           onTap: () {
@@ -47,13 +47,15 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     as ImageProvider,
           ),
         ),
+        const SizedBox(width: 10),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Hello ${widget.userName}',
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 26,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Inter',
               ),
@@ -61,24 +63,59 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             Text(
               widget.date,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 12,
                 fontFamily: 'Inter',
               ),
             ),
           ],
         ),
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black),
+        const Spacer(),
+        IconButton(
+          style: IconButton.styleFrom(
+            padding: const EdgeInsets.all(0),
           ),
-          child: Center(
-            child: Image.network(
-              widget.notificationImage,
-              width: 32,
-              fit: BoxFit.contain,
+          onPressed: () {
+            // print("Notification pressed");
+          },
+          icon: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Color(0xFF4FBDBA),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black),
+            ),
+            child: Center(
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                size: 32,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        IconButton(
+          style: IconButton.styleFrom(
+            padding: const EdgeInsets.all(0),
+          ),
+          onPressed: () {
+            // print("Search pressed");
+          },
+          icon: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Color(0xFF4FBDBA),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black),
+            ),
+            child: Center(
+              child: const Icon(
+                Icons.search,
+                size: 32,
+                color: Colors.black,
+              ),
             ),
           ),
         ),

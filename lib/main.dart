@@ -17,12 +17,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kcolorscheme =
-        ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 61, 70, 76));
+        ColorScheme.fromSeed(seedColor: const Color(0xff1A2C34));
     return MaterialApp(
       theme: ThemeData.dark().copyWith(
         colorScheme: kcolorscheme,
         appBarTheme: const AppBarTheme().copyWith(
-          backgroundColor: kcolorscheme.primary,
+          titleTextStyle: const TextStyle(color: Colors.white, fontSize: 21),
+          backgroundColor: Color(0xff1A2C34),
           foregroundColor: kcolorscheme.shadow,
         ),
         scaffoldBackgroundColor: kcolorscheme.onSurface,

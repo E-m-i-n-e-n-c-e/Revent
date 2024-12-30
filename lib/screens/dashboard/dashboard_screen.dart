@@ -14,21 +14,32 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: ProfileHeader(
-          userName: user.displayName ?? '',
-          date: 'Today ${DateFormat('MMM d').format(DateTime.now())}',
-          profileImage: user.photoURL ?? '', // Replace with your image asset
-          notificationImage:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/8c631dc645f470c140a9d1f5ef8fac2e9be09eb7f806a3637526fcf6b422e88b?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60",
-        ),
-      ),
       body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color.fromARGB(255, 15, 32, 39),
+              Color.fromARGB(255, 32, 58, 67),
+              Color.fromARGB(255, 44, 83, 100),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
         // constraints: const BoxConstraints(maxWidth: 480),
         padding: const EdgeInsets.fromLTRB(15, 12, 15, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 10),
+            ProfileHeader(
+              userName: user.displayName ?? '',
+              date: 'Today ${DateFormat('MMM d').format(DateTime.now())}',
+              profileImage:
+                  user.photoURL ?? '', // Replace with your image asset
+              notificationImage:
+                  "https://cdn.builder.io/api/v1/image/assets/TEMP/8c631dc645f470c140a9d1f5ef8fac2e9be09eb7f806a3637526fcf6b422e88b?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60",
+            ),
             const SizedBox(height: 26),
             Padding(
               padding: const EdgeInsets.only(left: 14),
@@ -72,7 +83,7 @@ class DashboardScreen extends StatelessWidget {
             const EventCard(title: "XYZ"),
             const SizedBox(height: 19),
             CustomBottomNavigationBar(),
-            const SizedBox(height: 25),
+            const SizedBox(height: 15),
           ],
         ),
       ),

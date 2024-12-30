@@ -17,7 +17,7 @@ class AnnouncementCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 12, 28, 88),
       decoration: BoxDecoration(
-        color: const Color(0xFFC271C4),
+        color: const Color(0xFF1A2C34),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -31,7 +31,7 @@ class AnnouncementCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF050000),
+                      color: Colors.white,
                       fontFamily: 'Inter',
                     ),
                   ),
@@ -40,7 +40,7 @@ class AnnouncementCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF050000),
+                      color: Colors.white,
                       fontFamily: 'Inter',
                     ),
                   ),
