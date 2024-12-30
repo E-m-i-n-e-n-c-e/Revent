@@ -1,6 +1,6 @@
 import 'package:events_manager/firebase_options.dart';
-import 'package:events_manager/homepage.dart';
 import 'package:events_manager/login_page.dart';
+import 'package:events_manager/screens/dashboard/dashboard_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           }
           if (snapshot.hasData) {
             var user = snapshot.data;
-            return HomePage(user: user!);
+            return DashboardScreen(user: user as User);
           }
           return LoginPage();
         },
