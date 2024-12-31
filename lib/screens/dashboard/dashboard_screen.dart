@@ -81,7 +81,7 @@ class DashboardScreen extends StatelessWidget {
               const EventCard(title: "XYZ"),
               const SizedBox(height: 19),
               CustomBottomNavigationBar(),
-              const SizedBox(height: 2),
+              // const SizedBox(height: 2),
             ],
           ),
         ),
