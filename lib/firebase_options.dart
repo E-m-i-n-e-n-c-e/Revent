@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCkA6U4suknekZF2JqGKXwR30CPPEAaR8c',
-    appId: '1:271665798346:android:83ba29371f1da5b22f2833',
+    appId: '1:271665798346:android:bd0a22ffb747d2432f2833',
     messagingSenderId: '271665798346',
     projectId: 'event-manager-dfd26',
     storageBucket: 'event-manager-dfd26.firebasestorage.app',

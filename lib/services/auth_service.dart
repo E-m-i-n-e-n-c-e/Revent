@@ -2,9 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    clientId:
+        '271665798346-bqalgst3gesb4979nacjplai064dpusf.apps.googleusercontent.com',
+  );
   Future<GoogleSignInAccount?> signInWithGoogle() async {
     // Sign in and force the user to select an account
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
     if (googleUser == null) {
       // User canceled the sign-in, return null
@@ -13,7 +17,7 @@ class AuthService {
     if (!googleUser.email.endsWith("iiitkottayam.ac.in") &&
         !googleUser.email.endsWith("gmail.com")) {
       // User is not from the IIIT Kottayam domain, return null
-      await GoogleSignIn().signOut();
+      await googleSignIn.signOut();
       return googleUser;
     }
 
@@ -34,6 +38,6 @@ class AuthService {
 
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
-    await GoogleSignIn().signOut();
+    await googleSignIn.signOut();
   }
 }

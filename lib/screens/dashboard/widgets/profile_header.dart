@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileHeader extends StatefulWidget {
-  final String userName;
+  final String userMail;
   final String date;
   final String profileImage;
 
   const ProfileHeader({
     super.key,
-    required this.userName,
+    required this.userMail,
     required this.date,
     required this.profileImage,
   });
@@ -51,7 +51,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              extractRollNumber(widget.userName),
+              extractRollNumber(widget.userMail),
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -124,14 +124,14 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
 String extractRollNumber(String email) {
   {
-    final String username = email.split('@')[0];
+    final String userMail = email.split('@')[0];
     final RegExp regExp = RegExp(r'(\d+)([a-zA-Z]+)(\d+)');
-    final match = regExp.firstMatch(username);
+    final match = regExp.firstMatch(userMail);
 
     if (match != null) {
       final String year = match.group(1)!;
       final String branch = match.group(2)!.toUpperCase();
-      final String number = match.group(3)!.padLeft(3, '0');
+      final String number = match.group(3)!.padLeft(4, '0');
       return '20$year$branch$number';
     }
 
