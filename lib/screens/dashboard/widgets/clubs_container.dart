@@ -254,7 +254,12 @@ class Points extends StatelessWidget {
             size: 12,
           ),
           const SizedBox(width: 4),
-          Text(points.toString()),
+          Text(points.toString(),
+              style: const TextStyle(
+                color: Color(0xffFFD700),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              )),
         ],
       ),
     );
