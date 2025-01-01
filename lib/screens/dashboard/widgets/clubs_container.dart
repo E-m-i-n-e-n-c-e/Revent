@@ -13,7 +13,8 @@ class ClubsContainer extends StatefulWidget {
 class _ClubsContainerState extends State<ClubsContainer> {
   final ScrollController _scrollController = ScrollController();
   bool _canScrollLeft = false;
-  bool _canScrollRight = true;
+  bool _canScrollRight = false;
+  final bool _firstTime = true;
 
   @override
   void initState() {
@@ -37,6 +38,11 @@ class _ClubsContainerState extends State<ClubsContainer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_firstTime) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateScrollArrows();
+      });
+    }
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
