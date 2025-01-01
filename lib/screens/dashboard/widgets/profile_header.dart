@@ -52,18 +52,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           children: [
             Text(
               extractRollNumber(widget.userMail),
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Inter',
-              ),
+              style: Theme.of(context).textTheme.headlineLarge,
             ),
             Text(
               widget.date,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: 'Inter',
-              ),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
           ],
         ),
@@ -79,7 +72,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: Color(0xFF4FBDBA),
+              color: Color(0xFF06222F),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.black),
             ),
@@ -87,36 +80,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               child: const Icon(
                 Icons.notifications_none_rounded,
                 size: 32,
-                color: Colors.black,
+                color: Color(0xffAEE7FF),
               ),
             ),
           ),
         ),
         const SizedBox(width: 10),
-        IconButton(
-          style: IconButton.styleFrom(
-            padding: const EdgeInsets.all(0),
-          ),
-          onPressed: () {
-            // print("Search pressed");
-          },
-          icon: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Color(0xFF4FBDBA),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black),
-            ),
-            child: Center(
-              child: const Icon(
-                Icons.search,
-                size: 32,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }

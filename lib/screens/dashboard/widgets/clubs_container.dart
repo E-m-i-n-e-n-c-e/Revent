@@ -1,23 +1,97 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class ClubsContainer extends StatelessWidget {
-  final String image;
+class ClubsContainer extends StatefulWidget {
+  const ClubsContainer({super.key});
 
-  const ClubsContainer({
-    super.key,
-    required this.image,
-  });
+  @override
+  State<ClubsContainer> createState() => _ClubsContainerState();
+}
+
+class _ClubsContainerState extends State<ClubsContainer> {
+  final ScrollController _scrollController = ScrollController();
+  bool _canScrollLeft = false;
+  bool _canScrollRight = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateScrollArrows);
+  }
+
+  void _updateScrollArrows() {
+    setState(() {
+      _canScrollLeft = _scrollController.offset > 0;
+      _canScrollRight =
+          _scrollController.offset < _scrollController.position.maxScrollExtent;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2C34),
-          borderRadius: BorderRadius.circular(35),
-        ),
-        child: ClubIconsRow());
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF06222F),
+        borderRadius: BorderRadius.circular(35),
+      ),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            child: ClubIconsRow(),
+          ),
+          if (_canScrollLeft)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () {
+                  _scrollController.animateTo(
+                    _scrollController.offset - 100,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.ease,
+                  );
+                },
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  color: Color(0xffAEE7FF),
+                ),
+              ),
+            ),
+          if (_canScrollRight)
+            Positioned(
+              right: -6,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () {
+                  _scrollController.animateTo(
+                    _scrollController.offset + 100,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.ease,
+                  );
+                },
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Color(0xffAEE7FF),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -58,8 +132,7 @@ class ClubIconsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text("1000"),
+              const Points(points: 1000),
             ],
           ),
           const SizedBox(width: 10),
@@ -82,8 +155,7 @@ class ClubIconsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text("2000"),
+              const Points(points: 2000),
             ],
           ),
           const SizedBox(width: 10),
@@ -106,8 +178,7 @@ class ClubIconsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text("3000"),
+              const Points(points: 3000),
             ],
           ),
           const SizedBox(width: 10),
@@ -130,8 +201,7 @@ class ClubIconsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text("4000"),
+              const Points(points: 4000),
             ],
           ),
           const SizedBox(width: 10),
@@ -154,10 +224,37 @@ class ClubIconsRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text("5000"),
+              const Points(points: 5000),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class Points extends StatelessWidget {
+  const Points({
+    super.key,
+    required this.points,
+  });
+
+  final int points;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(1),
+      color: Color(0xff06151C),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            FontAwesomeIcons.crown,
+            color: Color(0xffFFD700),
+            size: 12,
+          ),
+          const SizedBox(width: 4),
+          Text(points.toString()),
         ],
       ),
     );

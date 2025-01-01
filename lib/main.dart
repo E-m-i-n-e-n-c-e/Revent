@@ -22,7 +22,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         colorScheme: kcolorscheme,
         appBarTheme: const AppBarTheme().copyWith(
-          titleTextStyle: const TextStyle(color: Colors.white, fontSize: 21),
+          titleTextStyle:
+              const TextStyle(color: Color(0xffAEE7FF), fontSize: 21),
           backgroundColor: Color(0xff1A2C34),
           foregroundColor: kcolorscheme.shadow,
         ),
@@ -40,6 +41,24 @@ class MyApp extends StatelessWidget {
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
             foregroundColor: WidgetStateProperty.all(kcolorscheme.primary),
+          ),
+        ),
+        textTheme: TextTheme(
+          headlineLarge: TextStyle(
+            color: Color(0xffAEE7FF),
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Inter',
+          ),
+          headlineSmall: TextStyle(
+            fontSize: 12,
+            fontFamily: 'Inter',
+            color: Color(0xffAEE7FF),
+          ),
+          titleMedium: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Inter',
+            color: Color(0xffAEE7FF),
           ),
         ),
       ),

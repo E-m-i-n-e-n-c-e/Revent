@@ -1,30 +1,43 @@
-import 'package:events_manager/screens/dashboard/widgets/bottom_navbar.dart';
+import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'widgets/announcement_card.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'widgets/event_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.user});
 
   final User user;
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color.fromARGB(255, 15, 32, 39),
-                Color.fromARGB(255, 32, 58, 67),
-                Color.fromARGB(255, 44, 83, 100),
+                Color(0xFF07181F),
+                Color(0xFF000000),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
           // constraints: const BoxConstraints(maxWidth: 480),
@@ -33,10 +46,10 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ProfileHeader(
-                userMail: user.email ?? '',
+                userMail: widget.user.email ?? '',
                 date: 'Today ${DateFormat('MMM d').format(DateTime.now())}',
                 profileImage:
-                    user.photoURL ?? '', // Replace with your image asset
+                    widget.user.photoURL ?? '', // Replace with your image asset
               ),
               const SizedBox(height: 26),
               Padding(
@@ -54,33 +67,41 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 5),
-              const AnnouncementCard(
-                title: "CyberArc's",
-                subtitle: "CTF Challenge",
-                image:
-                    "https://cdn.builder.io/api/v1/image/assets/TEMP/a9276fd5715a6133eea9ffdae9790377354c81105b89c22fe2bb57eb12856cca?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60",
+              AnnouncementsSlider(pageController: _pageController),
+              const SizedBox(height: 10),
+              SmoothPageIndicator(
+                controller: _pageController,
+                count: 4, // Update based on the number of pages
+                effect: WormEffect(
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  activeDotColor: Theme.of(context).colorScheme.primary,
+                  spacing: 6, // Default spacing between dots
+                ),
               ),
               const SizedBox(height: 10),
-              const ClubsContainer(
-                  image:
-                      "https://cdn.builder.io/api/v1/image/assets/TEMP/71d91538e0c2b90a730df492efa0b352c0694ab4c6758e8bb710e0faf16c900b?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60"),
-              const SizedBox(height: 25),
+              Row(
+                children: [
+                  const SizedBox(width: 14),
+                  Text(
+                    'Your Clubs',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+              const ClubsContainer(),
               Row(
                 children: [
                   const SizedBox(width: 14),
                   Text(
                     "Today's Events",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Inter',
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
               const SizedBox(height: 9),
-              const EventCard(title: "XYZ"),
+              const EventCard(),
               const SizedBox(height: 19),
-              CustomBottomNavigationBar(),
               // const SizedBox(height: 2),
             ],
           ),
