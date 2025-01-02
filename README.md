@@ -111,7 +111,7 @@
 - Go to this Udemy Course  [Flutter Course](https://www.udemy.com/course/learn-flutter-dart-to-build-ios-android-apps/?couponCode=NVDIN35)(Click this link)
 - Scroll down and click on Windows Setup or MacOS setup
 
-![[Pasted image 20241222184731.png]]
+<img src = "./assets/Udemy-SS.png" >
 - Follow the video instructions
 
 ***Tip: The videos in the introduction module are free so you can watch them to get a basic idea of Flutter as well as setup your environment for Flutter*** 
