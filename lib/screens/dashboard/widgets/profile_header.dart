@@ -85,7 +85,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 5),
       ],
     );
   }

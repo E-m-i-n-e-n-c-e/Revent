@@ -14,7 +14,7 @@ class _ClubsContainerState extends State<ClubsContainer> {
   final ScrollController _scrollController = ScrollController();
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
-  final bool _firstTime = true;
+  bool _firstTime = true;
 
   @override
   void initState() {
@@ -42,6 +42,7 @@ class _ClubsContainerState extends State<ClubsContainer> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updateScrollArrows();
       });
+      _firstTime = false;
     }
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),

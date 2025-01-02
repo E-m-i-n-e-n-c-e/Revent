@@ -45,9 +45,9 @@ class LoginPageState extends State<LoginPage> {
             const Text(
               'Welcome to Events Manager',
               style: TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 24.0),
             isSigningIn

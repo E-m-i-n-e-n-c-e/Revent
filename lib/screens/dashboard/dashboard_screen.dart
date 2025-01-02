@@ -101,7 +101,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 9),
               const EventCard(),
-              const SizedBox(height: 19),
               // const SizedBox(height: 2),
             ],
           ),
