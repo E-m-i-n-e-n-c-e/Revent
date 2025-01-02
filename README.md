@@ -95,6 +95,7 @@
 ### Flutter Roadmap
 
 <img src = "./assets/Learn-to-become-a-modern-Flutter-developer.png" >
+
 - I took the above roadmap from https://roadmap.sh/flutter (You can also find roadmaps for other things there)
  
 ### Flutter Setup
@@ -112,7 +113,9 @@
 - Scroll down and click on Windows Setup or MacOS setup
 
 <img src = "./assets/Udemy-SS.png" >
+
 - Follow the video instructions
+
 
 ***Tip: The videos in the introduction module are free so you can watch them to get a basic idea of Flutter as well as setup your environment for Flutter*** 
 (and the same is true for most Udemy Courses)
