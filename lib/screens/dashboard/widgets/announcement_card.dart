@@ -15,103 +15,88 @@ class AnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onDoubleTap: () {
-        // Navigate to the detailed view on double-tap
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AnnouncementDetailView(
-              title: title,
-              subtitle: subtitle,
-              image: image,
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF06222F),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.28),
+            blurRadius: 20,
+            offset: Offset(0, 0),
+            spreadRadius: 2,
           ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFF06222F),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.28),
-              blurRadius: 20,
-              offset: Offset(0, 0),
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate a dynamic font size based on the available width
-                      double fontSize = constraints.maxWidth * 3 / title.length;
-                      // Adjust the factor as needed
-                      fontSize = fontSize.clamp(18, 28);
-                      // Ensure the font size is not too small or too large
-                      // Minimum font size 18, maximum 30
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Calculate a dynamic font size based on the available width
+                    double fontSize = constraints.maxWidth * 3 / title.length;
+                    // Adjust the factor as needed
+                    fontSize = fontSize.clamp(18, 28);
+                    // Ensure the font size is not too small or too large
+                    // Minimum font size 18, maximum 30
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: fontSize,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w800,
-                            ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: fontSize,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w800,
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(width: 20),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    image,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.contain,
-                    semanticLabel: 'Club Logo',
-                  ),
+              ),
+              const SizedBox(width: 20),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(51),
+                child: Image.network(
+                  image,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  semanticLabel: 'Club Logo',
                 ),
-              ],
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const Text(
-                  'View more',
-                  style: TextStyle(
-                    color: Color(0xFF83ACBD),
-                    fontSize: 11.5,
-                    fontFamily: 'DM Sans',
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.arrow_forward_ios,
+              ),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const Text(
+                'View more',
+                style: TextStyle(
                   color: Color(0xFF83ACBD),
-                  size: 10,
+                  fontSize: 11.5,
+                  fontFamily: 'DM Sans',
+                  fontWeight: FontWeight.w300,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Color(0xFF83ACBD),
+                size: 10,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -135,6 +120,12 @@ class AnnouncementDetailView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Announcement Details'),
         backgroundColor: const Color(0xFF06222F),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xff83ACBD)),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(

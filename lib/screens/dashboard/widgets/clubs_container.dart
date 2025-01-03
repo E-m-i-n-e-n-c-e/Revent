@@ -165,6 +165,7 @@ class ClubIconsRow extends StatelessWidget {
               const Points(points: 2000),
             ],
           ),
+          const SizedBox(width: 10),
           Column(
             children: [
               ElevatedButton(
