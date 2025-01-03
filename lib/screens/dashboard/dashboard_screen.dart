@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           // constraints: const BoxConstraints(maxWidth: 480),
-          padding: const EdgeInsets.fromLTRB(15, 5, 15, 5),
+          padding: const EdgeInsets.fromLTRB(15, 3, 15, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -73,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 10),
               SmoothPageIndicator(
                 controller: _pageController,
-                count: 4, // Update based on the number of pages
+                count: 5, // Update based on the number of pages
                 effect: WormEffect(
                   dotHeight: 8,
                   dotWidth: 8,

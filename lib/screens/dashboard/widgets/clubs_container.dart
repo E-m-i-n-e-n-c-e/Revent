@@ -165,6 +165,28 @@ class ClubIconsRow extends StatelessWidget {
               const Points(points: 2000),
             ],
           ),
+          Column(
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x001a2c34),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
+                ),
+                onPressed: () {},
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(51),
+                  child: Image.network(
+                    'https://cdn.builder.io/api/v1/image/assets/TEMP/fed9b3a788b46dd354fea88c29041d4a84d5f62787d73436fe30f66d8d127d5f?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
+                    width: 57,
+                    height: 57,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const Points(points: 2500),
+            ],
+          ),
           const SizedBox(width: 10),
           Column(
             children: [

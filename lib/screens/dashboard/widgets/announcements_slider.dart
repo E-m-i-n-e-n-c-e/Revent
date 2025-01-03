@@ -17,32 +17,39 @@ class AnnouncementsSlider extends StatelessWidget {
         controller: _pageController,
         itemBuilder: (context, index) {
           final actualIndex =
-              index % 4; // Assuming there are 4 announcement cards
+              index % 5; // Assuming there are 4 announcement cards
           switch (actualIndex) {
             case 0:
               return const AnnouncementCard(
-                title: "CyberArc's",
+                  title: "BetaLabs Mini Project🚀",
+                  subtitle:
+                      "🤖 Dive into the Future with BETALABS Mini-Projects! 🔬  ",
+                  image:
+                      'https://cdn.builder.io/api/v1/image/assets/TEMP/fed9b3a788b46dd354fea88c29041d4a84d5f62787d73436fe30f66d8d127d5f?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60');
+            case 1:
+              return const AnnouncementCard(
+                title: "CyberArc's CTF Challenge",
                 subtitle: "CTF Challenge",
                 image:
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/a70aa1deb5a0c0e7e806875063dfa1e13dc07225ea5d3942037ad18f7437f9a2?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
               );
-            case 1:
+            case 2:
               return const AnnouncementCard(
-                title: "TechFest",
+                title: "Coder's Club Coding Marathon",
                 subtitle: "Coding Marathon",
                 image:
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/5f950d41f1ad7f9496002217e671c81742ff4891e1aaa6eb1e4ac86095361a57?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
               );
-            case 2:
+            case 3:
               return const AnnouncementCard(
-                title: "WildBeats",
+                title: "WildBeats Music Festival",
                 subtitle: "Music Festival",
                 image:
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/37e7989965e171596ee40b7d5d043213ad09494587b6af294656a47ca2eb0988?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
               );
-            case 3:
+            case 4:
               return const AnnouncementCard(
-                title: "GDGC",
+                title: "GDGC Flutter Workshop",
                 subtitle: "Flutter Workshop",
                 image:
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/613a1aa021408fa85d9954915baceba0821ac2eb6af01df00f9d61c7229444fb?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
