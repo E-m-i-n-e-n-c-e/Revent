@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           // constraints: const BoxConstraints(maxWidth: 480),
-          padding: const EdgeInsets.fromLTRB(15, 12, 15, 30),
+          padding: const EdgeInsets.fromLTRB(15, 5, 15, 5),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
