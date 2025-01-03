@@ -158,19 +158,44 @@ class AnnouncementDetailView extends StatelessWidget {
                     stops: [0, 0.68],
                   ),
                 ),
-                child: Center(
-                  child: Text(
-                    'BetaLabs Mini Project🚀',
-                    style: GoogleFonts.getFont(
-                      'DM Sans',
-                      color: const Color(0xFFAEE7FF),
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    double subtitleFontSize =
+                        constraints.maxWidth * 1.8 / subtitle.length;
+                    subtitleFontSize = subtitleFontSize.clamp(14, 22);
+                    double titleFontSize =
+                        constraints.maxWidth * 1.8 / title.length;
+                    titleFontSize = titleFontSize.clamp(25, 30);
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            style: GoogleFonts.getFont(
+                              'DM Sans',
+                              color: const Color(0xFFAEE7FF),
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            subtitle,
+                            style: GoogleFonts.getFont(
+                              'DM Sans',
+                              color: Colors.white,
+                              fontSize: subtitleFontSize,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
