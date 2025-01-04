@@ -1,3 +1,4 @@
+import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
 import 'package:events_manager/screens/dashboard/widgets/bottom_navbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final PageController _pageController = PageController();
   List<Announcement> _announcements = [];
   bool _isLoading = true;
+  int _announcementCount = 0;
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Load from local data
     _announcements = sampleAnnouncements;
+    _announcementCount = _announcements.length;
 
     setState(() {
       _isLoading = false;
@@ -47,6 +50,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user != widget.user) {
+      _loadAnnouncements();
+    }
   }
 
   @override
@@ -118,16 +129,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const Spacer(),
-                    Container(
-                      margin: const EdgeInsets.only(right: 14),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.black,
-                        size: 20,
+                    IconButton(
+                      onPressed: () {
+                        navigateToAddAnnouncement(context);
+                      },
+                      icon: Container(
+                        margin: const EdgeInsets.only(right: 14),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.black,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
@@ -143,7 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 10),
               SmoothPageIndicator(
                 controller: _pageController,
-                count: _announcements.length,
+                count: _announcementCount,
                 effect: WormEffect(
                   dotHeight: 8,
                   dotWidth: 8,
@@ -180,4 +196,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+}
+
+Future<void> navigateToAddAnnouncement(BuildContext context) async {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const AddAnnouncementForm(),
+    ),
+  );
 }

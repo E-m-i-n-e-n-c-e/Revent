@@ -28,8 +28,9 @@ final List<Announcement> sampleAnnouncements = [
         "👉 Register now and kickstart your extraordinary BETALABS journey!",
     venue: "AC 404",
     time: "2:00 PM - 3:30 PM",
-    image:
-        'https://cdn.builder.io/api/v1/image/assets/TEMP/32d5faeec451c2b5c22f6904c99c92cdbc8aa3da9735844517f86c59fc307bcc?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
+    image: Uri.parse(
+            'https://cdn.builder.io/api/v1/image/assets/TEMP/32d5faeec451c2b5c22f6904c99c92cdbc8aa3da9735844517f86c59fc307bcc?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60')
+        .toString(),
     date: DateTime.now(),
     clubId: "betalabs",
   ),

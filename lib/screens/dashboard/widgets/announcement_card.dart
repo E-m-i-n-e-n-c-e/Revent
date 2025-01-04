@@ -137,7 +137,7 @@ class AnnouncementDetailView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (image != null)
+            if (image != null && Uri.parse(image!).isAbsolute)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Image.network(
