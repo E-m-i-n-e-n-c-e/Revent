@@ -1,4 +1,3 @@
-import 'package:events_manager/data/announcements_data.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:flutter/material.dart';
 
@@ -107,13 +106,11 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                       time: _timeController.text,
                       image: _imageUrlController.text.isEmpty
                           ? null
-                          : Uri.parse(_imageUrlController.text).toString(),
-                      clubId: 'betalabs', // Replace with actual club ID
+                          : Uri.parse(_imageUrlController.text.trim())
+                              .toString(),
+                      clubId: 'betalabs',
                       date: DateTime.now(),
                     );
-
-                    // Add to sample announcements
-                    sampleAnnouncements.add(newAnnouncement);
 
                     Navigator.pop(context, newAnnouncement);
                   }

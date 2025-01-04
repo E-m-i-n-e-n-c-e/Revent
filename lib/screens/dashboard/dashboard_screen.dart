@@ -24,7 +24,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final PageController _pageController = PageController();
   List<Announcement> _announcements = [];
   bool _isLoading = true;
-  int _announcementCount = 0;
 
   @override
   void initState() {
@@ -39,7 +38,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Load from local data
     _announcements = sampleAnnouncements;
-    _announcementCount = _announcements.length;
 
     setState(() {
       _isLoading = false;
@@ -50,14 +48,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(DashboardScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.user != widget.user) {
-      _loadAnnouncements();
-    }
   }
 
   @override
@@ -130,8 +120,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const Spacer(),
                     IconButton(
-                      onPressed: () {
-                        navigateToAddAnnouncement(context);
+                      onPressed: () async {
+                        var newAnnouncement = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddAnnouncementForm(),
+                          ),
+                        );
+                        if (newAnnouncement != null) {
+                          setState(() {
+                            sampleAnnouncements.add(newAnnouncement);
+                          });
+                          _loadAnnouncements();
+                        }
                       },
                       icon: Container(
                         margin: const EdgeInsets.only(right: 14),
@@ -159,7 +160,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 10),
               SmoothPageIndicator(
                 controller: _pageController,
-                count: _announcementCount,
+                count: _announcements.length,
                 effect: WormEffect(
                   dotHeight: 8,
                   dotWidth: 8,
@@ -196,13 +197,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-}
-
-Future<void> navigateToAddAnnouncement(BuildContext context) async {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const AddAnnouncementForm(),
-    ),
-  );
 }
