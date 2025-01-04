@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:events_manager/models/event.dart';
+import 'package:events_manager/data/events_data.dart';
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   const EventCard({super.key});
+
+  @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  List<Event> _events = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  void _loadEvents() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Load from local data
+    _events = sampleEvents;
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,29 +45,20 @@ class EventCard extends StatelessWidget {
             color: const Color(0xFF06151C),
             borderRadius: BorderRadius.circular(30),
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              children: const [
-                EventItem(
-                  title: 'Hack the Box: Cyber Challenge',
-                  description:
-                      'Join us for an action-packed Hack the Box Challenge! Solve puzzles, crack codes, and compete to top the leaderboard. Open to all skill...',
-                  time: '4:30 PM - 5:30 PM',
-                  imageUrl:
-                      'https://cdn.builder.io/api/v1/image/assets/TEMP/a70aa1deb5a0c0e7e806875063dfa1e13dc07225ea5d3942037ad18f7437f9a2?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  child: Column(
+                    children: _events.map((event) {
+                      return Column(
+                        children: [
+                          EventItem(event: event),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
-                SizedBox(height: 12),
-                EventItem(
-                  title: 'Code Smart: Problem-Solving 101',
-                  description:
-                      'Level up your coding game and dive into the fundamentals of algorithms, data structures, and problem-solving techniques.',
-                  time: '5:30 PM - 6:30 PM',
-                  imageUrl:
-                      'https://cdn.builder.io/api/v1/image/assets/TEMP/5f950d41f1ad7f9496002217e671c81742ff4891e1aaa6eb1e4ac86095361a57?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
@@ -46,17 +66,11 @@ class EventCard extends StatelessWidget {
 }
 
 class EventItem extends StatelessWidget {
-  final String title;
-  final String description;
-  final String time;
-  final String imageUrl;
+  final Event event;
 
   const EventItem({
     super.key,
-    required this.title,
-    required this.description,
-    required this.time,
-    required this.imageUrl,
+    required this.event,
   });
 
   @override
@@ -79,7 +93,7 @@ class EventItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            event.title,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 16,
@@ -89,7 +103,7 @@ class EventItem extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            description,
+            event.description,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 12,
@@ -103,7 +117,7 @@ class EventItem extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(51),
                 child: Image.network(
-                  imageUrl,
+                  event.imageUrl,
                   width: 35,
                   height: 35,
                   fit: BoxFit.contain,
@@ -118,7 +132,7 @@ class EventItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  time,
+                  event.time,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,

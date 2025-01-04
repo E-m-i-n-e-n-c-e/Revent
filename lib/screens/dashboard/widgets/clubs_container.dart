@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:events_manager/models/club.dart';
+import 'package:events_manager/data/clubs_data.dart';
 
 class ClubsContainer extends StatefulWidget {
   const ClubsContainer({super.key});
@@ -15,11 +17,27 @@ class _ClubsContainerState extends State<ClubsContainer> {
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
   bool _firstTime = true;
+  List<Club> _clubs = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_updateScrollArrows);
+    _loadClubs();
+  }
+
+  void _loadClubs() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Load from local data
+    _clubs = sampleClubs;
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _updateScrollArrows() {
@@ -44,6 +62,7 @@ class _ClubsContainerState extends State<ClubsContainer> {
       });
       _firstTime = false;
     }
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -51,214 +70,100 @@ class _ClubsContainerState extends State<ClubsContainer> {
         color: const Color(0xFF06222F),
         borderRadius: BorderRadius.circular(35),
       ),
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            child: ClubIconsRow(),
-          ),
-          if (_canScrollLeft)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: GestureDetector(
-                onTap: () {
-                  _scrollController.animateTo(
-                    _scrollController.offset - 100,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease,
-                  );
-                },
-                child: Icon(
-                  Icons.arrow_back_ios,
-                  color: Color(0xffAEE7FF),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _clubs
+                        .map(
+                          (club) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: ClubIcon(club: club),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
-              ),
+                if (_canScrollLeft)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: _buildScrollButton(true),
+                  ),
+                if (_canScrollRight)
+                  Positioned(
+                    right: -6,
+                    top: 0,
+                    bottom: 0,
+                    child: _buildScrollButton(false),
+                  ),
+              ],
             ),
-          if (_canScrollRight)
-            Positioned(
-              right: -6,
-              top: 0,
-              bottom: 0,
-              child: GestureDetector(
-                onTap: () {
-                  _scrollController.animateTo(
-                    _scrollController.offset + 100,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease,
-                  );
-                },
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  color: Color(0xffAEE7FF),
-                ),
-              ),
-            ),
-        ],
+    );
+  }
+
+  Widget _buildScrollButton(bool isLeft) {
+    return GestureDetector(
+      onTap: () {
+        _scrollController.animateTo(
+          _scrollController.offset + (isLeft ? -100 : 100),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.ease,
+        );
+      },
+      child: Icon(
+        isLeft ? Icons.arrow_back_ios : Icons.arrow_forward_ios,
+        color: const Color(0xffAEE7FF),
       ),
     );
   }
 }
 
-class ClubIconsRow extends StatelessWidget {
-  const ClubIconsRow({super.key});
+class ClubIcon extends StatelessWidget {
+  final Club club;
+
+  const ClubIcon({
+    super.key,
+    required this.club,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A2C34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {
-                  // print("Button pressed");
-                },
-                child: Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: Colors.black),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(500),
-                    child: Image.network(
-                      'https://cdn.builder.io/api/v1/image/assets/TEMP/37e7989965e171596ee40b7d5d043213ad09494587b6af294656a47ca2eb0988?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                  ),
-                ),
-              ),
-              const Points(points: 1000),
-            ],
+    return Column(
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1A2C34),
+            padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
           ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0x001a2c34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {},
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    'https://cdn.builder.io/api/v1/image/assets/TEMP/603ab57aebffa443d017c5d9aa169930ecd8da6f3709d3596061a3968d42d2d6?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                    width: 57,
-                    height: 57,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+          onPressed: () {
+            // Handle club selection
+          },
+          child: Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(500),
+              child: Image.network(
+                club.logoUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
               ),
-              const Points(points: 2000),
-            ],
+            ),
           ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0x001a2c34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {},
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    'https://cdn.builder.io/api/v1/image/assets/TEMP/fed9b3a788b46dd354fea88c29041d4a84d5f62787d73436fe30f66d8d127d5f?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                    width: 57,
-                    height: 57,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const Points(points: 2500),
-            ],
-          ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A2C34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {},
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    'https://cdn.builder.io/api/v1/image/assets/TEMP/613a1aa021408fa85d9954915baceba0821ac2eb6af01df00f9d61c7229444fb?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                    width: 58,
-                    height: 58,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const Points(points: 3000),
-            ],
-          ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A2C34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {},
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    'https://cdn.builder.io/api/v1/image/assets/TEMP/5f950d41f1ad7f9496002217e671c81742ff4891e1aaa6eb1e4ac86095361a57?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                    width: 57,
-                    height: 57,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const Points(points: 4000),
-            ],
-          ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A2C34),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
-                ),
-                onPressed: () {},
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(51),
-                  child: Image.network(
-                    'https://cdn.builder.io/api/v1/image/assets/TEMP/945592a2b1f8c4ef834c67e9dfb9cf376d9a3e44b6528a40407ee509fc839ee2?placeholderIfAbsent=true&apiKey=e0155e6c2dfe4f2bb7942c2b033a9a60',
-                    width: 57,
-                    height: 57,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const Points(points: 5000),
-            ],
-          ),
-        ],
-      ),
+        ),
+        Points(points: club.points),
+      ],
     );
   }
 }

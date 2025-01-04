@@ -7,6 +7,8 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'widgets/event_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
+import 'package:events_manager/models/announcement.dart';
+import 'package:events_manager/data/announcements_data.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.user});
@@ -19,6 +21,27 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final PageController _pageController = PageController();
+  List<Announcement> _announcements = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncements();
+  }
+
+  void _loadAnnouncements() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Load from local data
+    _announcements = sampleAnnouncements;
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -65,20 +88,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontFamily: 'Inter',
                           ),
                     ),
+                    const SizedBox(width: 5),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () {
+                        //  Navigate to announcements page
+                      },
+                      child: Row(
+                        children: [
+                          Text(
+                            'See more',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF83ACBD),
+                                  fontSize: 10,
+                                ),
+                          ),
+                          const SizedBox(width: 0.5),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF83ACBD),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      margin: const EdgeInsets.only(right: 14),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 5),
-              AnnouncementsSlider(pageController: _pageController),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AnnouncementsSlider(
+                      pageController: _pageController,
+                      announcements: _announcements,
+                    ),
               const SizedBox(height: 10),
               SmoothPageIndicator(
                 controller: _pageController,
-                count: 5, // Update based on the number of pages
+                count: _announcements.length,
                 effect: WormEffect(
                   dotHeight: 8,
                   dotWidth: 8,
                   activeDotColor: Theme.of(context).colorScheme.primary,
-                  spacing: 6, // Default spacing between dots
+                  spacing: 6,
                 ),
               ),
               const SizedBox(height: 10),
