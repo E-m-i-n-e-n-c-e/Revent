@@ -1,25 +1,34 @@
 class Announcement {
   final String title;
   final String subtitle;
-  final String image;
-  final DateTime date;
+  final String description;
+  final String venue;
+  final String time;
+  final String? image;
   final String clubId;
+  final DateTime date;
 
   Announcement({
     required this.title,
     required this.subtitle,
-    required this.image,
-    required this.date,
+    required this.description,
+    required this.venue,
+    required this.time,
+    this.image,
     required this.clubId,
+    required this.date,
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
     return Announcement(
       title: json['title'] ?? '',
       subtitle: json['subtitle'] ?? '',
-      image: json['image'] ?? '',
-      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      description: json['description'] ?? '',
+      venue: json['venue'] ?? '',
+      time: json['time'] ?? '',
+      image: json['image'],
       clubId: json['clubId'] ?? '',
+      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -27,9 +36,12 @@ class Announcement {
     return {
       'title': title,
       'subtitle': subtitle,
+      'description': description,
+      'venue': venue,
+      'time': time,
       'image': image,
-      'date': date.toIso8601String(),
       'clubId': clubId,
+      'date': date.toIso8601String(),
     };
   }
 }

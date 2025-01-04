@@ -1,3 +1,4 @@
+import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,8 @@ class AnnouncementsSlider extends StatelessWidget {
       child: GestureDetector(
         onDoubleTap: () {
           if (announcements.isEmpty) return;
-          var page = _pageController.page!.round();
-          var currentAnnouncement = announcements[page % announcements.length];
+          var currentAnnouncement = announcements[
+              _pageController.page!.round() % announcements.length];
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -28,6 +29,10 @@ class AnnouncementsSlider extends StatelessWidget {
                 title: currentAnnouncement.title,
                 subtitle: currentAnnouncement.subtitle,
                 image: currentAnnouncement.image,
+                description: currentAnnouncement.description,
+                venue: currentAnnouncement.venue,
+                time: currentAnnouncement.time,
+                clubId: currentAnnouncement.clubId,
               ),
             ),
           );
@@ -40,11 +45,19 @@ class AnnouncementsSlider extends StatelessWidget {
             return AnnouncementCard(
               title: announcement.title,
               subtitle: announcement.subtitle,
-              image: announcement.image,
+              image: getClubImage(announcement.clubId),
             );
           },
         ),
       ),
     );
   }
+}
+
+String getClubImage(String clubId) {
+  final club = sampleClubs.firstWhere(
+    (club) => club.id == clubId,
+    orElse: () => sampleClubs.first,
+  );
+  return club.logoUrl;
 }

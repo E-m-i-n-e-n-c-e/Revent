@@ -1,5 +1,5 @@
+import 'package:events_manager/data/clubs_data.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AnnouncementCard extends StatelessWidget {
   final String title;
@@ -105,13 +105,21 @@ class AnnouncementCard extends StatelessWidget {
 class AnnouncementDetailView extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String image;
+  final String description;
+  final String venue;
+  final String time;
+  final String? image;
+  final String clubId;
 
   const AnnouncementDetailView({
     super.key,
     required this.title,
     required this.subtitle,
+    required this.description,
+    required this.venue,
+    required this.time,
     required this.image,
+    required this.clubId,
   });
 
   @override
@@ -122,69 +130,78 @@ class AnnouncementDetailView extends StatelessWidget {
         backgroundColor: const Color(0xFF06222F),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xff83ACBD)),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              height: 200,
-              clipBehavior: Clip.hardEdge,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(
-                    'https://firebasestorage.googleapis.com/v0/b/codeless-app.appspot.com/o/projects%2F0Rl83Th9FU_rZnf4eeMP%2F6a4d38414580959635e787efd8249e496022d3c0image.png?alt=media&token=f435da32-88e8-419f-8d9a-ccfebabcefa8',
+            if (image != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Image.network(
+                  image!,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(getClubImage(clubId)),
+                    fit: BoxFit.cover,
                   ),
-                  fit: BoxFit.cover,
                 ),
               ),
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.transparent, Color(0xCC051116)],
-                    stops: [0, 0.68],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    double subtitleFontSize =
-                        constraints.maxWidth * 1.8 / subtitle.length;
-                    subtitleFontSize = subtitleFontSize.clamp(14, 22);
-                    double titleFontSize =
-                        constraints.maxWidth * 1.8 / title.length;
-                    titleFontSize = titleFontSize.clamp(25, 30);
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            title,
-                            style: GoogleFonts.getFont(
-                              'DM Sans',
-                              color: const Color(0xFFAEE7FF),
-                              fontSize: titleFontSize,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            subtitle,
-                            style: GoogleFonts.getFont(
-                              'DM Sans',
-                              color: Colors.white,
-                              fontSize: subtitleFontSize,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildInfoRow(Icons.access_time, time),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.location_on, venue),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'About',
+                    style: TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -192,4 +209,32 @@ class AnnouncementDetailView extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFF83ACBD),
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFFAEE7FF),
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String getClubImage(String clubId) {
+  final club = sampleClubs.firstWhere(
+    (club) => club.id == clubId,
+    orElse: () => sampleClubs.first,
+  );
+  return club.logoUrl;
 }
