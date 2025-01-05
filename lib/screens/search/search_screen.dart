@@ -29,13 +29,23 @@ class _SearchScreenState extends State<SearchScreen> {
     List<dynamic> results = [];
     query = query.toLowerCase();
 
+    // Helper function to get club name from clubId
+    String getClubName(String clubId) {
+      final club = sampleClubs.firstWhere(
+        (club) => club.id == clubId,
+        orElse: () => Club(id: '', name: '', logoUrl: '', points: 0),
+      );
+      return club.name;
+    }
+
     // Filter based on selected category
     if (_selectedFilter == 'All' || _selectedFilter == 'Events') {
       results.addAll(sampleEvents.where((event) =>
           event.title.toLowerCase().contains(query) ||
           event.description.toLowerCase().contains(query) ||
           event.time.toLowerCase().contains(query) ||
-          event.clubId.toLowerCase().contains(query)));
+          event.clubId.toLowerCase().contains(query) ||
+          getClubName(event.clubId).toLowerCase().contains(query)));
     }
 
     if (_selectedFilter == 'All' || _selectedFilter == 'Announcements') {
@@ -45,7 +55,8 @@ class _SearchScreenState extends State<SearchScreen> {
           announcement.description.toLowerCase().contains(query) ||
           announcement.venue.toLowerCase().contains(query) ||
           announcement.time.toLowerCase().contains(query) ||
-          announcement.clubId.toLowerCase().contains(query)));
+          announcement.clubId.toLowerCase().contains(query) ||
+          getClubName(announcement.clubId).toLowerCase().contains(query)));
     }
 
     if (_selectedFilter == 'All' || _selectedFilter == 'Clubs') {
@@ -164,17 +175,41 @@ class _SearchScreenState extends State<SearchScreen> {
       color: const Color(0xFF06222F),
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.event, color: Color(0xFF83ACBD)),
+        leading: CircleAvatar(
+          backgroundImage: NetworkImage(event.imageUrl),
+          backgroundColor: Colors.transparent,
+        ),
         title: Text(
           event.title,
           style: const TextStyle(color: Colors.white),
         ),
-        subtitle: Text(
-          event.description,
-          style: const TextStyle(color: Color(0xFF83ACBD)),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              event.description,
+              style: const TextStyle(color: Color(0xFF83ACBD)),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF17323D),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                event.time,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
         ),
+        isThreeLine: true,
       ),
     );
   }
