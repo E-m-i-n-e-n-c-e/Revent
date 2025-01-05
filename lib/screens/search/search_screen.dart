@@ -6,6 +6,7 @@ import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -200,7 +201,10 @@ class _SearchScreenState extends State<SearchScreen> {
         color: const Color(0xFF06222F),
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
-          leading: const Icon(Icons.announcement, color: Color(0xFF83ACBD)),
+          leading: const FaIcon(
+            FontAwesomeIcons.bullhorn,
+            color: Color(0xFF83ACBD),
+          ),
           title: Text(
             announcement.title,
             style: const TextStyle(color: Colors.white),
