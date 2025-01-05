@@ -1,5 +1,5 @@
 import 'package:events_manager/firebase_options.dart';
-import 'package:events_manager/login_page.dart';
+import 'package:events_manager/models/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
