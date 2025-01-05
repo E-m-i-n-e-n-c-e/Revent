@@ -30,14 +30,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadAnnouncements();
   }
 
-  void _loadAnnouncements() {
+  void _loadAnnouncements() async {
     setState(() {
       _isLoading = true;
     });
 
     // Load from local data
-    _announcements = sampleAnnouncements;
+    _announcements = List.from(sampleAnnouncements);
+    await Future.delayed(const Duration(seconds: 1));
 
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _addAnnouncement(Announcement announcement) async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    sampleAnnouncements.add(announcement);
+    _announcements.add(announcement);
     setState(() {
       _isLoading = false;
     });
@@ -119,18 +132,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const Spacer(),
                     IconButton(
                       onPressed: () async {
-                        var newAnnouncement = await Navigator.push(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AddAnnouncementForm(),
+                            builder: (context) => AddAnnouncementForm(
+                              addAnnouncement: _addAnnouncement,
+                            ),
                           ),
                         );
-                        if (newAnnouncement != null) {
-                          setState(() {
-                            sampleAnnouncements.add(newAnnouncement);
-                          });
-                          _loadAnnouncements();
-                        }
                       },
                       icon: Container(
                         margin: const EdgeInsets.only(right: 14),

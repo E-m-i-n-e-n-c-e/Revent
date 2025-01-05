@@ -2,7 +2,8 @@ import 'package:events_manager/models/announcement.dart';
 import 'package:flutter/material.dart';
 
 class AddAnnouncementForm extends StatefulWidget {
-  const AddAnnouncementForm({super.key});
+  final Future<void> Function(Announcement) addAnnouncement;
+  const AddAnnouncementForm({super.key, required this.addAnnouncement});
 
   @override
   State<AddAnnouncementForm> createState() => _AddAnnouncementFormState();
@@ -16,6 +17,8 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
   final _venueController = TextEditingController();
   final _timeController = TextEditingController();
   final _imageUrlController = TextEditingController();
+
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -95,30 +98,56 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                 style: const TextStyle(color: Color(0xFFAEE7FF)),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final newAnnouncement = Announcement(
-                      title: _titleController.text,
-                      subtitle: _subtitleController.text,
-                      description: _descriptionController.text,
-                      venue: _venueController.text,
-                      time: _timeController.text,
-                      image: _imageUrlController.text.isEmpty
-                          ? null
-                          : Uri.parse(_imageUrlController.text.trim())
-                              .toString(),
-                      clubId: 'betalabs',
-                      date: DateTime.now(),
-                    );
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() {
+                              _isSaving = true;
+                            });
 
-                    Navigator.pop(context, newAnnouncement);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF83ACBD),
+                            final newAnnouncement = Announcement(
+                              title: _titleController.text,
+                              subtitle: _subtitleController.text,
+                              description: _descriptionController.text,
+                              venue: _venueController.text,
+                              time: _timeController.text,
+                              image: _imageUrlController.text.isEmpty
+                                  ? null
+                                  : Uri.parse(_imageUrlController.text.trim())
+                                      .toString(),
+                              clubId: 'betalabs',
+                              date: DateTime.now(),
+                            );
+
+                            await widget.addAnnouncement(newAnnouncement);
+
+                            if (!context.mounted) return;
+                            Navigator.pop(context, newAnnouncement);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF83ACBD),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Create Announcement',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
-                child: const Text('Create Announcement'),
               ),
             ],
           ),
