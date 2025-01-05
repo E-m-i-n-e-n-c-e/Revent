@@ -3,10 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:events_manager/models/club.dart';
-import 'package:events_manager/data/clubs_data.dart';
 
 class ClubsContainer extends StatefulWidget {
-  const ClubsContainer({super.key});
+  const ClubsContainer({super.key, required this.clubs});
+
+  final List<Club> clubs;
 
   @override
   State<ClubsContainer> createState() => _ClubsContainerState();
@@ -17,27 +18,11 @@ class _ClubsContainerState extends State<ClubsContainer> {
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
   bool _firstTime = true;
-  List<Club> _clubs = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_updateScrollArrows);
-    _loadClubs();
-  }
-
-  void _loadClubs() {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Load from local data
-    _clubs = sampleClubs;
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   void _updateScrollArrows() {
@@ -70,40 +55,38 @@ class _ClubsContainerState extends State<ClubsContainer> {
         color: const Color(0xFF06222F),
         borderRadius: BorderRadius.circular(35),
       ),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                SingleChildScrollView(
-                  controller: _scrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _clubs
-                        .map(
-                          (club) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: ClubIcon(club: club),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                if (_canScrollLeft)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: _buildScrollButton(true),
-                  ),
-                if (_canScrollRight)
-                  Positioned(
-                    right: -6,
-                    top: 0,
-                    bottom: 0,
-                    child: _buildScrollButton(false),
-                  ),
-              ],
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: widget.clubs
+                  .map(
+                    (club) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: ClubIcon(club: club),
+                    ),
+                  )
+                  .toList(),
             ),
+          ),
+          if (_canScrollLeft)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: _buildScrollButton(true),
+            ),
+          if (_canScrollRight)
+            Positioned(
+              right: -6,
+              top: 0,
+              bottom: 0,
+              child: _buildScrollButton(false),
+            ),
+        ],
+      ),
     );
   }
 

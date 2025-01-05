@@ -1,37 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:events_manager/models/event.dart';
-import 'package:events_manager/data/events_data.dart';
 
 class EventCard extends StatefulWidget {
-  const EventCard({super.key});
+  const EventCard({super.key, required this.events});
+  final List<Event> events;
 
   @override
   State<EventCard> createState() => _EventCardState();
 }
 
 class _EventCardState extends State<EventCard> {
-  List<Event> _events = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEvents();
-  }
-
-  void _loadEvents() {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Load from local data
-    _events = sampleEvents;
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -45,20 +23,18 @@ class _EventCardState extends State<EventCard> {
             color: const Color(0xFF06151C),
             borderRadius: BorderRadius.circular(30),
           ),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  child: Column(
-                    children: _events.map((event) {
-                      return Column(
-                        children: [
-                          EventItem(event: event),
-                          const SizedBox(height: 12),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: widget.events.map((event) {
+                return Column(
+                  children: [
+                    EventItem(event: event),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
