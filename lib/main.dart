@@ -1,9 +1,9 @@
 import 'package:events_manager/firebase_options.dart';
 import 'package:events_manager/login_page.dart';
-import 'package:events_manager/screens/dashboard/dashboard_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:events_manager/event_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,7 +72,7 @@ class MyApp extends StatelessWidget {
           }
           if (snapshot.hasData) {
             var user = snapshot.data;
-            return DashboardScreen(user: user as User);
+            return EventManager(user: user as User);
           }
           return LoginPage();
         },

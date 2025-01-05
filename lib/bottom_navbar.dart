@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-class CustomBottomNavigationBar extends StatefulWidget {
-  const CustomBottomNavigationBar({super.key});
+class CustomBottomNavigationBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onItemSelected;
 
-  @override
-  State<CustomBottomNavigationBar> createState() =>
-      _CustomBottomNavigationBarState();
-}
-
-class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
-  int _selectedIndex = 0;
+  const CustomBottomNavigationBar({
+    super.key,
+    required this.selectedIndex,
+    required this.onItemSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,18 +47,14 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
   }
 
   Widget _buildNavItem({required IconData icon, required int index}) {
-    bool isSelected = _selectedIndex == index;
+    bool isSelected = selectedIndex == index;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
         padding: const EdgeInsets.all(0),
       ),
-      onPressed: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
+      onPressed: () => onItemSelected(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

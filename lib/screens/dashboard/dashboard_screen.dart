@@ -1,6 +1,5 @@
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
-import 'package:events_manager/screens/dashboard/widgets/bottom_navbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -53,7 +52,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const CustomBottomNavigationBar(),
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
