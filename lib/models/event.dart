@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Event {
   final String title;
   final String description;
@@ -5,7 +7,8 @@ class Event {
   final DateTime endTime;
   final String clubId;
   final String? venue;
-  String? id;
+  final String? id;
+
   Event({
     required this.title,
     required this.description,
@@ -17,28 +20,49 @@ class Event {
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
+    // Handle both Timestamp and String formats for dates
+
     return Event(
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      startTime:
-          DateTime.parse(json['startTime'] ?? DateTime.now().toIso8601String()),
-      endTime: DateTime.parse(json['endTime'] ??
-          DateTime.now().add(const Duration(hours: 1)).toIso8601String()),
-      clubId: json['clubId'] ?? '',
-      venue: json['venue'],
-      id: json['id'],
+      id: json['id'] as String?,
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      startTime: json['startTime'].toDate(),
+      endTime: json['endTime'].toDate(),
+      clubId: json['clubId'] as String? ?? '',
+      venue: json['venue'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'description': description,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
       'clubId': clubId,
       'venue': venue,
-      'id': id,
     };
+  }
+
+  // Create a copy of the event with some fields updated
+  Event copyWith({
+    String? title,
+    String? description,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? clubId,
+    String? venue,
+    String? id,
+  }) {
+    return Event(
+      title: title ?? this.title,
+      description: description ?? this.description,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      clubId: clubId ?? this.clubId,
+      venue: venue ?? this.venue,
+      id: id ?? this.id,
+    );
   }
 }

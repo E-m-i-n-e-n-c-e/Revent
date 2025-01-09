@@ -1,9 +1,9 @@
 import 'package:events_manager/data/clubs_data.dart';
-import 'package:events_manager/data/events_data.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
+import 'package:events_manager/utils/firedata.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -41,17 +41,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isLoading = true;
     });
 
-    // Load all data with artificial delay
-    // await Future.delayed(const Duration(seconds: 1));
+    try {
+      final now = DateTime.now();
+      final endOfDay = now.add(const Duration(days: 1));
+      // Load today's events from Firebase
+      final eventList = await loadEventsByDateRange(now, endOfDay);
+      // final eventList = await loadEvents();
 
-    // Load announcements, clubs, and events
-    _announcements = List.from(sampleAnnouncements);
-    _clubs = List.from(sampleClubs);
-    _events = List.from(sampleEvents);
+      _events =
+          eventList.map((eventData) => Event.fromJson(eventData)).toList();
 
-    setState(() {
-      _isLoading = false;
-    });
+      // Load announcements and clubs (still using sample data for now)
+      _announcements = List.from(sampleAnnouncements);
+      _clubs = List.from(sampleClubs);
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load dashboard data: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
+    }
   }
 
   Future<void> _addAnnouncement(Announcement newAnnouncement) async {

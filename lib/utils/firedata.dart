@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<List<Map<String, dynamic>>> loadEvents() async {
   final firestore = FirebaseFirestore.instance;
-  final events = await firestore.collection('events').orderBy('date').get();
+  final events =
+      await firestore.collection('events').orderBy('startTime').get();
 
   final eventList = events.docs.map((doc) => doc.data()).toList();
   return eventList;
@@ -12,7 +13,12 @@ Future<List<Map<String, dynamic>>> loadEvents() async {
 
 Future<List<Map<String, dynamic>>> loadEventsByDate(DateTime date) async {
   final events = await loadEvents();
-  final eventsByDate = events.where((event) => event['date'] == date).toList();
+  final eventsByDate = events.where((event) {
+    final eventDate = event['startTime'].toDate();
+    return eventDate.year == date.year &&
+        eventDate.month == date.month &&
+        eventDate.day == date.day;
+  }).toList();
   return eventsByDate;
 }
 
@@ -22,11 +28,22 @@ Future<List<Map<String, dynamic>>> loadTodayEvents() async {
 
 Future<List<Map<String, dynamic>>> loadEventsByDateRange(
     DateTime startDate, DateTime endDate) async {
-  final events = await loadEvents();
-  final eventsByDateRange = events
-      .where((event) => event['date'] >= startDate && event['date'] <= endDate)
-      .toList();
-  return eventsByDateRange;
+  final firestore = FirebaseFirestore.instance;
+
+  // Convert to Timestamps for Firestore query
+  final startTimestamp = Timestamp.fromDate(startDate);
+  final endTimestamp = Timestamp.fromDate(endDate);
+
+  final events = await firestore
+      .collection('events')
+      .where('startTime', isGreaterThanOrEqualTo: startTimestamp)
+      .where('startTime', isLessThanOrEqualTo: endTimestamp)
+      .orderBy('startTime')
+      .get();
+
+  final eventList = events.docs.map((doc) => doc.data()).toList();
+
+  return eventList;
 }
 
 Future<String> sendEvent(Map<String, dynamic> eventJson) async {
@@ -38,10 +55,15 @@ Future<String> sendEvent(Map<String, dynamic> eventJson) async {
 
 Future<void> updateEvent(String eventId, Map<String, dynamic> eventJson) async {
   final firestore = FirebaseFirestore.instance;
+  eventJson['id'] = eventId;
   await firestore.collection('events').doc(eventId).update(eventJson);
 }
 
 Future<void> deleteEvent(String eventId) async {
-  final firestore = FirebaseFirestore.instance;
-  await firestore.collection('events').doc(eventId).delete();
+  try {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('events').doc(eventId).delete();
+  } catch (e) {
+    rethrow;
+  }
 }

@@ -25,18 +25,30 @@ class _EventCardState extends State<EventCard> {
             color: const Color(0xFF06151C),
             borderRadius: BorderRadius.circular(30),
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              children: widget.events.map((event) {
-                return Column(
-                  children: [
-                    EventItem(event: event),
-                    const SizedBox(height: 12),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
+          child: widget.events.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No events today',
+                    style: TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DM Sans',
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    children: widget.events.map((event) {
+                      return Column(
+                        children: [
+                          EventItem(event: event),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
         ),
       ),
     );

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:events_manager/models/event.dart';
-import 'package:events_manager/data/events_data.dart';
 import 'package:events_manager/data/clubs_data.dart';
+import 'package:events_manager/utils/firedata.dart';
 import 'event_utils.dart';
 
 class EventsScreen extends StatefulWidget {
@@ -33,15 +33,21 @@ class _EventsScreenState extends State<EventsScreen> {
     }
   }
 
-  void _loadEvents() {
+  void _loadEvents() async {
+    _selectedDate = null;
     try {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
 
+      // Load events from Firebase
+      final eventList = await loadEvents();
+      final events =
+          eventList.map((eventData) => Event.fromJson(eventData)).toList();
+
       // Convert events to appointments
-      _appointments = sampleEvents.map((event) {
+      _appointments = events.map((event) {
         return Appointment(
           startTime: event.startTime,
           endTime: event.endTime,
@@ -50,6 +56,7 @@ class _EventsScreenState extends State<EventsScreen> {
           location: event.venue,
           resourceIds: [event.clubId],
           color: getColorForClub(event.clubId),
+          id: event.id, // Store event ID in appointment
         );
       }).toList();
 
@@ -71,10 +78,14 @@ class _EventsScreenState extends State<EventsScreen> {
       });
     } else if (details.targetElement == CalendarElement.appointment) {
       final Appointment tappedAppointment = details.appointments![0];
-      final Event selectedEvent = sampleEvents.firstWhere(
-        (event) =>
-            event.title == tappedAppointment.subject &&
-            event.startTime == tappedAppointment.startTime,
+      final Event selectedEvent = Event(
+        id: tappedAppointment.id?.toString(),
+        title: tappedAppointment.subject,
+        description: tappedAppointment.notes ?? '',
+        startTime: tappedAppointment.startTime,
+        endTime: tappedAppointment.endTime,
+        clubId: (tappedAppointment.resourceIds?.first as String?) ?? '',
+        venue: tappedAppointment.location,
       );
       _showEventOptions(selectedEvent);
     }
@@ -138,17 +149,23 @@ class _EventsScreenState extends State<EventsScreen> {
                 style: TextStyle(color: Color(0xFFAEE7FF))),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                sampleEvents.removeWhere(
-                  (e) =>
-                      e.title == event.title &&
-                      e.startTime == event.startTime &&
-                      e.endTime == event.endTime,
-                );
-                _loadEvents();
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                await deleteEvent(event.id!);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  _loadEvents(); // Reload events after deletion
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete event: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -162,25 +179,36 @@ class _EventsScreenState extends State<EventsScreen> {
       context: context,
       builder: (context) => _EditEventDialog(
         event: event,
-        onEventEdited: (updatedEvent) {
-          setState(() {
-            final index = sampleEvents.indexWhere(
-              (e) =>
-                  e.title == event.title &&
-                  e.startTime == event.startTime &&
-                  e.endTime == event.endTime,
-            );
-            if (index != -1) {
-              sampleEvents[index] = updatedEvent;
-              _loadEvents();
+        onEventEdited: (updatedEvent) async {
+          try {
+            if (updatedEvent.startTime.isAfter(updatedEvent.endTime)) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Start time cannot be after end time'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
             }
-          });
+            await updateEvent(event.id!, updatedEvent.toJson());
+            _loadEvents(); // Reload events after update
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to update event: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
         },
       ),
     );
 
     if (result != null) {
-      _loadEvents();
+      _loadEvents(); // Reload events if dialog was closed with a result
     }
   }
 
@@ -194,7 +222,6 @@ class _EventsScreenState extends State<EventsScreen> {
         (selectedDate.year == today.year &&
             selectedDate.month == today.month &&
             selectedDate.day < today.day)) {
-      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cannot add events in the past'),
@@ -207,18 +234,43 @@ class _EventsScreenState extends State<EventsScreen> {
     final result = await showDialog<Event>(
       context: context,
       builder: (context) => _AddEventDialog(
-        initialDate: selectedDate,
-        onEventAdded: (event) {
-          setState(() {
-            sampleEvents.add(event);
-            _loadEvents();
-          });
+        initialDate: selectedDate.add(const Duration(hours: 12)),
+        finalDate: _currentView == CalendarView.day
+            ? selectedDate.add(const Duration(hours: 1))
+            : selectedDate.add(const Duration(hours: 23, minutes: 59)),
+        onEventAdded: (event) async {
+          try {
+            // Validate event times
+            if (event.startTime.isAfter(event.endTime)) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Start time cannot be after end time'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+            await sendEvent(event.toJson());
+            if (mounted) {
+              _loadEvents(); // Reload events after adding
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to create event: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
         },
       ),
     );
 
     if (result != null) {
-      _loadEvents();
+      _loadEvents(); // Reload events if dialog was closed with a result
     }
   }
 
@@ -347,9 +399,11 @@ class _EventsScreenState extends State<EventsScreen> {
 class _AddEventDialog extends StatefulWidget {
   final DateTime initialDate;
   final Function(Event) onEventAdded;
+  final DateTime finalDate;
 
   const _AddEventDialog({
     required this.initialDate,
+    required this.finalDate,
     required this.onEventAdded,
   });
 
@@ -368,12 +422,14 @@ class _AddEventDialogState extends State<_AddEventDialog> {
   @override
   void initState() {
     super.initState();
+
+    // Set initial times
     _startTime = widget.initialDate;
-    _endTime = widget.initialDate.add(const Duration(hours: 2));
+    _endTime = widget.finalDate;
     _selectedClubId = sampleClubs.first.id;
   }
 
-  Widget _buildDateTimePicker(
+  Widget _buildTimePicker(
       String label, DateTime dateTime, Function(DateTime) onChanged) {
     return Row(
       children: [
@@ -385,30 +441,24 @@ class _AddEventDialogState extends State<_AddEventDialog> {
               backgroundColor: const Color(0xFF17323D),
             ),
             onPressed: () async {
-              final DateTime? pickedDate = await showDatePicker(
+              final TimeOfDay? pickedTime = await showTimePicker(
                 context: context,
-                initialDate: dateTime,
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
+                initialTime: TimeOfDay.fromDateTime(dateTime),
               );
-              if (pickedDate != null && mounted) {
-                final TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.fromDateTime(dateTime),
+              if (pickedTime != null) {
+                final DateTime newDateTime = DateTime(
+                  widget.initialDate.year,
+                  widget.initialDate.month,
+                  widget.initialDate.day,
+                  pickedTime.hour,
+                  pickedTime.minute,
                 );
-                if (pickedTime != null) {
-                  onChanged(DateTime(
-                    pickedDate.year,
-                    pickedDate.month,
-                    pickedDate.day,
-                    pickedTime.hour,
-                    pickedTime.minute,
-                  ));
-                }
+
+                onChanged(newDateTime);
               }
             },
             child: Text(
-              '${'${dateTime.toLocal()}'.split(' ')[0]} ${TimeOfDay.fromDateTime(dateTime).format(context)}',
+              '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${TimeOfDay.fromDateTime(dateTime).format(context)}',
               style: const TextStyle(color: Color(0xFFAEE7FF)),
             ),
           ),
@@ -470,10 +520,10 @@ class _AddEventDialogState extends State<_AddEventDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildDateTimePicker('Start Time', _startTime,
+            _buildTimePicker('Start Time', _startTime,
                 (newDate) => setState(() => _startTime = newDate)),
             const SizedBox(height: 8),
-            _buildDateTimePicker('End Time', _endTime,
+            _buildTimePicker('End Time', _endTime,
                 (newDate) => setState(() => _endTime = newDate)),
           ],
         ),
@@ -572,18 +622,22 @@ class _EditEventDialogState extends State<_EditEventDialog> {
                   initialTime: TimeOfDay.fromDateTime(dateTime),
                 );
                 if (pickedTime != null) {
-                  onChanged(DateTime(
+                  final DateTime newDateTime = DateTime(
                     pickedDate.year,
                     pickedDate.month,
                     pickedDate.day,
                     pickedTime.hour,
                     pickedTime.minute,
-                  ));
+                  );
+
+                  // Validate start time is before end time
+
+                  onChanged(newDateTime);
                 }
               }
             },
             child: Text(
-              '${'${dateTime.toLocal()}'.split(' ')[0]} ${TimeOfDay.fromDateTime(dateTime).format(context)}',
+              '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${TimeOfDay.fromDateTime(dateTime).format(context)}',
               style: const TextStyle(color: Color(0xFFAEE7FF)),
             ),
           ),
