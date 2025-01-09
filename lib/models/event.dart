@@ -1,28 +1,32 @@
 class Event {
   final String title;
   final String description;
-  final String imageUrl;
-  final String time;
+  final DateTime startTime;
+  final DateTime endTime;
   final String clubId;
-  final DateTime date;
-
+  final String? venue;
+  String? id;
   Event({
     required this.title,
     required this.description,
-    required this.imageUrl,
-    required this.time,
+    required this.startTime,
+    required this.endTime,
     required this.clubId,
-    required this.date,
+    this.venue,
+    this.id,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      time: json['time'] ?? '',
+      startTime:
+          DateTime.parse(json['startTime'] ?? DateTime.now().toIso8601String()),
+      endTime: DateTime.parse(json['endTime'] ??
+          DateTime.now().add(const Duration(hours: 1)).toIso8601String()),
       clubId: json['clubId'] ?? '',
-      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      venue: json['venue'],
+      id: json['id'],
     );
   }
 
@@ -30,10 +34,11 @@ class Event {
     return {
       'title': title,
       'description': description,
-      'imageUrl': imageUrl,
-      'time': time,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
       'clubId': clubId,
-      'date': date.toIso8601String(),
+      'venue': venue,
+      'id': id,
     };
   }
 }

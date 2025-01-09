@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:events_manager/models/event.dart';
+import 'package:events_manager/data/clubs_data.dart';
+import 'package:events_manager/screens/events/event_utils.dart';
 
 class EventCard extends StatefulWidget {
   const EventCard({super.key, required this.events});
@@ -49,6 +51,14 @@ class EventItem extends StatelessWidget {
     required this.event,
   });
 
+  String getClubLogo(String clubId) {
+    final club = sampleClubs.firstWhere(
+      (club) => club.id == clubId,
+      orElse: () => sampleClubs.first,
+    );
+    return club.logoUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -93,7 +103,7 @@ class EventItem extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(51),
                 child: Image.network(
-                  event.imageUrl,
+                  getClubLogo(event.clubId),
                   width: 35,
                   height: 35,
                   fit: BoxFit.contain,
@@ -108,7 +118,7 @@ class EventItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  event.time,
+                  formatTimeRange(context, event.startTime, event.endTime),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
@@ -117,6 +127,36 @@ class EventItem extends StatelessWidget {
                   ),
                 ),
               ),
+              if (event.venue != null && event.venue!.trim().isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF17323D),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        event.venue!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'DM Sans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ],

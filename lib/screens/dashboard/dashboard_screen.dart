@@ -42,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     // Load all data with artificial delay
-    await Future.delayed(const Duration(seconds: 1));
+    // await Future.delayed(const Duration(seconds: 1));
 
     // Load announcements, clubs, and events
     _announcements = List.from(sampleAnnouncements);

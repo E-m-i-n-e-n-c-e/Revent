@@ -7,6 +7,7 @@ import 'package:events_manager/models/event.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:events_manager/screens/events/event_utils.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -43,8 +44,9 @@ class _SearchScreenState extends State<SearchScreen> {
       results.addAll(sampleEvents.where((event) =>
           event.title.toLowerCase().contains(query) ||
           event.description.toLowerCase().contains(query) ||
-          event.time.toLowerCase().contains(query) ||
           event.clubId.toLowerCase().contains(query) ||
+          formatEventDateTime(event.startTime).toLowerCase().contains(query) ||
+          formatEventDateTime(event.endTime).toLowerCase().contains(query) ||
           getClubName(event.clubId).toLowerCase().contains(query)));
     }
 
@@ -176,7 +178,7 @@ class _SearchScreenState extends State<SearchScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(event.imageUrl),
+          backgroundImage: NetworkImage(getClubLogoUrl(event.clubId)),
           backgroundColor: Colors.transparent,
         ),
         title: Text(
@@ -200,7 +202,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                event.time,
+                formatTimeRange(context, event.startTime, event.endTime),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -288,4 +290,8 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController.dispose();
     super.dispose();
   }
+}
+
+String getClubLogoUrl(String clubId) {
+  return sampleClubs.firstWhere((club) => club.id == clubId).logoUrl;
 }
