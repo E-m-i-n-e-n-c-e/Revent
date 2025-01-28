@@ -1,6 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 
-// We write firebase functions here
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:events_manager/models/announcement.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// initializeClubs() async {
+//   final clubsList = await FirebaseFirestore.instance.collection('clubs').get();
+//   return clubsList.docs.map((doc) => doc.data()).toList();
+// }
+
+// var areClubsInitialized = false;
+// final clubsList = initializeClubs().then((value) => areClubsInitialized = true);
 
 Future<List<Map<String, dynamic>>> loadEvents() async {
   final firestore = FirebaseFirestore.instance;
@@ -63,6 +73,130 @@ Future<void> deleteEvent(String eventId) async {
   try {
     final firestore = FirebaseFirestore.instance;
     await firestore.collection('events').doc(eventId).delete();
+  } catch (e) {
+    rethrow;
+  }
+}
+
+// Announcements Firebase Functions
+Future<List<Announcement>> loadAnnouncementsbyClubId(String clubId) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final doc = await firestore.collection('announcements').doc(clubId).get();
+
+    if (!doc.exists || !doc.data()!.containsKey('announcementsList')) {
+      return [];
+    }
+
+    final List<dynamic> announcementsList = doc.data()!['announcementsList'];
+    return announcementsList
+        .map((json) => Announcement.fromJson(json))
+        .toList();
+  } catch (e) {
+    return [];
+  }
+}
+
+Future<List<Announcement>> loadAllAnnouncements() async {
+  final firestore = FirebaseFirestore.instance;
+  final clubIdsList = await firestore.collection('announcements').get();
+  final clubIds = clubIdsList.docs.map((doc) => doc.id).toList();
+  final announcements = await Future.wait(
+      clubIds.map((clubId) => loadAnnouncementsbyClubId(clubId)));
+  final allAnnouncements =
+      announcements.expand((announcements) => announcements).toList();
+  allAnnouncements.sort((a, b) =>
+      b.date.compareTo(a.date)); // Order announcements by date ascending
+  return allAnnouncements;
+}
+
+Future<void> addAnnouncement(String clubId, Announcement announcement) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final docRef = firestore.collection('announcements').doc(clubId);
+
+    final doc = await docRef.get();
+    List<Map<String, dynamic>> announcementsList = [];
+
+    if (doc.exists && doc.data()!.containsKey('announcementsList')) {
+      announcementsList =
+          List<Map<String, dynamic>>.from(doc.data()!['announcementsList']);
+    }
+
+    announcementsList.insert(0, announcement.toJson());
+    announcementsList = announcementsList.take(20).toList();
+
+    await docRef.set({'announcementsList': announcementsList});
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> updateAnnouncement(
+    String clubId, int index, Announcement announcement) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final docRef = firestore.collection('announcements').doc(clubId);
+
+    final doc = await docRef.get();
+    if (!doc.exists || !doc.data()!.containsKey('announcementsList')) {
+      throw Exception('No announcements found');
+    }
+
+    List<Map<String, dynamic>> announcementsList =
+        List<Map<String, dynamic>>.from(doc.data()!['announcementsList']);
+    if (index >= announcementsList.length) {
+      throw Exception('Invalid announcement index');
+    }
+
+    announcementsList[index] = announcement.toJson();
+
+    await docRef.update({'announcementsList': announcementsList});
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> deleteAnnouncement(String clubId, int index) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final docRef = firestore.collection('announcements').doc(clubId);
+
+    final doc = await docRef.get();
+    if (!doc.exists || !doc.data()!.containsKey('announcementsList')) {
+      throw Exception('No announcements found');
+    }
+
+    List<Map<String, dynamic>> announcementsList =
+        List<Map<String, dynamic>>.from(doc.data()!['announcementsList']);
+    if (index >= announcementsList.length) {
+      throw Exception('Invalid announcement index');
+    }
+
+    announcementsList.removeAt(index);
+
+    await docRef.update({'announcementsList': announcementsList});
+  } catch (e) {
+    rethrow;
+  }
+}
+
+// Supabase Storage Function
+Future<String> uploadAnnouncementImage(String filePath) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+    await supabase.storage
+        .from('assets')
+        .upload('announcements/$fileName', file);
+
+    final imageUrl =
+        supabase.storage.from('assets').getPublicUrl('announcements/$fileName');
+
+    return imageUrl;
   } catch (e) {
     rethrow;
   }

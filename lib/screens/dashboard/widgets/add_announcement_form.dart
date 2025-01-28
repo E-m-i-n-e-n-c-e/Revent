@@ -1,5 +1,8 @@
 import 'package:events_manager/models/announcement.dart';
+import 'package:events_manager/utils/firedata.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddAnnouncementForm extends StatefulWidget {
   final Future<void> Function(Announcement) addAnnouncement;
@@ -16,9 +19,22 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
   final _descriptionController = TextEditingController();
   final _venueController = TextEditingController();
   final _timeController = TextEditingController();
-  final _imageUrlController = TextEditingController();
 
+  File? _selectedImage;
   bool _isSaving = false;
+  String? _errorMessage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+        _errorMessage = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +53,14 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
           key: _formKey,
           child: Column(
             children: [
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -88,15 +112,36 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                 ),
                 style: const TextStyle(color: Color(0xFFAEE7FF)),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _imageUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Image URL',
-                  labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
-                ),
-                style: const TextStyle(color: Color(0xFFAEE7FF)),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isSaving ? null : _pickImage,
+                      icon: const Icon(Icons.image),
+                      label: Text(_selectedImage == null
+                          ? 'Select Image'
+                          : 'Change Image'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF83ACBD),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              if (_selectedImage != null) ...[
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _selectedImage!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -107,26 +152,38 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                           if (_formKey.currentState!.validate()) {
                             setState(() {
                               _isSaving = true;
+                              _errorMessage = null;
                             });
 
-                            final newAnnouncement = Announcement(
-                              title: _titleController.text,
-                              subtitle: _subtitleController.text,
-                              description: _descriptionController.text,
-                              venue: _venueController.text,
-                              time: _timeController.text,
-                              image: _imageUrlController.text.isEmpty
-                                  ? null
-                                  : Uri.parse(_imageUrlController.text.trim())
-                                      .toString(),
-                              clubId: 'betalabs',
-                              date: DateTime.now(),
-                            );
+                            try {
+                              String? imageUrl;
+                              if (_selectedImage != null) {
+                                imageUrl = await uploadAnnouncementImage(
+                                    _selectedImage!.path);
+                              }
 
-                            await widget.addAnnouncement(newAnnouncement);
+                              final newAnnouncement = Announcement(
+                                title: _titleController.text,
+                                subtitle: _subtitleController.text,
+                                description: _descriptionController.text,
+                                venue: _venueController.text,
+                                time: _timeController.text,
+                                image: imageUrl,
+                                clubId: 'betalabs',
+                                date: DateTime.now(),
+                              );
 
-                            if (!context.mounted) return;
-                            Navigator.pop(context, newAnnouncement);
+                              await widget.addAnnouncement(newAnnouncement);
+
+                              if (!context.mounted) return;
+                              Navigator.pop(context, newAnnouncement);
+                            } catch (e) {
+                              setState(() {
+                                _errorMessage =
+                                    'Failed to create announcement: $e';
+                                _isSaving = false;
+                              });
+                            }
                           }
                         },
                   style: ElevatedButton.styleFrom(
@@ -163,7 +220,6 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
     _descriptionController.dispose();
     _venueController.dispose();
     _timeController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
   }
 }

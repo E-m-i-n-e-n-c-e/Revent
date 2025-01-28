@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:events_manager/models/club.dart';
+import 'package:events_manager/screens/clubs/club_page.dart';
 
 class ClubsContainer extends StatefulWidget {
   const ClubsContainer({super.key, required this.clubs});
@@ -125,7 +126,12 @@ class ClubIcon extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 0),
           ),
           onPressed: () {
-            // Handle club selection
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ClubPage(club: club),
+              ),
+            );
           },
           child: Container(
             width: 58,

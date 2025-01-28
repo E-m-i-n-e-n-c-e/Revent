@@ -144,6 +144,22 @@ class AnnouncementDetailView extends StatelessWidget {
                   image!,
                   width: double.infinity,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.error, color: Colors.red),
+                  ),
+                  loadingBuilder: (context, child, loadingProgress) =>
+                      loadingProgress == null
+                          ? child
+                          : Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        (loadingProgress.expectedTotalBytes ??
+                                            1)
+                                    : null,
+                              ),
+                            ),
                 ),
               )
             else

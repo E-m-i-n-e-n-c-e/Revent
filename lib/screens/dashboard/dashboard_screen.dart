@@ -2,6 +2,7 @@ import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
+import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,7 +13,6 @@ import 'widgets/event_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 import 'package:events_manager/models/announcement.dart';
-import 'package:events_manager/data/announcements_data.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.user});
@@ -51,8 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _events =
           eventList.map((eventData) => Event.fromJson(eventData)).toList();
 
-      // Load announcements and clubs (still using sample data for now)
-      _announcements = List.from(sampleAnnouncements);
+      _announcements = await loadAllAnnouncements();
       _clubs = List.from(sampleClubs);
 
       setState(() {
@@ -75,12 +74,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _isLoading = true;
     });
-    await Future.delayed(const Duration(seconds: 1));
-    sampleAnnouncements.insert(0, newAnnouncement);
-    _announcements.insert(0, newAnnouncement);
-    setState(() {
-      _isLoading = false;
-    });
+
+    try {
+      await addAnnouncement(newAnnouncement.clubId, newAnnouncement);
+
+      setState(() {
+        _announcements.insert(0, newAnnouncement);
+        print("inserted");
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add announcement: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -202,21 +216,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    AnnouncementsSlider(
-                      pageController: _pageController,
-                      announcements: _announcements,
-                    ),
-                    const SizedBox(height: 10),
-                    SmoothPageIndicator(
-                      controller: _pageController,
-                      count: _announcements.length,
-                      effect: WormEffect(
-                        dotHeight: 8,
-                        dotWidth: 8,
-                        activeDotColor: Theme.of(context).colorScheme.primary,
-                        spacing: 6,
+                    if (_announcements.isNotEmpty) ...[
+                      AnnouncementsSlider(
+                        pageController: _pageController,
+                        announcements: _announcements,
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      SmoothPageIndicator(
+                        controller: _pageController,
+                        count: _announcements.length,
+                        effect: WormEffect(
+                          dotHeight: 8,
+                          dotWidth: 8,
+                          activeDotColor: Theme.of(context).colorScheme.primary,
+                          spacing: 6,
+                        ),
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        height: 200,
+                        child: AnnouncementCard(
+                          title: 'You have no announcements',
+                          subtitle: 'You have no announcements',
+                          image:
+                              'https://i.pinimg.com/originals/c0/88/7d/c0887d39121ff3649f04e249942b8fec.jpg',
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Row(
                       children: [
