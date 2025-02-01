@@ -17,14 +17,21 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     // Clear search state when screen is initialized
     _searchController.clear();
-    ref.read(searchQueryProvider.notifier).state = '';
-    ref.read(searchFilterProvider.notifier).state = 'All';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(searchQueryProvider.notifier).state = '';
+      ref.read(searchFilterProvider.notifier).state = 'All';
+      setState(() {
+        _isInitialized = true;
+      });
+    });
   }
 
   @override
@@ -75,7 +82,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: searchResults.isEmpty
+              child: !_isInitialized || searchResults.isEmpty
                   ? const Center(
                       child: Text(
                         'No results found',
