@@ -1,6 +1,7 @@
 import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/providers/stream_providers.dart';
+import 'package:events_manager/screens/announcements/announcements_page.dart';
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
@@ -134,12 +135,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               padding: EdgeInsets.zero,
                             ),
                             onPressed: () {
-                              //  Navigate to announcements page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProviderScope(
+                                      child: const AnnouncementsPage()),
+                                ),
+                              );
                             },
                             child: Row(
                               children: [
                                 Text(
-                                  'See more',
+                                  'See all',
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -150,7 +157,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                                 const SizedBox(width: 0.5),
                                 const Icon(
-                                  Icons.keyboard_arrow_down,
+                                  Icons.keyboard_arrow_right,
                                   color: Color(0xFF83ACBD),
                                   size: 20,
                                 ),
