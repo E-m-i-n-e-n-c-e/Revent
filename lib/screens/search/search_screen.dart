@@ -19,6 +19,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Clear search state when screen is initialized
+    _searchController.clear();
+    ref.read(searchQueryProvider.notifier).state = '';
+    ref.read(searchFilterProvider.notifier).state = 'All';
+  }
+
+  @override
   Widget build(BuildContext context) {
     final searchResults = ref.watch(searchResultsProvider);
 
