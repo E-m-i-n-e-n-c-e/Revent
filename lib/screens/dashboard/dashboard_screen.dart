@@ -1,5 +1,3 @@
-import 'package:events_manager/data/clubs_data.dart';
-import 'package:events_manager/models/club.dart';
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/screens/announcements/announcements_page.dart';
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
@@ -30,28 +28,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final PageController _pageController = PageController();
-  List<Club> _clubs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadClubs();
-  }
-
-  Future<void> _loadClubs() async {
-    try {
-      _clubs = List.from(sampleClubs);
-    } catch (error) {
-      setState(() {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load clubs data: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      });
-    }
-  }
 
   Future<void> _addAnnouncement(Announcement newAnnouncement) async {
     try {
@@ -77,7 +53,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final events = ref.watch(todaysEventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
-    bool isLoading = announcements.isLoading || events.isLoading;
+    final clubs = ref.watch(clubsStreamProvider);
+    bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
     return Scaffold(
       body: SafeArea(
         child: isLoading
@@ -244,7 +221,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                       ],
                     ),
-                    ClubsContainer(clubs: _clubs),
+                    clubs.when(
+                      data: (clubsList) => ClubsContainer(clubs: clubsList),
+                      loading: () => const SizedBox(),
+                      error: (error, stack) => Center(
+                        child: Text('Error loading clubs: $error'),
+                      ),
+                    ),
                     Row(
                       children: [
                         const SizedBox(width: 14),
