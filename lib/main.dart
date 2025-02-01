@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:events_manager/event_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 const supabaseUrl = 'https://ttmoltlyckvmfvntgetz.supabase.co';
@@ -84,7 +85,9 @@ class MyApp extends StatelessWidget {
           }
           if (snapshot.hasData) {
             var user = snapshot.data;
-            return EventManager(user: user as User);
+            return ProviderScope(
+              child: EventManager(user: user as User),
+            );
           }
           return LoginPage();
         },

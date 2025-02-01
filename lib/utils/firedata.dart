@@ -4,14 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// initializeClubs() async {
-//   final clubsList = await FirebaseFirestore.instance.collection('clubs').get();
-//   return clubsList.docs.map((doc) => doc.data()).toList();
-// }
-
-// var areClubsInitialized = false;
-// final clubsList = initializeClubs().then((value) => areClubsInitialized = true);
-
 Future<List<Map<String, dynamic>>> loadEvents() async {
   final firestore = FirebaseFirestore.instance;
   final events =
@@ -110,10 +102,11 @@ Future<List<Announcement>> loadAllAnnouncements() async {
   return allAnnouncements;
 }
 
-Future<void> addAnnouncement(String clubId, Announcement announcement) async {
+Future<void> addAnnouncement(Announcement announcement) async {
   try {
     final firestore = FirebaseFirestore.instance;
-    final docRef = firestore.collection('announcements').doc(clubId);
+    final docRef =
+        firestore.collection('announcements').doc(announcement.clubId);
 
     final doc = await docRef.get();
     List<Map<String, dynamic>> announcementsList = [];

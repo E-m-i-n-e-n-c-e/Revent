@@ -1,12 +1,13 @@
 import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/club.dart';
-import 'package:events_manager/models/event.dart';
+import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/screens/dashboard/widgets/add_announcement_form.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcements_slider.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'widgets/event_card.dart';
@@ -14,55 +15,36 @@ import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 import 'package:events_manager/models/announcement.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.user});
+class DashboardScreen extends ConsumerStatefulWidget {
+  const DashboardScreen({
+    super.key,
+    required this.user,
+  });
 
   final User user;
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final PageController _pageController = PageController();
-  List<Announcement> _announcements = [];
   List<Club> _clubs = [];
-  List<Event> _events = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    _loadClubs();
   }
 
-  Future<void> _loadDashboardData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _loadClubs() async {
     try {
-      final now = DateTime.now();
-      final endOfDay = now.add(const Duration(days: 1));
-      // Load today's events from Firebase
-      final eventList = await loadEventsByDateRange(now, endOfDay);
-      // final eventList = await loadEvents();
-
-      _events =
-          eventList.map((eventData) => Event.fromJson(eventData)).toList();
-
-      _announcements = await loadAllAnnouncements();
       _clubs = List.from(sampleClubs);
-
-      setState(() {
-        _isLoading = false;
-      });
     } catch (error) {
       setState(() {
-        _isLoading = false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load dashboard data: $error'),
+            content: Text('Failed to load clubs data: $error'),
             backgroundColor: Colors.red,
           ),
         );
@@ -71,22 +53,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _addAnnouncement(Announcement newAnnouncement) async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      await addAnnouncement(newAnnouncement.clubId, newAnnouncement);
-
-      setState(() {
-        _announcements.insert(0, newAnnouncement);
-        print("inserted");
-        _isLoading = false;
-      });
+      await addAnnouncement(newAnnouncement);
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -105,9 +74,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final events = ref.watch(todaysEventsStreamProvider);
+    final announcements = ref.watch(announcementsStreamProvider);
+    bool isLoading = announcements.isLoading || events.isLoading;
     return Scaffold(
       body: SafeArea(
-        child: _isLoading
+        child: isLoading
             ? Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -216,33 +188,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    if (_announcements.isNotEmpty) ...[
-                      AnnouncementsSlider(
-                        pageController: _pageController,
-                        announcements: _announcements,
+                    announcements.when(
+                      data: (announcementsList) {
+                        if (announcementsList.isEmpty) {
+                          return SizedBox(
+                            height: 200,
+                            child: AnnouncementCard(
+                              title: 'You have no announcements',
+                              subtitle: 'You have no announcements',
+                              image:
+                                  'https://i.pinimg.com/originals/c0/88/7d/c0887d39121ff3649f04e249942b8fec.jpg',
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: [
+                            AnnouncementsSlider(
+                              pageController: _pageController,
+                              announcements: announcementsList,
+                            ),
+                            const SizedBox(height: 10),
+                            SmoothPageIndicator(
+                              controller: _pageController,
+                              count: announcementsList.length,
+                              effect: WormEffect(
+                                dotHeight: 8,
+                                dotWidth: 8,
+                                activeDotColor:
+                                    Theme.of(context).colorScheme.primary,
+                                spacing: 6,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () => const SizedBox(),
+                      error: (error, stack) => Center(
+                        child: Text('Error loading announcements: $error'),
                       ),
-                      const SizedBox(height: 10),
-                      SmoothPageIndicator(
-                        controller: _pageController,
-                        count: _announcements.length,
-                        effect: WormEffect(
-                          dotHeight: 8,
-                          dotWidth: 8,
-                          activeDotColor: Theme.of(context).colorScheme.primary,
-                          spacing: 6,
-                        ),
-                      ),
-                    ] else ...[
-                      SizedBox(
-                        height: 200,
-                        child: AnnouncementCard(
-                          title: 'You have no announcements',
-                          subtitle: 'You have no announcements',
-                          image:
-                              'https://i.pinimg.com/originals/c0/88/7d/c0887d39121ff3649f04e249942b8fec.jpg',
-                        ),
-                      ),
-                    ],
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -264,7 +248,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 9),
-                    EventCard(events: _events),
+                    events.when(
+                      data: (eventsList) => EventCard(events: eventsList),
+                      loading: () => const SizedBox(),
+                      error: (error, stack) => Center(
+                        child: Text('Error loading events: $error'),
+                      ),
+                    ),
                   ],
                 ),
               ),

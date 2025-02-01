@@ -13,8 +13,6 @@ class EventManager extends StatefulWidget {
 
 class _EventManagerState extends State<EventManager> {
   int _selectedIndex = 0;
-
-  // Add your screen widgets here
   late final List<Widget> _screens;
 
   @override

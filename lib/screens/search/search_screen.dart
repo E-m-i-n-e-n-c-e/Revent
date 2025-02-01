@@ -1,77 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:events_manager/data/announcements_data.dart';
-import 'package:events_manager/data/events_data.dart';
-import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:events_manager/screens/events/event_utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:events_manager/providers/stream_providers.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<dynamic> _searchResults = [];
-  String _selectedFilter = 'All';
-
-  void _performSearch(String query) {
-    if (query.isEmpty) {
-      setState(() => _searchResults = []);
-      return;
-    }
-
-    List<dynamic> results = [];
-    query = query.toLowerCase();
-
-    // Helper function to get club name from clubId
-    String getClubName(String clubId) {
-      final club = sampleClubs.firstWhere(
-        (club) => club.id == clubId,
-        orElse: () => Club(id: '', name: '', logoUrl: '', points: 0),
-      );
-      return club.name;
-    }
-
-    // Filter based on selected category
-    if (_selectedFilter == 'All' || _selectedFilter == 'Events') {
-      results.addAll(sampleEvents.where((event) =>
-          event.title.toLowerCase().contains(query) ||
-          event.description.toLowerCase().contains(query) ||
-          event.clubId.toLowerCase().contains(query) ||
-          formatEventDateTime(event.startTime).toLowerCase().contains(query) ||
-          formatEventDateTime(event.endTime).toLowerCase().contains(query) ||
-          getClubName(event.clubId).toLowerCase().contains(query)));
-    }
-
-    if (_selectedFilter == 'All' || _selectedFilter == 'Announcements') {
-      results.addAll(sampleAnnouncements.where((announcement) =>
-          announcement.title.toLowerCase().contains(query) ||
-          announcement.subtitle.toLowerCase().contains(query) ||
-          announcement.description.toLowerCase().contains(query) ||
-          announcement.venue.toLowerCase().contains(query) ||
-          announcement.time.toLowerCase().contains(query) ||
-          announcement.clubId.toLowerCase().contains(query) ||
-          getClubName(announcement.clubId).toLowerCase().contains(query)));
-    }
-
-    if (_selectedFilter == 'All' || _selectedFilter == 'Clubs') {
-      results.addAll(sampleClubs.where((club) =>
-          club.name.toLowerCase().contains(query) ||
-          club.id.toLowerCase().contains(query)));
-    }
-
-    setState(() => _searchResults = results);
-  }
 
   @override
   Widget build(BuildContext context) {
+    final searchResults = ref.watch(searchResultsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search'),
@@ -81,12 +31,12 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Search bar with filter chips
             Column(
               children: [
                 TextField(
                   controller: _searchController,
-                  onChanged: _performSearch,
+                  onChanged: (value) =>
+                      ref.read(searchQueryProvider.notifier).state = value,
                   decoration: InputDecoration(
                     hintText: 'Search...',
                     hintStyle: const TextStyle(color: Color(0xFF83ACBD)),
@@ -115,9 +65,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            // Search results
             Expanded(
-              child: _searchResults.isEmpty
+              child: searchResults.isEmpty
                   ? const Center(
                       child: Text(
                         'No results found',
@@ -125,9 +74,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: _searchResults.length,
+                      itemCount: searchResults.length,
                       itemBuilder: (context, index) {
-                        final result = _searchResults[index];
+                        final result = searchResults[index];
                         return _buildSearchResultCard(result);
                       },
                     ),
@@ -139,21 +88,19 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildFilterChip(String label) {
+    final selectedFilter = ref.watch(searchFilterProvider);
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: FilterChip(
         label: Text(
           label,
           style: TextStyle(
-            color: _selectedFilter == label ? Colors.black : Colors.white,
+            color: selectedFilter == label ? Colors.black : Colors.white,
           ),
         ),
-        selected: _selectedFilter == label,
+        selected: selectedFilter == label,
         onSelected: (bool selected) {
-          setState(() {
-            _selectedFilter = label;
-            _performSearch(_searchController.text);
-          });
+          ref.read(searchFilterProvider.notifier).state = label;
         },
         backgroundColor: const Color(0xFF06222F),
         selectedColor: const Color(0xFF83ACBD),
@@ -173,12 +120,18 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildEventCard(Event event) {
+    final clubs = ref.watch(clubsStreamProvider).value ?? [];
+    final clubLogo = clubs
+        .firstWhere((club) => club.id == event.clubId,
+            orElse: () => Club(id: '', name: '', logoUrl: '', points: 0))
+        .logoUrl;
+
     return Card(
       color: const Color(0xFF06222F),
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(getClubLogoUrl(event.clubId)),
+          backgroundImage: NetworkImage(clubLogo),
           backgroundColor: Colors.transparent,
         ),
         title: Text(
@@ -290,8 +243,4 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController.dispose();
     super.dispose();
   }
-}
-
-String getClubLogoUrl(String clubId) {
-  return sampleClubs.firstWhere((club) => club.id == clubId).logoUrl;
 }

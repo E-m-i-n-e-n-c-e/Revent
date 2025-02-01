@@ -46,6 +46,8 @@ dependencies:
   cloud_firestore: ^5.6.1
   image_picker: ^1.1.2
   supabase_flutter: ^2.8.3
+  rxdart: ^0.28.0
+  flutter_riverpod: ^2.6.1
 
 dev_dependencies:
   flutter_test:

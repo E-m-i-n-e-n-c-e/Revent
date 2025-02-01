@@ -1,19 +1,21 @@
+import 'package:events_manager/providers/stream_providers.dart';
+import 'package:events_manager/screens/events/event_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/utils/firedata.dart';
-import 'event_utils.dart';
 import 'event_dialogs.dart';
 import 'events_calendar.dart';
 
-class EventsScreen extends StatefulWidget {
+class EventsScreen extends ConsumerStatefulWidget {
   const EventsScreen({super.key});
 
   @override
-  State<EventsScreen> createState() => _EventsScreenState();
+  ConsumerState<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen> {
+class _EventsScreenState extends ConsumerState<EventsScreen> {
   List<Appointment> _appointments = [];
   CalendarView _currentView = CalendarView.month;
   DateTime? _selectedDate;
@@ -23,49 +25,12 @@ class _EventsScreenState extends State<EventsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadEvents();
   }
 
   void _handleDoubleTap(TapDownDetails details) {
     if (_selectedDate != null) {
       setState(() {
         _currentView = CalendarView.day;
-      });
-    }
-  }
-
-  void _loadEvents() async {
-    _selectedDate = null;
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final eventList = await loadEvents();
-      final events =
-          eventList.map((eventData) => Event.fromJson(eventData)).toList();
-
-      _appointments = events.map((event) {
-        return Appointment(
-          startTime: event.startTime,
-          endTime: event.endTime,
-          subject: event.title,
-          notes: event.description,
-          location: event.venue,
-          resourceIds: [event.clubId],
-          color: getColorForClub(event.clubId),
-          id: event.id,
-        );
-      }).toList();
-
-      setState(() {
-        _isLoading = false;
-      });
-    } catch (error) {
-      setState(() {
-        _errorMessage = 'Failed to load events. Please try again.';
-        _isLoading = false;
       });
     }
   }
@@ -153,7 +118,6 @@ class _EventsScreenState extends State<EventsScreen> {
                 await deleteEvent(event.id!);
                 if (context.mounted) {
                   Navigator.pop(context);
-                  _loadEvents();
                 }
               } catch (e) {
                 if (context.mounted) {
@@ -174,7 +138,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   Future<void> _editEvent(Event event) async {
-    final result = await showDialog<Event>(
+    await showDialog<Event>(
       context: context,
       builder: (context) => EditEventDialog(
         event: event,
@@ -191,7 +155,6 @@ class _EventsScreenState extends State<EventsScreen> {
               return;
             }
             await updateEvent(event.id!, updatedEvent.toJson());
-            _loadEvents();
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -205,10 +168,6 @@ class _EventsScreenState extends State<EventsScreen> {
         },
       ),
     );
-
-    if (result != null) {
-      _loadEvents();
-    }
   }
 
   Future<void> _addEvent() async {
@@ -229,7 +188,7 @@ class _EventsScreenState extends State<EventsScreen> {
       return;
     }
 
-    final result = await showDialog<Event>(
+    await showDialog<Event>(
       context: context,
       builder: (context) => AddEventDialog(
         initialDate: selectedDate.add(const Duration(hours: 12)),
@@ -249,9 +208,6 @@ class _EventsScreenState extends State<EventsScreen> {
               return;
             }
             await sendEvent(event.toJson());
-            if (mounted) {
-              _loadEvents();
-            }
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -265,10 +221,6 @@ class _EventsScreenState extends State<EventsScreen> {
         },
       ),
     );
-
-    if (result != null) {
-      _loadEvents();
-    }
   }
 
   @override
@@ -281,7 +233,8 @@ class _EventsScreenState extends State<EventsScreen> {
         ),
       );
     }
-
+    final events = ref.watch(eventsStreamProvider);
+    _isLoading = events.isLoading;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Events Calendar'),
@@ -301,11 +254,30 @@ class _EventsScreenState extends State<EventsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : GestureDetector(
               onDoubleTapDown: _handleDoubleTap,
-              child: EventsCalendar(
-                currentView: _currentView,
-                selectedDate: _selectedDate,
-                appointments: _appointments,
-                onTap: _onCalendarTapped,
+              child: events.when(
+                data: (eventsList) {
+                  _appointments = eventsList.map((event) {
+                    return Appointment(
+                      startTime: event.startTime,
+                      endTime: event.endTime,
+                      subject: event.title,
+                      notes: event.description,
+                      location: event.venue,
+                      resourceIds: [event.clubId],
+                      color: getColorForClub(event.clubId),
+                      id: event.id,
+                    );
+                  }).toList();
+                  return EventsCalendar(
+                    currentView: _currentView,
+                    selectedDate: _selectedDate,
+                    appointments: _appointments,
+                    onTap: _onCalendarTapped,
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) =>
+                    Center(child: Text('Error loading events: $error')),
               ),
             ),
       floatingActionButton: FloatingActionButton(
