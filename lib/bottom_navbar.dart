@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
@@ -21,23 +22,23 @@ class CustomBottomNavigationBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildNavItem(
-              icon: Icons.home,
+              iconPath: 'assets/icons_1/home.svg',
               index: 0,
             ),
             _buildNavItem(
-              icon: Icons.calendar_month_outlined,
+              iconPath: 'assets/icons_1/calender.svg',
               index: 1,
             ),
             _buildNavItem(
-              icon: Icons.search,
+              iconPath: 'assets/icons_1/search.svg',
               index: 2,
             ),
             _buildNavItem(
-              icon: Icons.auto_stories,
+              iconPath: 'assets/icons_1/stories.svg',
               index: 3,
             ),
             _buildNavItem(
-              icon: Icons.chat,
+              iconPath: 'assets/icons_1/chat.svg',
               index: 4,
             ),
           ],
@@ -46,7 +47,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem({required IconData icon, required int index}) {
+  Widget _buildNavItem({required String iconPath, required int index}) {
     bool isSelected = selectedIndex == index;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -58,11 +59,13 @@ class CustomBottomNavigationBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xff71C2E4),
-            size: 26,
-          ),
+          SvgPicture.asset(
+            iconPath,
+            height: 26,
+            colorFilter: ColorFilter.mode(
+              isSelected ? const Color(0xff71C2E4) : Color(0xff71C2E4),
+              BlendMode.srcIn,
+            ),),
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             height: 2,

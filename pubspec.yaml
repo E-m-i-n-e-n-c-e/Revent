@@ -76,6 +76,12 @@ flutter:
   assets:
     - assets/icons/
     - assets/backgrounds/
+    - assets/icons_1/home.svg
+    - assets/icons_1/calender.svg
+    - assets/icons_1/search.svg
+    - assets/icons_1/stories.svg
+    - assets/icons_1/chat.svg
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
