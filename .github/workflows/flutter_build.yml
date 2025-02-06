@@ -20,9 +20,11 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
-          channel: 'stable'
+          channel: 'main'
           cache: true
+
+      - name: Check Flutter version
+        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
