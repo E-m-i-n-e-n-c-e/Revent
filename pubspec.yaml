@@ -49,6 +49,8 @@ dependencies:
   rxdart: ^0.28.0
   flutter_riverpod: ^2.6.1
   flutter_svg: ^2.0.17
+  google_generative_ai: ^0.4.6
+  flutter_markdown: ^0.6.21
 
 dev_dependencies:
   flutter_test:
