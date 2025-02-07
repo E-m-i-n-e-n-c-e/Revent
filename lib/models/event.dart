@@ -21,7 +21,6 @@ class Event {
 
   factory Event.fromJson(Map<String, dynamic> json) {
     // Handle both Timestamp and String formats for dates
-
     return Event(
       id: json['id'] as String?,
       title: json['title'] as String? ?? '',
