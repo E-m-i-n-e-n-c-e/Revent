@@ -53,9 +53,74 @@ Copy the SHA1 value and share it with the project administrator(DiscordId : armi
   - Ensure Java is properly installed and added to your system's PATH
   - Try using the full path to keytool in your Java installation directory
 
+<br>
+<br>
+<br>
+<br>
+<br>
 
+# Project Documentation
 
+## Folder Structure
+```
+lib/
+├── data/               # Static data and mock data for development
+├── models/             # Data models and their serialization logic
+├── providers/          # Riverpod providers for state management
+│   └── stream_providers.dart  # Firebase stream providers
+├── screens/           # UI screens and their widgets
+│   ├── announcements/  # Announcements Full View that appears on clicking see all announcements
+│   ├── dashboard/      # Dashboard screen and its components
+│   ├── events/         # Events Screen/Calendar Screen and its components
+│   ├── search/         # Search Screen
+│   └── screens.dart    # Screen exports
+├── services/          # External service integrations
+├── utils/             # Utility functions and helpers
+│   └── firedata.dart   # Firebase data operations
+├── bottom_navbar.dart  # Custom bottom navigation bar
+├── event_manager.dart  # Main app widget manager
+└── main.dart          # App entry point
+```
 
+## State Management
+- Using Riverpod for state management
+- Stream providers for real-time Firebase data
+- State providers for UI state (search, filters)
 
+## Widget Flow
+```
+App Entry
+└── EventManager (Root Widget)
+    ├── DashboardScreen
+    │   ├── ProfileHeader
+    │   ├── AnnouncementsSlider
+    │   ├── ClubsContainer
+    │   └── EventCard
+    ├── EventsScreen
+    ├── SearchScreen
+    │   ├── SearchBar
+    │   ├── FilterChips
+    │   └── SearchResults
+    ├── ResourcesScreen
+    └── ChatScreen
+```
 
- 
+## Data Flow
+```
+Firebase Streams (firedata.dart)
+   └── Stream Providers (stream_providers.dart)
+       └── Consumer Widgets
+```
+
+## Best Practices
+1. **State Management**
+   - Use Riverpod providers for global state
+
+2. **Code Organization**
+   - Firebase operations in lib/utils/firedata.dart
+   - Auth Service in lib/utils/services
+   - Data fetching done through providers in providers/stream_providers.dart
+
+3. **Firebase Integration**
+   - All Firebase operations through firedata.dart
+   - Use stream providers for real-time updates
