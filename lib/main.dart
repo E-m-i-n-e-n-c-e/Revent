@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
           foregroundColor: kcolorscheme.shadow,
         ),
         scaffoldBackgroundColor: kcolorscheme.onSurface,
-        cardTheme: const CardTheme().copyWith(
+        cardTheme: const CardThemeData().copyWith(
           color: kcolorscheme.primaryContainer,
           elevation: 5,
         ),
