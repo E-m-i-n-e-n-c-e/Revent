@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/screens/events/event_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventCard extends StatefulWidget {
   const EventCard({super.key, required this.events});
@@ -33,7 +34,7 @@ class _EventCardState extends State<EventCard> {
                 ),
               )
             : Container(
-              padding: EdgeInsets.symmetric(vertical: 1),
+              padding: EdgeInsets.symmetric(vertical: 5),
               child: SingleChildScrollView(
                   child: Column(
                     children: widget.events.map((event) {
@@ -69,8 +70,26 @@ class EventItem extends StatelessWidget {
     return club.logoUrl;
   }
 
+  Future<void> _launchUrl(String url) async {
+    // Ensure URL has a scheme
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  bool _isEventPast() {
+    return DateTime.now().isAfter(event.endTime);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isPastEvent = _isEventPast();
+
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
@@ -136,21 +155,44 @@ class EventItem extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E668A),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'REGISTER',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+              if (isPastEvent && event.feedbackLink != null)
+                GestureDetector(
+                  onTap: () => _launchUrl(event.feedbackLink!),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E668A),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'FEEDBACK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                )
+              else if (!isPastEvent && event.registrationLink != null)
+                GestureDetector(
+                  onTap: () => _launchUrl(event.registrationLink!),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E668A),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'REGISTER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

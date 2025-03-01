@@ -8,6 +8,8 @@ class Event {
   final String clubId;
   final String? venue;
   final String? id;
+  final String? registrationLink;
+  final String? feedbackLink;
 
   Event({
     required this.title,
@@ -17,6 +19,8 @@ class Event {
     required this.clubId,
     this.venue,
     this.id,
+    this.registrationLink,
+    this.feedbackLink,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,8 @@ class Event {
       endTime: json['endTime'].toDate(),
       clubId: json['clubId'] as String? ?? '',
       venue: json['venue'] as String?,
+      registrationLink: json['registrationLink'] as String?,
+      feedbackLink: json['feedbackLink'] as String?,
     );
   }
 
@@ -41,6 +47,8 @@ class Event {
       'endTime': Timestamp.fromDate(endTime),
       'clubId': clubId,
       'venue': venue,
+      'registrationLink': registrationLink,
+      'feedbackLink': feedbackLink,
     };
   }
 
@@ -53,6 +61,8 @@ class Event {
     String? clubId,
     String? venue,
     String? id,
+    String? registrationLink,
+    String? feedbackLink,
   }) {
     return Event(
       title: title ?? this.title,
@@ -62,6 +72,8 @@ class Event {
       clubId: clubId ?? this.clubId,
       venue: venue ?? this.venue,
       id: id ?? this.id,
+      registrationLink: registrationLink ?? this.registrationLink,
+      feedbackLink: feedbackLink ?? this.feedbackLink,
     );
   }
 }

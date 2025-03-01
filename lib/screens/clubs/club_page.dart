@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 
 class ClubPage extends ConsumerStatefulWidget {
   final Club club;
@@ -43,6 +44,18 @@ class _ClubPageState extends ConsumerState<ClubPage> {
       setState(() => _isHeaderCollapsed = true);
     } else if (_scrollController.offset <= 140 && _isHeaderCollapsed) {
       setState(() => _isHeaderCollapsed = false);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    // Ensure URL has a scheme
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
     }
   }
 
@@ -568,6 +581,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
   Widget _buildEventCard(Event event) {
     final formattedDate = DateFormat('MMM d, y').format(event.startTime);
     final formattedTime = DateFormat('h:mm a').format(event.startTime);
+    final bool isPastEvent = DateTime.now().isAfter(event.endTime);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -656,27 +670,50 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                 ),
               ),
               const Spacer(),
-              TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF0E668A),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+              if (isPastEvent && event.feedbackLink != null)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                  onPressed: () => _launchUrl(event.feedbackLink!),
+                  child: const Text(
+                    'FEEDBACK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                )
+              else if (!isPastEvent && event.registrationLink != null)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  onPressed: () => _launchUrl(event.registrationLink!),
+                  child: const Text(
+                    'REGISTER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                onPressed: () {},
-                child: const Text(
-                  'REGISTER',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
             ],
           ),
         ],

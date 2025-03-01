@@ -35,22 +35,14 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     }
   }
 
-  void _onCalendarTapped(CalendarTapDetails details) {
+  void _onCalendarTapped(CalendarTapDetails details, List<Event> events) {
     if (details.targetElement == CalendarElement.calendarCell) {
       setState(() {
         _selectedDate = details.date;
       });
     } else if (details.targetElement == CalendarElement.appointment) {
       final Appointment tappedAppointment = details.appointments![0];
-      final Event selectedEvent = Event(
-        id: tappedAppointment.id?.toString(),
-        title: tappedAppointment.subject,
-        description: tappedAppointment.notes ?? '',
-        startTime: tappedAppointment.startTime,
-        endTime: tappedAppointment.endTime,
-        clubId: (tappedAppointment.resourceIds?.first as String?) ?? '',
-        venue: tappedAppointment.location,
-      );
+      final Event selectedEvent = events.firstWhere((event) => event.id == tappedAppointment.id);
       _showEventOptions(selectedEvent);
     }
   }
@@ -272,7 +264,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                     currentView: _currentView,
                     selectedDate: _selectedDate,
                     appointments: _appointments,
-                    onTap: _onCalendarTapped,
+                    onTap: (details) => _onCalendarTapped(details, eventsList),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),

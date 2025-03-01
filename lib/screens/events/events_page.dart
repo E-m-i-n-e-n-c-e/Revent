@@ -2,9 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/models/club.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventsPage extends ConsumerWidget {
   const EventsPage({super.key});
+
+  Future<void> _launchUrl(String url) async {
+    // Ensure URL has a scheme
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  bool _isEventPast(DateTime endTime) {
+    return DateTime.now().isAfter(endTime);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,6 +89,8 @@ class EventsPage extends ConsumerWidget {
                           (club) => club.id == event.clubId,
                           orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
                         );
+                        final bool isPastEvent = _isEventPast(event.endTime);
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Container(
@@ -149,27 +168,50 @@ class EventsPage extends ConsumerWidget {
                                         ),
                                       ),
                                       const Spacer(),
-                                      TextButton(
-                                        style: TextButton.styleFrom(
-                                          backgroundColor: const Color(0xFF0E668A),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 2,
+                                      if (isPastEvent && event.feedbackLink != null)
+                                        TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: const Color(0xFF0E668A),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 2,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(6),
+                                          onPressed: () => _launchUrl(event.feedbackLink!),
+                                          child: const Text(
+                                            'FEEDBACK',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        )
+                                      else if (!isPastEvent && event.registrationLink != null)
+                                        TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: const Color(0xFF0E668A),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 2,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                          ),
+                                          onPressed: () => _launchUrl(event.registrationLink!),
+                                          child: const Text(
+                                            'REGISTER',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
-                                        onPressed: () {},
-                                        child: const Text(
-                                          'REGISTER',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ],

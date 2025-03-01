@@ -25,6 +25,8 @@ class _AddEventDialogState extends State<AddEventDialog> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _venueController = TextEditingController();
+  final TextEditingController _registrationLinkController = TextEditingController();
+  final TextEditingController _feedbackLinkController = TextEditingController();
 
   @override
   void initState() {
@@ -107,6 +109,22 @@ class _AddEventDialogState extends State<AddEventDialog> {
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
             ),
+            TextField(
+              controller: _registrationLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Registration Link (Optional)',
+                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+              ),
+              style: const TextStyle(color: Color(0xFFAEE7FF)),
+            ),
+            TextField(
+              controller: _feedbackLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Feedback Link (Optional)',
+                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+              ),
+              style: const TextStyle(color: Color(0xFFAEE7FF)),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedClubId,
@@ -151,6 +169,12 @@ class _AddEventDialogState extends State<AddEventDialog> {
               endTime: _endTime,
               clubId: _selectedClubId,
               venue: _venueController.text,
+              registrationLink: _registrationLinkController.text.isNotEmpty
+                  ? _registrationLinkController.text
+                  : null,
+              feedbackLink: _feedbackLinkController.text.isNotEmpty
+                  ? _feedbackLinkController.text
+                  : null,
             );
             widget.onEventAdded(event);
             Navigator.pop(context, event);
@@ -166,6 +190,8 @@ class _AddEventDialogState extends State<AddEventDialog> {
     _titleController.dispose();
     _descriptionController.dispose();
     _venueController.dispose();
+    _registrationLinkController.dispose();
+    _feedbackLinkController.dispose();
     super.dispose();
   }
 }
@@ -188,6 +214,8 @@ class _EditEventDialogState extends State<EditEventDialog> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _venueController;
+  late TextEditingController _registrationLinkController;
+  late TextEditingController _feedbackLinkController;
   late DateTime _startTime;
   late DateTime _endTime;
   late String _selectedClubId;
@@ -199,6 +227,8 @@ class _EditEventDialogState extends State<EditEventDialog> {
     _descriptionController =
         TextEditingController(text: widget.event.description);
     _venueController = TextEditingController(text: widget.event.venue ?? '');
+    _registrationLinkController = TextEditingController(text: widget.event.registrationLink ?? '');
+    _feedbackLinkController = TextEditingController(text: widget.event.feedbackLink ?? '');
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
     _selectedClubId = widget.event.clubId;
@@ -284,6 +314,22 @@ class _EditEventDialogState extends State<EditEventDialog> {
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
             ),
+            TextField(
+              controller: _registrationLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Registration Link (Optional)',
+                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+              ),
+              style: const TextStyle(color: Color(0xFFAEE7FF)),
+            ),
+            TextField(
+              controller: _feedbackLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Feedback Link (Optional)',
+                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+              ),
+              style: const TextStyle(color: Color(0xFFAEE7FF)),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedClubId,
@@ -328,6 +374,12 @@ class _EditEventDialogState extends State<EditEventDialog> {
               endTime: _endTime,
               clubId: _selectedClubId,
               venue: _venueController.text,
+              registrationLink: _registrationLinkController.text.isNotEmpty
+                  ? _registrationLinkController.text
+                  : null,
+              feedbackLink: _feedbackLinkController.text.isNotEmpty
+                  ? _feedbackLinkController.text
+                  : null,
             );
             widget.onEventEdited(updatedEvent);
             Navigator.pop(context, updatedEvent);
@@ -343,6 +395,8 @@ class _EditEventDialogState extends State<EditEventDialog> {
     _titleController.dispose();
     _descriptionController.dispose();
     _venueController.dispose();
+    _registrationLinkController.dispose();
+    _feedbackLinkController.dispose();
     super.dispose();
   }
 }
