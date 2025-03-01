@@ -52,7 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(todaysEventsStreamProvider);
+    final events = ref.watch(eventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
     bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
@@ -86,6 +86,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 2),
                     ProfileHeader(
                       userMail: widget.user.email ?? '',
                       date:

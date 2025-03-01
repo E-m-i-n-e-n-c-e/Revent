@@ -139,7 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final clubs = ref.watch(clubsStreamProvider).value ?? [];
     final clubLogo = clubs
         .firstWhere((club) => club.id == event.clubId,
-            orElse: () => Club(id: '', name: '', logoUrl: '', points: 0))
+            orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''))
         .logoUrl;
 
     return Card(
@@ -243,11 +243,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.star, color: Colors.amber, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              club.points.toString(),
-              style: const TextStyle(color: Colors.amber),
-            ),
           ],
         ),
       ),

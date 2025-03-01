@@ -19,6 +19,17 @@ class ProfileHeader extends StatefulWidget {
 }
 
 class _ProfileHeaderState extends State<ProfileHeader> {
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 16) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -30,7 +41,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Good Evening',
+              _getGreeting(),
               style: TextStyle(
                 color: Color(0xFFAEE7FF),
                 fontSize: 28,

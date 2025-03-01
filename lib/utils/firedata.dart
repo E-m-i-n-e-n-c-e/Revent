@@ -194,3 +194,8 @@ Future<String> uploadAnnouncementImage(String filePath) async {
     rethrow;
   }
 }
+
+Future<void> updateClubBackground(String clubId, String imageUrl) async {
+  final firestore = FirebaseFirestore.instance;
+  await firestore.collection('clubs').doc(clubId).update({'backgroundImageUrl': imageUrl});
+}

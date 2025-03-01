@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/clubs/club_page.dart';
 
@@ -152,41 +151,8 @@ class ClubIcon extends StatelessWidget {
             ),
           ),
         ),
-        Points(points: club.points),
       ],
     );
   }
 }
 
-class Points extends StatelessWidget {
-  const Points({
-    super.key,
-    required this.points,
-  });
-
-  final int points;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(1),
-      color: Color(0xff06151C),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            FontAwesomeIcons.crown,
-            color: Color(0xffFFD700),
-            size: 12,
-          ),
-          const SizedBox(width: 4),
-          Text(points.toString(),
-              style: const TextStyle(
-                color: Color(0xffFFD700),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              )),
-        ],
-      ),
-    );
-  }
-}

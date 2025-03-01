@@ -70,7 +70,7 @@ class EventsPage extends ConsumerWidget {
                         final event = eventsList[index];
                         final club = clubs.value?.firstWhere(
                           (club) => club.id == event.clubId,
-                          orElse: () => Club(id: '', name: '', logoUrl: '', points: 0),
+                          orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
                         );
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),

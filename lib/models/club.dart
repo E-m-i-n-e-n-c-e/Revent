@@ -2,13 +2,13 @@ class Club {
   final String id;
   final String name;
   final String logoUrl;
-  final int points;
+  final String backgroundImageUrl;
 
   Club({
     required this.id,
     required this.name,
     required this.logoUrl,
-    required this.points,
+    required this.backgroundImageUrl,
   });
 
   factory Club.fromJson(Map<String, dynamic> json) {
@@ -16,7 +16,7 @@ class Club {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       logoUrl: json['logoUrl'] ?? '',
-      points: json['points'] ?? 0,
+      backgroundImageUrl: json['backgroundImageUrl'] ?? '',
     );
   }
 
@@ -25,7 +25,7 @@ class Club {
       'id': id,
       'name': name,
       'logoUrl': logoUrl,
-      'points': points,
+      'backgroundImageUrl': backgroundImageUrl,
     };
   }
 }

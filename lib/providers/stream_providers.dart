@@ -82,7 +82,7 @@ final searchResultsProvider = Provider<List<dynamic>>((ref) {
   String getClubName(String clubId) {
     final club = clubs.firstWhere(
       (club) => club.id == clubId,
-      orElse: () => Club(id: '', name: '', logoUrl: '', points: 0),
+      orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
     );
     return club.name;
   }
