@@ -16,40 +16,38 @@ class _EventCardState extends State<EventCard> {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
+        padding: EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(0),
+          color: const Color(0xFF06151C),
+          borderRadius: BorderRadius.circular(30),
         ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
-          decoration: BoxDecoration(
-            color: const Color(0xFF06151C),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: widget.events.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No events today',
-                    style: TextStyle(
-                      color: Color(0xFFAEE7FF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'DM Sans',
-                    ),
+        child: widget.events.isEmpty
+            ? const Center(
+                child: Text(
+                  'No events today',
+                  style: TextStyle(
+                    color: Color(0xFFAEE7FF),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                )
-              : SingleChildScrollView(
+                ),
+              )
+            : Container(
+              padding: EdgeInsets.symmetric(vertical: 1),
+              child: SingleChildScrollView(
                   child: Column(
                     children: widget.events.map((event) {
-                      return Column(
-                        children: [
-                          EventItem(event: event),
-                          const SizedBox(height: 12),
-                        ],
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 8,
+                        ),
+                        child: EventItem(event: event),
                       );
                     }).toList(),
                   ),
                 ),
-        ),
+            ),
       ),
     );
   }
@@ -74,7 +72,7 @@ class EventItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 9, 26, 9),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: const Color(0xFF0F2027),
         borderRadius: BorderRadius.circular(17),
@@ -95,36 +93,35 @@ class EventItem extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 16,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Text(
             event.description,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
-              fontSize: 12,
-              fontWeight: FontWeight.w200,
-              fontFamily: 'DM Sans',
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 9),
+          const SizedBox(height: 10),
           Row(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(51),
                 child: Image.network(
                   getClubLogo(event.clubId),
-                  width: 35,
-                  height: 35,
-                  fit: BoxFit.contain,
-                  semanticLabel: 'Club Logo',
+                  width: 25,
+                  height: 25,
+                  fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 13),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF17323D),
                   borderRadius: BorderRadius.circular(5),
@@ -135,40 +132,25 @@ class EventItem extends StatelessWidget {
                     color: Colors.white,
                     fontSize: 9,
                     fontWeight: FontWeight.w400,
-                    fontFamily: 'DM Sans',
                   ),
                 ),
               ),
-              if (event.venue != null && event.venue!.trim().isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF17323D),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        event.venue!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'DM Sans',
-                        ),
-                      ),
-                    ],
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E668A),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'REGISTER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ],

@@ -21,71 +21,78 @@ class ProfileHeader extends StatefulWidget {
 class _ProfileHeaderState extends State<ProfileHeader> {
   @override
   Widget build(BuildContext context) {
-    // Fetch the current user dynamically
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        GestureDetector(
-          onTap: () {
-            // Navigate to the profile screen and pass the user object
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProfileScreen(user: user),
-              ),
-            );
-          },
-          child: CircleAvatar(
-            radius: 23,
-            backgroundImage: user?.photoURL != null
-                ? NetworkImage(user!.photoURL!)
-                : const AssetImage('assets/default_avatar.png')
-                    as ImageProvider,
-          ),
-        ),
-        const SizedBox(width: 10),
         Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              extractRollNumber(widget.userMail),
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-            Text(
-              widget.date,
-              style: Theme.of(context).textTheme.headlineSmall,
+              'Good Evening',
+              style: TextStyle(
+                color: Color(0xFFAEE7FF),
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
-        const Spacer(),
-        IconButton(
-          style: IconButton.styleFrom(
-            padding: const EdgeInsets.all(0),
-          ),
-          onPressed: () {
-            // print("Notification pressed");
-          },
-          icon: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Color(0xFF06222F),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black),
-            ),
-            child: Center(
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                size: 32,
-                color: Color(0xffAEE7FF),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                // Handle notification
+              },
+              icon: Stack(
+                children: [
+                  Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF71C2E4),
+                    size: 28,
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFB30000),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(user: user),
+                  ),
+                );
+              },
+              child: Container(
+                width: 45,
+                height: 46,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: user?.photoURL != null
+                        ? NetworkImage(user!.photoURL!)
+                        : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 5),
       ],
     );
   }
