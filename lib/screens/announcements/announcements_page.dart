@@ -202,13 +202,13 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
-                      radius: 20,
+                      radius: 16,
                       backgroundColor: Colors.grey[200],
                       backgroundImage: isLoading || clubLogo == null
                           ? null
                           : NetworkImage(clubLogo!),
                       child: isLoading || clubLogo == null
-                          ? Icon(Icons.group, color: Colors.grey[600])
+                          ? Icon(Icons.group, color: Colors.grey[600], size: 18)
                           : null,
                     ),
                     const SizedBox(width: 12),
@@ -219,14 +219,14 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                           Text(
                             isLoading ? 'Loading...' : clubName ?? 'Unknown Club',
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                               color: Color(0xFFAEE7FF),
                             ),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             formattedDate,
                             style: const TextStyle(
@@ -239,7 +239,19 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Text(
+                  widget.announcement.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFAEE7FF),
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
                 const Divider(
                   color: Color(0xFF17323D),
                   thickness: 1,

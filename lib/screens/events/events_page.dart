@@ -280,13 +280,10 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
             Row(
               children: [
                 Container(
-                  width: 20,
-                  height: 20,
+                  width: 23,
+                  height: 23,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFF71C2E4),
-                    ),
                     image: DecorationImage(
                       image: NetworkImage(widget.club?.logoUrl ?? ''),
                       fit: BoxFit.cover,
@@ -374,7 +371,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                       overlayColor: WidgetStateProperty.resolveWith<Color?>(
                         (Set<WidgetState> states) {
                           if (states.contains(WidgetState.pressed)) {
-                            return Colors.white.withOpacity(0.1);
+                            return Colors.white.withValues(alpha:0.1);
                           }
                           return null;
                         },
@@ -409,7 +406,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                       overlayColor: WidgetStateProperty.resolveWith<Color?>(
                         (Set<WidgetState> states) {
                           if (states.contains(WidgetState.pressed)) {
-                            return Colors.white.withOpacity(0.1);
+                            return Colors.white.withValues(alpha:0.1);
                           }
                           return null;
                         },

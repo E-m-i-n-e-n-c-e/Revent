@@ -1,3 +1,4 @@
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 
@@ -46,13 +46,6 @@ class _ClubPageState extends ConsumerState<ClubPage> {
       setState(() => _isHeaderCollapsed = true);
     } else if (_scrollController.offset <= 140 && _isHeaderCollapsed) {
       setState(() => _isHeaderCollapsed = false);
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $url');
     }
   }
 
@@ -602,7 +595,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
       formattedDate: formattedDate,
       formattedTime: formattedTime,
       isPastEvent: isPastEvent,
-      onLaunchUrl: _launchUrl,
+      onLaunchUrl: launchUrlExternal,
     );
   }
 
@@ -768,52 +761,76 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
               ),
               const Spacer(),
               if (widget.isPastEvent && widget.event.feedbackLink != null)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E668A),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0E668A),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return Colors.white.withValues(alpha:0.1);
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                    onPressed: () => launchUrlExternal(widget.event.feedbackLink!),
+                    child: const Text(
+                      'FEEDBACK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  onPressed: () =>
-                      widget.onLaunchUrl(widget.event.feedbackLink!),
-                  child: const Text(
-                    'FEEDBACK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
+                  )
               else if (!widget.isPastEvent &&
                   widget.event.registrationLink != null)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E668A),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0E668A),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return Colors.white.withValues(alpha:0.1);
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                    onPressed: () => launchUrlExternal(widget.event.registrationLink!),
+                    child: const Text(
+                      'REGISTER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                  onPressed: () =>
-                      widget.onLaunchUrl(widget.event.registrationLink!),
-                  child: const Text(
-                    'REGISTER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
             ],
           ),
         ],
@@ -1038,8 +1055,7 @@ class _ExpandableAnnouncementCardState
                       ),
                       onTapLink: (text, href, title) {
                         if (href != null) {
-                          launchUrl(Uri.parse(href),
-                              mode: LaunchMode.externalApplication);
+                          launchUrlExternal(href);
                         }
                       },
                       imageBuilder: (uri, title, alt) {
