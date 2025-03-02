@@ -36,6 +36,7 @@ Stream<List<Map<String, dynamic>>> loadAnnouncementsStream() {
         allAnnouncements.addAll(announcementsList.cast<Map<String, dynamic>>());
       }
     }
+    allAnnouncements.sort((a, b) => b['date'].compareTo(a['date'])); //descending
     return allAnnouncements;
   });
 }

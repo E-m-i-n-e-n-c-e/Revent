@@ -5,23 +5,43 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
-class AddAnnouncementForm extends StatefulWidget {
-  final Future<void> Function(Announcement) addAnnouncement;
-  const AddAnnouncementForm({super.key, required this.addAnnouncement});
+class EditAnnouncementForm extends StatefulWidget {
+  final String title;
+  final String description;
+  final String clubId;
+  final int index;
+  final DateTime date;
+
+  const EditAnnouncementForm({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.clubId,
+    required this.index,
+    required this.date,
+  });
 
   @override
-  State<AddAnnouncementForm> createState() => _AddAnnouncementFormState();
+  State<EditAnnouncementForm> createState() => _EditAnnouncementFormState();
 }
 
-class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
+class _EditAnnouncementFormState extends State<EditAnnouncementForm> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
 
   bool _isPreviewMode = false;
   bool _isSaving = false;
   String? _errorMessage;
   bool _isUploadingFile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with existing data
+    _titleController = TextEditingController(text: widget.title);
+    _descriptionController = TextEditingController(text: widget.description);
+  }
 
   // Insert text at current cursor position
   void _insertText(String text) {
@@ -76,10 +96,10 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
         _isUploadingFile = true;
       });
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
+      if (pickedFile != null) {
         // Upload to Supabase
         final imageUrl = await uploadAnnouncementImage(pickedFile.path);
 
@@ -97,12 +117,54 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
     }
   }
 
+  Future<void> _updateAnnouncement() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSaving = true;
+        _errorMessage = null;
+      });
+
+      try {
+        // Create updated announcement with the same fields except title and description
+        final updatedAnnouncement = Announcement(
+          title: _titleController.text,
+          subtitle: '', // We're not using subtitle in the new design
+          description: _descriptionController.text,
+          venue: '', // We're not using venue in the new design
+          time: '', // We're not using time in the new design
+          clubId: widget.clubId,
+          date: widget.date, // Do not change date upon updating
+        );
+
+        // Update the announcement
+        await updateAnnouncement(widget.clubId, widget.index, updatedAnnouncement);
+
+        if (mounted) {
+          // Show success message and navigate back twice (to detail view and list)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Announcement updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Go back to detail view
+          Navigator.pop(context); // Go back to list
+        }
+      } catch (e) {
+        setState(() {
+          _isSaving = false;
+          _errorMessage = 'Failed to update announcement: $e';
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF06222F),
       appBar: AppBar(
-        title: const Text('Add Announcement'),
+        title: const Text('Edit Announcement'),
         backgroundColor: const Color(0xFF06222F),
         elevation: 0,
         leading: IconButton(
@@ -138,39 +200,7 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
           ),
           IconButton(
             icon: const Icon(Icons.check, color: Color(0xff83ACBD)),
-            onPressed: _isSaving
-                ? null
-                : () async {
-                    if (_formKey.currentState!.validate()) {
-                      setState(() {
-                        _isSaving = true;
-                        _errorMessage = null;
-                      });
-
-                      try {
-                        final newAnnouncement = Announcement(
-                          title: _titleController.text,
-                          subtitle: '', // Not used anymore
-                          description: _descriptionController.text,
-                          venue: '', // Not used anymore
-                          time: '', // Not used anymore
-                          image: null, // Images are now in markdown
-                          clubId: 'betalabs',
-                          date: DateTime.now(),
-                        );
-
-                        await widget.addAnnouncement(newAnnouncement);
-
-                        if (!context.mounted) return;
-                        Navigator.pop(context, newAnnouncement);
-                      } catch (e) {
-                        setState(() {
-                          _errorMessage = 'Failed to create announcement: $e';
-                          _isSaving = false;
-                        });
-                      }
-                    }
-                  },
+            onPressed: _isSaving ? null : _updateAnnouncement,
             tooltip: 'Save',
           ),
           const SizedBox(width: 8),
@@ -301,8 +331,8 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
         Container(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
+            controller: _titleController,
+            decoration: const InputDecoration(
               hintText: 'Title',
               hintStyle: TextStyle(
                 color: Color(0xFFAEE7FF),
@@ -317,13 +347,13 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a title';
+              }
+              return null;
+            },
+          ),
         ),
 
         // Divider
@@ -339,13 +369,13 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
         Expanded(
           child: TextFormField(
             controller: _descriptionController,
-                decoration: const InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'Write your announcement in markdown...',
               hintStyle: TextStyle(color: Color(0xFF83ACBD)),
               border: InputBorder.none,
               contentPadding: EdgeInsets.all(16),
-                ),
-                style: const TextStyle(color: Color(0xFFAEE7FF)),
+            ),
+            style: const TextStyle(color: Color(0xFFAEE7FF)),
             maxLines: null,
             expands: true,
             textAlignVertical: TextAlignVertical.top,

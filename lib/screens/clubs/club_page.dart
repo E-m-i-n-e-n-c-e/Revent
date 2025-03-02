@@ -11,6 +11,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 
 class ClubPage extends ConsumerStatefulWidget {
   final Club club;
@@ -48,11 +50,6 @@ class _ClubPageState extends ConsumerState<ClubPage> {
   }
 
   Future<void> _launchUrl(String url) async {
-    // Ensure URL has a scheme
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $url');
@@ -242,33 +239,33 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
-                              width: 88,
-                              height: 88,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF71C2E4),
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF71C2E4),
                                   width: 2,
-                                ),
-                                image: DecorationImage(
-                                  image: NetworkImage(widget.club.logoUrl),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
+                        ),
+                        image: DecorationImage(
+                          image: NetworkImage(widget.club.logoUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
                             const SizedBox(width: 16),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.club.name,
-                                    style: const TextStyle(
-                                      color: Color(0xFF61E7FF),
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.club.name,
+                      style: const TextStyle(
+                        color: Color(0xFF61E7FF),
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -358,7 +355,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                 _buildSectionHeader('Upcoming Events', upcomingEvents.length),
                                 const SizedBox(height: 10),
                                 ...upcomingEvents.map((event) => _buildEventCard(event)),
-                                const SizedBox(height: 20),
+                    const SizedBox(height: 20),
                               ],
                               if (pastEvents.isNotEmpty) ...[
                                 _buildSectionHeader('Past Events', pastEvents.length),
@@ -384,7 +381,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                        children: [
                               _buildSectionHeader('Announcements', recentAnnouncements.length),
                               const SizedBox(height: 10),
                               ...recentAnnouncements.map((announcement) => _buildAnnouncementCard(announcement)),
@@ -434,15 +431,15 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                 height: 1.5,
                               ),
                             ),
-                          ],
-                        ),
+                        ],
                       ),
+                    ),
                     ],
                   ],
                 ),
+                ),
               ),
-            ),
-          ],
+            ],
         ),
       ),
     );
@@ -480,10 +477,10 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
   Widget _buildSectionHeader(String title, int? count) {
     return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
             color: Color(0xFFAEE7FF),
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -583,6 +580,50 @@ class _ClubPageState extends ConsumerState<ClubPage> {
     final formattedTime = DateFormat('h:mm a').format(event.startTime);
     final bool isPastEvent = DateTime.now().isAfter(event.endTime);
 
+    return ExpandableEventCard(
+      event: event,
+      formattedDate: formattedDate,
+      formattedTime: formattedTime,
+      isPastEvent: isPastEvent,
+      onLaunchUrl: _launchUrl,
+    );
+  }
+
+  Widget _buildAnnouncementCard(Announcement announcement) {
+    final formattedDate = DateFormat('MMM d, y').format(announcement.date);
+
+    return ExpandableAnnouncementCard(
+      announcement: announcement,
+      formattedDate: formattedDate,
+    );
+  }
+}
+
+class ExpandableEventCard extends StatefulWidget {
+  final Event event;
+  final String formattedDate;
+  final String formattedTime;
+  final bool isPastEvent;
+  final Function(String) onLaunchUrl;
+
+  const ExpandableEventCard({
+    super.key,
+    required this.event,
+    required this.formattedDate,
+    required this.formattedTime,
+    required this.isPastEvent,
+    required this.onLaunchUrl,
+  });
+
+  @override
+  State<ExpandableEventCard> createState() => _ExpandableEventCardState();
+}
+
+class _ExpandableEventCardState extends State<ExpandableEventCard> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
@@ -602,7 +643,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            event.title,
+            widget.event.title,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 18,
@@ -611,12 +652,50 @@ class _ClubPageState extends ConsumerState<ClubPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            event.description,
+            widget.event.description,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 14,
             ),
+            maxLines: isExpanded ? null : 3,
+            overflow: isExpanded ? null : TextOverflow.ellipsis,
           ),
+          if (widget.event.description.split('\n').length > 3 ||
+              widget.event.description.length > 150)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isExpanded = !isExpanded;
+                    });
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isExpanded ? 'See less' : 'See more',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF83ACBD),
+                        ),
+                      ),
+                      Icon(
+                        isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
+                        size: 12,
+                        color: const Color(0xFF83ACBD),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -635,7 +714,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      formattedDate,
+                      widget.formattedDate,
                       style: const TextStyle(
                         color: Color(0xFFAEE7FF),
                         fontSize: 12,
@@ -660,8 +739,8 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      formattedTime,
-                      style: const TextStyle(
+                      widget.formattedTime,
+                  style: const TextStyle(
                         color: Color(0xFFAEE7FF),
                         fontSize: 12,
                       ),
@@ -670,7 +749,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                 ),
               ),
               const Spacer(),
-              if (isPastEvent && event.feedbackLink != null)
+              if (widget.isPastEvent && widget.event.feedbackLink != null)
                 TextButton(
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFF0E668A),
@@ -682,7 +761,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  onPressed: () => _launchUrl(event.feedbackLink!),
+                  onPressed: () => widget.onLaunchUrl(widget.event.feedbackLink!),
                   child: const Text(
                     'FEEDBACK',
                     style: TextStyle(
@@ -692,7 +771,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                     ),
                   ),
                 )
-              else if (!isPastEvent && event.registrationLink != null)
+              else if (!widget.isPastEvent && widget.event.registrationLink != null)
                 TextButton(
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFF0E668A),
@@ -704,11 +783,11 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  onPressed: () => _launchUrl(event.registrationLink!),
+                  onPressed: () => widget.onLaunchUrl(widget.event.registrationLink!),
                   child: const Text(
                     'REGISTER',
                     style: TextStyle(
-                      color: Colors.white,
+                    color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -720,13 +799,29 @@ class _ClubPageState extends ConsumerState<ClubPage> {
       ),
     );
   }
+}
 
-  Widget _buildAnnouncementCard(Announcement announcement) {
-    final formattedDate = DateFormat('MMM d, y').format(announcement.date);
+class ExpandableAnnouncementCard extends StatefulWidget {
+  final Announcement announcement;
+  final String formattedDate;
 
+  const ExpandableAnnouncementCard({
+    super.key,
+    required this.announcement,
+    required this.formattedDate,
+  });
+
+  @override
+  State<ExpandableAnnouncementCard> createState() => _ExpandableAnnouncementCardState();
+}
+
+class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF0F2026),
         borderRadius: BorderRadius.circular(17),
@@ -739,91 +834,318 @@ class _ClubPageState extends ConsumerState<ClubPage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            announcement.title,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            announcement.subtitle,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            announcement.description,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF17323D),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today,
-                      color: Color(0xFFAEE7FF),
-                      size: 12,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      formattedDate,
-                      style: const TextStyle(
-                        color: Color(0xFFAEE7FF),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(17),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(17),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnnouncementDetailView(
+                  title: widget.announcement.title,
+                  description: widget.announcement.description,
+                  clubId: widget.announcement.clubId,
+                  date: widget.announcement.date,
                 ),
               ),
-              if (announcement.venue.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF17323D),
-                    borderRadius: BorderRadius.circular(5),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.announcement.title,
+                  style: const TextStyle(
+                    color: Color(0xFFAEE7FF),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Color(0xFFAEE7FF),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        announcement.venue,
-                        style: const TextStyle(
+                ),
+                if (widget.announcement.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.announcement.subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                const Divider(
+                  color: Color(0xFF17323D),
+                  thickness: 1,
+                  height: 1,
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: isExpanded ? double.infinity : 100,
+                  ),
+                  child: SingleChildScrollView(
+                    physics: isExpanded
+                        ? const AlwaysScrollableScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    child: MarkdownBody(
+                      data: widget.announcement.description,
+                      styleSheet: MarkdownStyleSheet(
+                        // Text styles
+                        p: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                        h1: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        h2: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        h3: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        h4: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        h5: const TextStyle(
                           color: Color(0xFFAEE7FF),
                           fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        h6: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        // Adjust paragraph spacing
+                        pPadding: const EdgeInsets.only(bottom: 8),
+                        h1Padding: const EdgeInsets.only(bottom: 8, top: 8),
+                        h2Padding: const EdgeInsets.only(bottom: 8, top: 8),
+                        h3Padding: const EdgeInsets.only(bottom: 8, top: 8),
+                        h4Padding: const EdgeInsets.only(bottom: 8, top: 8),
+                        h5Padding: const EdgeInsets.only(bottom: 8, top: 8),
+                        h6Padding: const EdgeInsets.only(bottom: 8, top: 8),
+
+                        // List styles
+                        listBullet: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                        ),
+                        listIndent: 20.0,
+
+                        // Code styles
+                        code: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          backgroundColor: Color(0xFF17323D),
+                          fontFamily: 'monospace',
+                        ),
+                        codeblockDecoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+
+                        // Emphasis styles
+                        em: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        strong: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontWeight: FontWeight.bold,
+                        ),
+
+                        // Quote styles
+                        blockquote: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        blockquoteDecoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFF2A3F4A)),
+                        ),
+
+                        // Link style
+                        a: const TextStyle(
+                          color: Color(0xFF71C2E4),
+                          decoration: TextDecoration.underline,
+                        ),
+
+                        // Table styles
+                        tableHead: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        tableBody: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                        ),
+                        tableBorder: TableBorder.all(
+                          color: const Color(0xFF2A3F4A),
+                          width: 1,
+                        ),
+                        tableCellsPadding: const EdgeInsets.all(8.0),
+
+                        // Horizontal rule style
+                        horizontalRuleDecoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              width: 1.0,
+                              color: const Color(0xFF2A3F4A),
+                            ),
+                          ),
+                        ),
+                      ),
+                      onTapLink: (text, href, title) {
+                        if (href != null) {
+                          launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      imageBuilder: (uri, title, alt) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width - 64, // Account for padding
+                            ),
+                            child: Image.network(
+                              uri.toString(),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF17323D),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Unable to load image',
+                                    style: TextStyle(color: Color(0xFFAEE7FF)),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                if (widget.announcement.description.length > 150 ||
+                    widget.announcement.description.contains('\n'))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isExpanded = !isExpanded;
+                          });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isExpanded ? 'See less' : 'See more',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF83ACBD),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
+                              size: 12,
+                              color: const Color(0xFF83ACBD),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF17323D),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFFAEE7FF),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.formattedDate,
+                            style: const TextStyle(
+                              color: Color(0xFFAEE7FF),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.announcement.venue.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: Color(0xFFAEE7FF),
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.announcement.venue,
+                              style: const TextStyle(
+                                color: Color(0xFFAEE7FF),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

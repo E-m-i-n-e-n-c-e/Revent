@@ -1,18 +1,14 @@
-import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/providers/stream_providers.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
+import 'package:intl/intl.dart';
+import 'package:events_manager/models/announcement.dart';
 
 class AnnouncementsPage extends ConsumerWidget {
   const AnnouncementsPage({super.key});
-
-  String getClubImage(String clubId) {
-    final club = sampleClubs.firstWhere(
-      (club) => club.id == clubId,
-      orElse: () => sampleClubs.first,
-    );
-    return club.logoUrl;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,16 +30,26 @@ class AnnouncementsPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 32),
               Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: Text(
-                  'Announcements',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFAEE7FF),
-                  ),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Color(0xFFAEE7FF),
+                      ),
+                    ),
+                    const Text(
+                      'Announcements',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFAEE7FF),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -59,13 +65,12 @@ class AnnouncementsPage extends ConsumerWidget {
                       );
                     }
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 29),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: announcementsList.length,
                       itemBuilder: (context, index) {
                         final announcement = announcementsList[index];
-                        return ExpandableAnnouncementCard(
+                        return MarkdownAnnouncementCard(
                           announcement: announcement,
-                          getClubImage: getClubImage,
                         );
                       },
                     );
@@ -89,137 +94,351 @@ class AnnouncementsPage extends ConsumerWidget {
   }
 }
 
-class ExpandableAnnouncementCard extends StatefulWidget {
-  final dynamic announcement;
-  final Function(String) getClubImage;
+class MarkdownAnnouncementCard extends ConsumerStatefulWidget {
+  final Announcement announcement;
+  final VoidCallback? onTap;
 
-  const ExpandableAnnouncementCard({
+  const MarkdownAnnouncementCard({
     super.key,
     required this.announcement,
-    required this.getClubImage,
+    this.onTap,
   });
 
   @override
-  State<ExpandableAnnouncementCard> createState() =>
-      _ExpandableAnnouncementCardState();
+  ConsumerState<MarkdownAnnouncementCard> createState() => _MarkdownAnnouncementCardState();
 }
 
-class _ExpandableAnnouncementCardState
-    extends State<ExpandableAnnouncementCard> {
+class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementCard> {
   bool isExpanded = false;
+  String? clubLogo;
+  String? clubName;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClubData();
+  }
+
+  Future<void> _loadClubData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Now we can use ref directly since we're in a ConsumerState
+    clubName = getClubName(ref, widget.announcement.clubId);
+    clubLogo = getClubLogo(ref, widget.announcement.clubId);
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        return '${difference.inMinutes} min ago';
+      }
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else {
+      return DateFormat('MMM d, yyyy').format(date);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final formattedDate = _formatDate(widget.announcement.date);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: const Color(0xFF064756),
+        color: const Color(0xFF0F2027),
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.28),
-            blurRadius: 19.9,
-            spreadRadius: 2,
+            color: Color.fromRGBO(0, 0, 0, 0.25),
+            blurRadius: 10,
+            spreadRadius: 1,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () {
+            // Find the index of this announcement in its club's list
+            final clubAnnouncementList = ref
+                .read(announcementsStreamProvider)
+                .value!
+                .where((a) => a.clubId == widget.announcement.clubId)
+                .toList();
+            final index = clubAnnouncementList.indexOf(widget.announcement);
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnnouncementDetailView(
+                  title: widget.announcement.title,
+                  description: widget.announcement.description,
+                  clubId: widget.announcement.clubId,
+                  index: index,
+                  date: widget.announcement.date,
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.announcement.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFAEE7FF),
-                      ),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: isLoading || clubLogo == null
+                          ? null
+                          : NetworkImage(clubLogo!),
+                      child: isLoading || clubLogo == null
+                          ? Icon(Icons.group, color: Colors.grey[600])
+                          : null,
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.announcement.subtitle,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                    Text(
-                      widget.announcement.description,
-                      maxLines: isExpanded ? null : 3,
-                      overflow: isExpanded ? null : TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isLoading ? 'Loading...' : clubName ?? 'Unknown Club',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFAEE7FF),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formattedDate,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF83ACBD),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  widget.announcement.image == null ? 51 : 10,
+                const SizedBox(height: 12),
+                const Divider(
+                  color: Color(0xFF17323D),
+                  thickness: 1,
+                  height: 1,
                 ),
-                child: Image.network(
-                  widget.announcement.image ??
-                      widget.getClubImage(widget.announcement.clubId),
-                  width: widget.announcement.image == null ? 100 : 69,
-                  height: widget.announcement.image == null ? 100 : 66,
-                  fit: widget.announcement.image == null
-                      ? BoxFit.contain
-                      : BoxFit.cover,
-                  semanticLabel: widget.announcement.image == null
-                      ? 'Club Logo'
-                      : 'Announcement Image',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF064756),
-                  padding: EdgeInsets.all(5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: isExpanded ? double.infinity : 100,
+                  ),
+                  child: SingleChildScrollView(
+                    physics: isExpanded
+                        ? const AlwaysScrollableScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    child: MarkdownBody(
+                      data: widget.announcement.description,
+                      styleSheet: MarkdownStyleSheet(
+                        // Text styles
+                        p: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                        h1: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h2: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h3: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h4: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h5: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h6: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+
+                        // List styles
+                        listBullet: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                        ),
+                        listIndent: 20.0,
+
+                        // Code styles
+                        code: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          backgroundColor: Color(0xFF17323D),
+                          fontFamily: 'monospace',
+                        ),
+                        codeblockDecoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+
+                        // Emphasis styles
+                        em: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        strong: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontWeight: FontWeight.bold,
+                        ),
+
+                        // Quote styles
+                        blockquote: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        blockquoteDecoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFF2A3F4A)),
+                        ),
+
+                        // Link style
+                        a: const TextStyle(
+                          color: Color(0xFF71C2E4),
+                          decoration: TextDecoration.underline,
+                        ),
+
+                        // Table styles
+                        tableHead: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        tableBody: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                        ),
+                        tableBorder: TableBorder.all(
+                          color: const Color(0xFF2A3F4A),
+                          width: 1,
+                        ),
+                        tableCellsPadding: const EdgeInsets.all(8.0),
+
+                        // Horizontal rule style
+                        horizontalRuleDecoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              width: 1.0,
+                              color: const Color(0xFF2A3F4A),
+                            ),
+                          ),
+                        ),
+                      ),
+                      onTapLink: (text, href, title) {
+                        if (href != null) {
+                          launchUrlExternal(href);
+                        }
+                      },
+                      imageBuilder: (uri, title, alt) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width - 64, // Account for padding
+                            ),
+                            child: Image.network(
+                              uri.toString(),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF17323D),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Unable to load image',
+                                    style: TextStyle(color: Color(0xFFAEE7FF)),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    isExpanded = !isExpanded;
-                  });
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      isExpanded ? 'See less' : 'See more',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF83ACBD),
+                if (widget.announcement.description.length > 150 ||
+                    widget.announcement.description.contains('\n'))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isExpanded = !isExpanded;
+                          });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isExpanded ? 'See less' : 'See more',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF83ACBD),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
+                              size: 12,
+                              color: const Color(0xFF83ACBD),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    Icon(
-                      isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
-                      size: 12,
-                      color: Color(0xFF83ACBD),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

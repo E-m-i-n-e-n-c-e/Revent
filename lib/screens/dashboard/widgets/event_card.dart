@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:events_manager/models/event.dart';
-import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/screens/events/event_utils.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:events_manager/utils/common_utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EventCard extends StatefulWidget {
   const EventCard({super.key, required this.events});
@@ -54,7 +54,7 @@ class _EventCardState extends State<EventCard> {
   }
 }
 
-class EventItem extends StatelessWidget {
+class EventItem extends ConsumerWidget {
   final Event event;
 
   const EventItem({
@@ -62,32 +62,12 @@ class EventItem extends StatelessWidget {
     required this.event,
   });
 
-  String getClubLogo(String clubId) {
-    final club = sampleClubs.firstWhere(
-      (club) => club.id == clubId,
-      orElse: () => sampleClubs.first,
-    );
-    return club.logoUrl;
-  }
-
-  Future<void> _launchUrl(String url) async {
-    // Ensure URL has a scheme
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $url');
-    }
-  }
-
   bool _isEventPast() {
     return DateTime.now().isAfter(event.endTime);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isPastEvent = _isEventPast();
 
     return Container(
@@ -132,7 +112,7 @@ class EventItem extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(51),
                 child: Image.network(
-                  getClubLogo(event.clubId),
+                  getClubLogo(ref, event.clubId),
                   width: 25,
                   height: 25,
                   fit: BoxFit.cover,
@@ -157,7 +137,7 @@ class EventItem extends StatelessWidget {
               const Spacer(),
               if (isPastEvent && event.feedbackLink != null)
                 GestureDetector(
-                  onTap: () => _launchUrl(event.feedbackLink!),
+                  onTap: () => launchUrlExternal(event.feedbackLink!),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
@@ -176,7 +156,7 @@ class EventItem extends StatelessWidget {
                 )
               else if (!isPastEvent && event.registrationLink != null)
                 GestureDetector(
-                  onTap: () => _launchUrl(event.registrationLink!),
+                  onTap: () => launchUrlExternal(event.registrationLink!),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(

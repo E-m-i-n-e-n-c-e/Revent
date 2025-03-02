@@ -21,7 +21,11 @@ void main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
   await supabase.Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
-  runApp(const MyApp());
+  runApp(
+    ProviderScope(
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -85,9 +89,7 @@ class MyApp extends StatelessWidget {
           }
           if (snapshot.hasData) {
             var user = snapshot.data;
-            return ProviderScope(
-              child: EventManager(user: user as User),
-            );
+            return EventManager(user: user as User);
           }
           return LoginPage();
         },
