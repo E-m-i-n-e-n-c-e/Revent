@@ -85,7 +85,8 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Background image updated successfully')),
+            const SnackBar(
+                content: Text('Background image updated successfully')),
           );
         }
       }
@@ -112,8 +113,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
   }
 
   List<Announcement> _getRecentAnnouncements(List<Announcement> announcements) {
-    return announcements
-      ..sort((a, b) => b.date.compareTo(a.date));
+    return announcements..sort((a, b) => b.date.compareTo(a.date));
   }
 
   @override
@@ -124,7 +124,8 @@ class _ClubPageState extends ConsumerState<ClubPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: _isHeaderCollapsed ? const Color(0xFF06222F) : Colors.transparent,
+        backgroundColor:
+            _isHeaderCollapsed ? const Color(0xFF06222F) : Colors.transparent,
         elevation: _isHeaderCollapsed ? 4 : 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
@@ -194,7 +195,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                const Color(0xFF07181F).withValues(alpha:0.8),
+                                const Color(0xFF07181F).withValues(alpha: 0.8),
                               ],
                             ),
                           ),
@@ -211,7 +212,8 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAEE7FF)),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFFAEE7FF)),
                                   ),
                                   SizedBox(height: 16),
                                   Text(
@@ -239,33 +241,33 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFF71C2E4),
+                              width: 88,
+                              height: 88,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF71C2E4),
                                   width: 2,
-                        ),
-                        image: DecorationImage(
-                          image: NetworkImage(widget.club.logoUrl),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
+                                ),
+                                image: DecorationImage(
+                                  image: NetworkImage(widget.club.logoUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
                             const SizedBox(width: 16),
                             Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.club.name,
-                      style: const TextStyle(
-                        color: Color(0xFF61E7FF),
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.club.name,
+                                    style: const TextStyle(
+                                      color: Color(0xFF61E7FF),
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -352,20 +354,25 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (upcomingEvents.isNotEmpty) ...[
-                                _buildSectionHeader('Upcoming Events', upcomingEvents.length),
+                                _buildSectionHeader(
+                                    'Upcoming Events', upcomingEvents.length),
                                 const SizedBox(height: 10),
-                                ...upcomingEvents.map((event) => _buildEventCard(event)),
-                    const SizedBox(height: 20),
+                                ...upcomingEvents
+                                    .map((event) => _buildEventCard(event)),
+                                const SizedBox(height: 20),
                               ],
                               if (pastEvents.isNotEmpty) ...[
-                                _buildSectionHeader('Past Events', pastEvents.length),
+                                _buildSectionHeader(
+                                    'Past Events', pastEvents.length),
                                 const SizedBox(height: 10),
-                                ...pastEvents.map((event) => _buildEventCard(event)),
+                                ...pastEvents
+                                    .map((event) => _buildEventCard(event)),
                               ],
                             ],
                           );
                         },
-                        loading: () => const Center(child: CircularProgressIndicator()),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
                         error: (error, stack) => Center(
                           child: Text('Error loading events: $error',
                               style: const TextStyle(color: Colors.red)),
@@ -375,20 +382,25 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                       announcements.when(
                         data: (announcementsList) {
                           final clubAnnouncements = announcementsList
-                              .where((announcement) => announcement.clubId == widget.club.id)
+                              .where((announcement) =>
+                                  announcement.clubId == widget.club.id)
                               .toList();
-                          final recentAnnouncements = _getRecentAnnouncements(clubAnnouncements);
+                          final recentAnnouncements =
+                              _getRecentAnnouncements(clubAnnouncements);
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                              _buildSectionHeader('Announcements', recentAnnouncements.length),
+                            children: [
+                              _buildSectionHeader(
+                                  'Announcements', recentAnnouncements.length),
                               const SizedBox(height: 10),
-                              ...recentAnnouncements.map((announcement) => _buildAnnouncementCard(announcement)),
+                              ...recentAnnouncements.map((announcement) =>
+                                  _buildAnnouncementCard(announcement)),
                             ],
                           );
                         },
-                        loading: () => const Center(child: CircularProgressIndicator()),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
                         error: (error, stack) => Center(
                           child: Text('Error loading announcements: $error',
                               style: const TextStyle(color: Colors.red)),
@@ -431,15 +443,15 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                 height: 1.5,
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
                     ],
                   ],
                 ),
-                ),
               ),
-            ],
+            ),
+          ],
         ),
       ),
     );
@@ -467,7 +479,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
         Text(
           label,
           style: TextStyle(
-            color: const Color(0xFFAEE7FF).withValues(alpha:0.7),
+            color: const Color(0xFFAEE7FF).withValues(alpha: 0.7),
             fontSize: 12,
           ),
         ),
@@ -477,10 +489,10 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
   Widget _buildSectionHeader(String title, int? count) {
     return Row(
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
             color: Color(0xFFAEE7FF),
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -508,7 +520,8 @@ class _ClubPageState extends ConsumerState<ClubPage> {
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String text, {required VoidCallback onTap}) {
+  Widget _buildSocialButton(IconData icon, String text,
+      {required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -517,7 +530,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
           color: const Color(0xFF17323D),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: const Color(0xFF71C2E4).withValues(alpha:0.3),
+            color: const Color(0xFF71C2E4).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -559,14 +572,18 @@ class _ClubPageState extends ConsumerState<ClubPage> {
           color: isSelected ? const Color(0xFF17323D) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF71C2E4).withValues(alpha:0.3),
+            color: isSelected
+                ? const Color(0xFF71C2E4)
+                : const Color(0xFF71C2E4).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFFAEE7FF).withValues(alpha:0.7),
+            color: isSelected
+                ? const Color(0xFFAEE7FF)
+                : const Color(0xFFAEE7FF).withValues(alpha: 0.7),
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
@@ -667,7 +684,8 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -740,7 +758,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                     const SizedBox(width: 4),
                     Text(
                       widget.formattedTime,
-                  style: const TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFFAEE7FF),
                         fontSize: 12,
                       ),
@@ -761,7 +779,8 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  onPressed: () => widget.onLaunchUrl(widget.event.feedbackLink!),
+                  onPressed: () =>
+                      widget.onLaunchUrl(widget.event.feedbackLink!),
                   child: const Text(
                     'FEEDBACK',
                     style: TextStyle(
@@ -771,7 +790,8 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                     ),
                   ),
                 )
-              else if (!widget.isPastEvent && widget.event.registrationLink != null)
+              else if (!widget.isPastEvent &&
+                  widget.event.registrationLink != null)
                 TextButton(
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFF0E668A),
@@ -783,11 +803,12 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                  onPressed: () => widget.onLaunchUrl(widget.event.registrationLink!),
+                  onPressed: () =>
+                      widget.onLaunchUrl(widget.event.registrationLink!),
                   child: const Text(
                     'REGISTER',
                     style: TextStyle(
-                    color: Colors.white,
+                      color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -812,10 +833,12 @@ class ExpandableAnnouncementCard extends StatefulWidget {
   });
 
   @override
-  State<ExpandableAnnouncementCard> createState() => _ExpandableAnnouncementCardState();
+  State<ExpandableAnnouncementCard> createState() =>
+      _ExpandableAnnouncementCardState();
 }
 
-class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard> {
+class _ExpandableAnnouncementCardState
+    extends State<ExpandableAnnouncementCard> {
   bool isExpanded = false;
 
   @override
@@ -1015,7 +1038,8 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                       ),
                       onTapLink: (text, href, title) {
                         if (href != null) {
-                          launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
+                          launchUrl(Uri.parse(href),
+                              mode: LaunchMode.externalApplication);
                         }
                       },
                       imageBuilder: (uri, title, alt) {
@@ -1023,7 +1047,8 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                           borderRadius: BorderRadius.circular(8),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width - 64, // Account for padding
+                              maxWidth: MediaQuery.of(context).size.width -
+                                  64, // Account for padding
                             ),
                             child: Image.network(
                               uri.toString(),
@@ -1056,7 +1081,8 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -1077,7 +1103,9 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                             ),
                             const SizedBox(width: 4),
                             Icon(
-                              isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
+                              isExpanded
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward,
                               size: 12,
                               color: const Color(0xFF83ACBD),
                             ),
@@ -1090,7 +1118,8 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF17323D),
                         borderRadius: BorderRadius.circular(5),
@@ -1116,7 +1145,8 @@ class _ExpandableAnnouncementCardState extends State<ExpandableAnnouncementCard>
                     if (widget.announcement.venue.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF17323D),
                           borderRadius: BorderRadius.circular(5),

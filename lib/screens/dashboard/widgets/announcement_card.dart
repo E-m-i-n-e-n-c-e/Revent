@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:events_manager/screens/dashboard/widgets/edit_announcement_form.dart';
+import 'package:markdown/markdown.dart' as markdown;
 
 class AnnouncementCard extends StatelessWidget {
   final String title;
@@ -314,6 +315,9 @@ class AnnouncementDetailView extends StatelessWidget {
             launchUrlExternal(href);
           }
         },
+        builders: {
+          'a': CustomLinkBuilder(),
+        },
         imageBuilder: (uri, title, alt) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -348,5 +352,35 @@ class AnnouncementDetailView extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+class CustomLinkBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfter(markdown.Element element, TextStyle? preferredStyle) {
+    var text = element.textContent;
+    var href = element.attributes['href'];
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (href != null) {
+            launchUrlExternal(href);
+          }
+        },
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Color(0xFF71C2E4),
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

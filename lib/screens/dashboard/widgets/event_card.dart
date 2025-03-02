@@ -136,40 +136,60 @@ class EventItem extends ConsumerWidget {
               ),
               const Spacer(),
               if (isPastEvent && event.feedbackLink != null)
-                GestureDetector(
-                  onTap: () => launchUrlExternal(event.feedbackLink!),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E668A),
+                ElevatedButton(
+                  onPressed: () => launchUrlExternal(event.feedbackLink!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
-                      'FEEDBACK',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (states) => states.contains(WidgetState.pressed)
+                          ? Colors.white.withOpacity(0.1)
+                          : null,
+                    ),
+                  ),
+                  child: const Text(
+                    'FEEDBACK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 )
               else if (!isPastEvent && event.registrationLink != null)
-                GestureDetector(
-                  onTap: () => launchUrlExternal(event.registrationLink!),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E668A),
+                ElevatedButton(
+                  onPressed: () => launchUrlExternal(event.registrationLink!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
-                      'REGISTER',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (states) => states.contains(WidgetState.pressed)
+                          ? Colors.white.withOpacity(0.1)
+                          : null,
+                    ),
+                  ),
+                  child: const Text(
+                    'REGISTER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

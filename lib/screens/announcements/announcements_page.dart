@@ -367,6 +367,9 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                           launchUrlExternal(href);
                         }
                       },
+                      builders: {
+                        'a': CustomLinkBuilder(),
+                      },
                       imageBuilder: (uri, title, alt) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),

@@ -4,12 +4,55 @@ import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/utils/common_utils.dart';
+import 'package:intl/intl.dart';
 
 class EventsPage extends ConsumerWidget {
   const EventsPage({super.key});
 
-  bool _isEventPast(DateTime endTime) {
-    return DateTime.now().isAfter(endTime);
+  List<Event> _getUpcomingEvents(List<Event> events) {
+    final now = DateTime.now();
+    return events.where((event) => event.startTime.isAfter(now)).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  List<Event> _getPastEvents(List<Event> events) {
+    final now = DateTime.now();
+    return events.where((event) => event.startTime.isBefore(now)).toList()
+      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  }
+
+  Widget _buildSectionHeader(String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 11, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF173240),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              count.toString(),
+              style: const TextStyle(
+                color: Color(0xFFAEE7FF),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -21,12 +64,12 @@ class EventsPage extends ConsumerWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF071820),
+              Color(0xFF07181F),
               Color(0xFF000000),
             ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
         ),
         child: SafeArea(
@@ -34,7 +77,7 @@ class EventsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 7, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Row(
                   children: [
                     IconButton(
@@ -48,13 +91,14 @@ class EventsPage extends ConsumerWidget {
                       'Events',
                       style: TextStyle(
                         color: Color(0xFFAEE7FF),
-                        fontSize: 28,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
               Expanded(
                 child: events.when(
                   data: (eventsList) {
@@ -69,26 +113,49 @@ class EventsPage extends ConsumerWidget {
                         ),
                       );
                     }
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 11),
-                      itemCount: eventsList.length,
-                      itemBuilder: (context, index) {
-                        final event = eventsList[index];
-                        final club = clubs.value?.firstWhere(
-                          (club) => club.id == event.clubId,
-                          orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
-                        );
-                        final bool isPastEvent = _isEventPast(event.endTime);
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ExpandableEventCard(
-                            event: event,
-                            club: club,
-                            isPastEvent: isPastEvent,
-                          ),
-                        );
-                      },
+                    final upcomingEvents = _getUpcomingEvents(eventsList);
+                    final pastEvents = _getPastEvents(eventsList);
+
+                    return ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 11),
+                      children: [
+                        if (upcomingEvents.isNotEmpty) ...[
+                          _buildSectionHeader('Upcoming Events', upcomingEvents.length),
+                          ...upcomingEvents.map((event) {
+                            final club = clubs.value?.firstWhere(
+                              (club) => club.id == event.clubId,
+                              orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: ExpandableEventCard(
+                                event: event,
+                                club: club,
+                                isPastEvent: false,
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 24),
+                        ],
+                        if (pastEvents.isNotEmpty) ...[
+                          _buildSectionHeader('Past Events', pastEvents.length),
+                          ...pastEvents.map((event) {
+                            final club = clubs.value?.firstWhere(
+                              (club) => club.id == event.clubId,
+                              orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: ExpandableEventCard(
+                                event: event,
+                                club: club,
+                                isPastEvent: true,
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
                     );
                   },
                   loading: () => const Center(
@@ -129,8 +196,14 @@ class ExpandableEventCard extends StatefulWidget {
 class _ExpandableEventCardState extends State<ExpandableEventCard> {
   bool isExpanded = false;
 
+  String _formatDate(DateTime date) {
+    return DateFormat('MMM d, yyyy').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final formattedDate = _formatDate(widget.event.startTime);
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0F2027),
@@ -223,37 +296,88 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                 const SizedBox(width: 13),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
+                    horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF173240),
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Color(0xFFAEE7FF),
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        widget.event.startTime.toString(),
+                        formattedDate,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
+                if (widget.event.venue != null && widget.event.venue!.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF173240),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          color: Color(0xFFAEE7FF),
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.event.venue!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 if (widget.isPastEvent && widget.event.feedbackLink != null)
-                  TextButton(
-                    style: TextButton.styleFrom(
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0E668A),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 2,
+                        vertical: 4,
                       ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return Colors.white.withOpacity(0.1);
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     onPressed: () => launchUrlExternal(widget.event.feedbackLink!),
@@ -267,15 +391,28 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                     ),
                   )
                 else if (!widget.isPastEvent && widget.event.registrationLink != null)
-                  TextButton(
-                    style: TextButton.styleFrom(
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0E668A),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 2,
+                        vertical: 4,
                       ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return Colors.white.withOpacity(0.1);
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     onPressed: () => launchUrlExternal(widget.event.registrationLink!),
