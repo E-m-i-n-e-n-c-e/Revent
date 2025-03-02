@@ -1,9 +1,10 @@
-import 'package:events_manager/data/clubs_data.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AnnouncementsSlider extends StatelessWidget {
+class AnnouncementsSlider extends ConsumerWidget {
   const AnnouncementsSlider({
     super.key,
     required PageController pageController,
@@ -14,25 +15,24 @@ class AnnouncementsSlider extends StatelessWidget {
   final List<Announcement> announcements;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       height: 200,
       child: GestureDetector(
-        onDoubleTap: () {
+        onTap: () {
           if (announcements.isEmpty) return;
-          var currentAnnouncement = announcements[
-              _pageController.page!.round() % announcements.length];
+          final currentIndex = _pageController.page!.round() % announcements.length;
+          var currentAnnouncement = announcements[currentIndex];
+          final clubAnnouncementList = announcements.where((announcement) => announcement.clubId == currentAnnouncement.clubId).toList();
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => AnnouncementDetailView(
                 title: currentAnnouncement.title,
-                subtitle: currentAnnouncement.subtitle,
-                image: currentAnnouncement.image,
                 description: currentAnnouncement.description,
-                venue: currentAnnouncement.venue,
-                time: currentAnnouncement.time,
                 clubId: currentAnnouncement.clubId,
+                index: clubAnnouncementList.indexOf(currentAnnouncement),
+                date: currentAnnouncement.date,
               ),
             ),
           );
@@ -45,19 +45,11 @@ class AnnouncementsSlider extends StatelessWidget {
             return AnnouncementCard(
               title: announcement.title,
               subtitle: announcement.subtitle,
-              image: getClubImage(announcement.clubId),
+              image: getClubLogo(ref, announcement.clubId),
             );
           },
         ),
       ),
     );
   }
-}
-
-String getClubImage(String clubId) {
-  final club = sampleClubs.firstWhere(
-    (club) => club.id == clubId,
-    orElse: () => sampleClubs.first,
-  );
-  return club.logoUrl;
 }

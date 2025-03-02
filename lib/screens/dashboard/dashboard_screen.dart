@@ -13,6 +13,7 @@ import 'widgets/event_card.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 import 'package:events_manager/models/announcement.dart';
+import 'package:events_manager/screens/events/events_page.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({
@@ -51,7 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(todaysEventsStreamProvider);
+    final events = ref.watch(eventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
     bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
@@ -85,6 +86,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 2),
                     ProfileHeader(
                       userMail: widget.user.email ?? '',
                       date:
@@ -109,34 +111,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           const SizedBox(width: 5),
                           TextButton(
                             style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProviderScope(
-                                      child: const AnnouncementsPage()),
+                                  builder: (context) => const AnnouncementsPage(),
                                 ),
                               );
                             },
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   'See all',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: const Color(0xFF83ACBD),
-                                        fontSize: 10,
-                                      ),
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(131, 172, 189, 0.7),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                                const SizedBox(width: 0.5),
-                                const Icon(
+                                Icon(
                                   Icons.keyboard_arrow_right,
-                                  color: Color(0xFF83ACBD),
-                                  size: 20,
+                                  color: Color.fromRGBO(131, 172, 189, 0.7),
+                                  size: 16,
                                 ),
                               ],
                             ),
@@ -211,13 +212,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Text('Error loading announcements: $error'),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 13),
                     Row(
                       children: [
                         const SizedBox(width: 14),
                         Text(
                           'Your Clubs',
                           style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(width: 5),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () {},
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'See all',
+                                style: TextStyle(
+                                  color: Color.fromRGBO(131, 172, 189, 0.7),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Icon(
+                                Icons.keyboard_arrow_right,
+                                color: Color.fromRGBO(131, 172, 189, 0.7),
+                                size: 16,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -228,12 +256,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Text('Error loading clubs: $error'),
                       ),
                     ),
+                    const SizedBox(height: 5),
                     Row(
                       children: [
                         const SizedBox(width: 14),
                         Text(
                           "Today's Events",
                           style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(width: 5),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4,vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EventsPage(),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'See all',
+                                style: TextStyle(
+                                  color: Color.fromRGBO(131, 172, 189, 0.7),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Icon(
+                                Icons.keyboard_arrow_right,
+                                color: Color.fromRGBO(131, 172, 189, 0.7),
+                                size: 16,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

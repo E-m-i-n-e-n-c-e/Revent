@@ -139,7 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final clubs = ref.watch(clubsStreamProvider).value ?? [];
     final clubLogo = clubs
         .firstWhere((club) => club.id == event.clubId,
-            orElse: () => Club(id: '', name: '', logoUrl: '', points: 0))
+            orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''))
         .logoUrl;
 
     return Card(
@@ -193,12 +193,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           MaterialPageRoute(
             builder: (context) => AnnouncementDetailView(
               title: announcement.title,
-              subtitle: announcement.subtitle,
               description: announcement.description,
-              venue: announcement.venue,
-              time: announcement.time,
-              image: announcement.image,
               clubId: announcement.clubId,
+              date: announcement.date,
             ),
           ),
         );
@@ -214,12 +211,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           title: Text(
             announcement.title,
             style: const TextStyle(color: Colors.white),
-          ),
-          subtitle: Text(
-            announcement.subtitle,
-            style: const TextStyle(color: Color(0xFF83ACBD)),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),
@@ -243,11 +234,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.star, color: Colors.amber, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              club.points.toString(),
-              style: const TextStyle(color: Colors.amber),
-            ),
           ],
         ),
       ),

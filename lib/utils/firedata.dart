@@ -194,3 +194,29 @@ Future<String> uploadAnnouncementImage(String filePath) async {
     rethrow;
   }
 }
+
+Future<void> updateClubBackground(String clubId, String imageUrl) async {
+  final firestore = FirebaseFirestore.instance;
+  await firestore.collection('clubs').doc(clubId).update({'backgroundImageUrl': imageUrl});
+}
+
+Future<void> updateEventLinks(String eventId, {String? registrationLink, String? feedbackLink}) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final Map<String, dynamic> updateData = {};
+
+    if (registrationLink != null) {
+      updateData['registrationLink'] = registrationLink;
+    }
+
+    if (feedbackLink != null) {
+      updateData['feedbackLink'] = feedbackLink;
+    }
+
+    if (updateData.isNotEmpty) {
+      await firestore.collection('events').doc(eventId).update(updateData);
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
