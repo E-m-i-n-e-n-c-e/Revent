@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/providers/stream_providers.dart';
@@ -87,3 +88,44 @@ String getClubName(WidgetRef ref, String clubId) {
     return "Unknown Club";
   }
 }
+
+Widget buildDateSeparator(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    String dateText;
+    if (date == today) {
+      dateText = 'Today';
+    } else if (date == tomorrow) {
+      dateText = 'Tomorrow';
+    } else {
+      dateText = DateFormat('EEEE, MMMM d').format(date);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 10,
+          ),
+          Text(
+            dateText,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Divider(
+              color: Colors.white.withValues(alpha: 0.1),
+              thickness: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }

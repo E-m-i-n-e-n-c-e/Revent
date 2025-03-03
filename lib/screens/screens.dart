@@ -1,4 +1,4 @@
-export 'chat/chat_screen.dart';
+export 'map/map_screen.dart';
 export 'dashboard/dashboard_screen.dart';
 export 'events/events_screen.dart';
 export 'resources/resources_screen.dart';

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/models/announcement.dart';
+import 'package:events_manager/models/map_marker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<List<Map<String, dynamic>>> loadEvents() async {
@@ -200,6 +201,45 @@ Future<void> updateClubBackground(String clubId, String imageUrl) async {
   await firestore.collection('clubs').doc(clubId).update({'backgroundImageUrl': imageUrl});
 }
 
+Future<void> updateClubLogo(String clubId, String imageUrl) async {
+  final firestore = FirebaseFirestore.instance;
+  await firestore.collection('clubs').doc(clubId).update({'logoUrl': imageUrl});
+}
+
+Future<void> updateClubDetails(String clubId, {
+  String? name,
+  String? about,
+  List<String>? adminEmails,
+}) async {
+  final firestore = FirebaseFirestore.instance;
+  final Map<String, dynamic> updateData = {};
+
+  if (name != null) updateData['name'] = name;
+  if (about != null) updateData['about'] = about;
+  if (adminEmails != null) updateData['adminEmails'] = adminEmails;
+
+  if (updateData.isNotEmpty) {
+    await firestore.collection('clubs').doc(clubId).update(updateData);
+  }
+}
+
+Future<String> uploadClubImage(String clubId, String filePath, String type) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'clubs/$clubId/${type}_$fileName';
+
+    await supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+
+    return imageUrl;
+  } catch (e) {
+    rethrow;
+  }
+}
+
 Future<void> updateEventLinks(String eventId, {String? registrationLink, String? feedbackLink}) async {
   try {
     final firestore = FirebaseFirestore.instance;
@@ -216,6 +256,72 @@ Future<void> updateEventLinks(String eventId, {String? registrationLink, String?
     if (updateData.isNotEmpty) {
       await firestore.collection('events').doc(eventId).update(updateData);
     }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+// Map Marker Functions
+Future<List<MapMarker>> loadMapMarkers() async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final markersSnapshot = await firestore.collection('mapMarkers')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return markersSnapshot.docs
+        .map((doc) => MapMarker.fromJson(doc.data()))
+        .toList();
+  } catch (e) {
+    return [];
+  }
+}
+
+Future<void> addMapMarker(MapMarker marker) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('mapMarkers')
+        .doc(marker.id)
+        .set(marker.toJson());
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> updateMapMarker(MapMarker marker) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('mapMarkers')
+        .doc(marker.id)
+        .update(marker.toJson());
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> deleteMapMarker(String markerId) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('mapMarkers')
+        .doc(markerId)
+        .delete();
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<String> uploadMapMarkerImage(String filePath) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'mapMarkers/$fileName';
+
+    await supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+
+    return imageUrl;
   } catch (e) {
     rethrow;
   }

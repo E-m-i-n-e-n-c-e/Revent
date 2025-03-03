@@ -23,7 +23,7 @@ class _EventManagerState extends State<EventManager> {
       const EventsScreen(),
       const SearchScreen(),
       const ResourcesScreen(),
-      const ChatScreen(),
+      const MapScreen(),
     ];
   }
 
