@@ -21,6 +21,22 @@ class EventsPage extends ConsumerWidget {
       ..sort((a, b) => b.startTime.compareTo(a.startTime));
   }
 
+  Map<DateTime, List<Event>> _groupEventsByDate(List<Event> events) {
+    final Map<DateTime, List<Event>> groupedEvents = {};
+    for (var event in events) {
+      final date = DateTime(
+        event.startTime.year,
+        event.startTime.month,
+        event.startTime.day,
+      );
+      if (!groupedEvents.containsKey(date)) {
+        groupedEvents[date] = [];
+      }
+      groupedEvents[date]!.add(event);
+    }
+    return groupedEvents;
+  }
+
   Widget _buildSectionHeader(String title, int count) {
     return Padding(
       padding: const EdgeInsets.only(left: 11, bottom: 8),
@@ -117,43 +133,62 @@ class EventsPage extends ConsumerWidget {
                     final upcomingEvents = _getUpcomingEvents(eventsList);
                     final pastEvents = _getPastEvents(eventsList);
 
+                    final upcomingGrouped = _groupEventsByDate(upcomingEvents);
+                    final pastGrouped = _groupEventsByDate(pastEvents);
+
                     return ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 11),
                       children: [
                         if (upcomingEvents.isNotEmpty) ...[
                           _buildSectionHeader('Upcoming Events', upcomingEvents.length),
-                          ...upcomingEvents.map((event) {
-                            final club = clubs.value?.firstWhere(
-                              (club) => club.id == event.clubId,
-                              orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ExpandableEventCard(
-                                event: event,
-                                club: club,
-                                isPastEvent: false,
-                              ),
-                            );
-                          }),
+                          ...upcomingGrouped.entries.expand((entry) => [
+                                buildDateSeparator(entry.key),
+                                ...entry.value.map((event) {
+                                  final club = clubs.value?.firstWhere(
+                                    (club) => club.id == event.clubId,
+                                    orElse: () => Club(
+                                      id: '',
+                                      name: '',
+                                      logoUrl: '',
+                                      backgroundImageUrl: '',
+                                    ),
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ExpandableEventCard(
+                                      event: event,
+                                      club: club,
+                                      isPastEvent: false,
+                                    ),
+                                  );
+                                }),
+                              ]),
                           const SizedBox(height: 24),
                         ],
                         if (pastEvents.isNotEmpty) ...[
                           _buildSectionHeader('Past Events', pastEvents.length),
-                          ...pastEvents.map((event) {
-                            final club = clubs.value?.firstWhere(
-                              (club) => club.id == event.clubId,
-                              orElse: () => Club(id: '', name: '', logoUrl: '', backgroundImageUrl: ''),
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ExpandableEventCard(
-                                event: event,
-                                club: club,
-                                isPastEvent: true,
-                              ),
-                            );
-                          }),
+                          ...pastGrouped.entries.expand((entry) => [
+                                buildDateSeparator(entry.key),
+                                ...entry.value.map((event) {
+                                  final club = clubs.value?.firstWhere(
+                                    (club) => club.id == event.clubId,
+                                    orElse: () => Club(
+                                      id: '',
+                                      name: '',
+                                      logoUrl: '',
+                                      backgroundImageUrl: '',
+                                    ),
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ExpandableEventCard(
+                                      event: event,
+                                      club: club,
+                                      isPastEvent: true,
+                                    ),
+                                  );
+                                }),
+                              ]),
                         ],
                       ],
                     );
@@ -196,13 +231,15 @@ class ExpandableEventCard extends StatefulWidget {
 class _ExpandableEventCardState extends State<ExpandableEventCard> {
   bool isExpanded = false;
 
-  String _formatDate(DateTime date) {
-    return DateFormat('MMM d, yyyy').format(date);
+  String _formatTimeRange(DateTime start, DateTime end) {
+    final startTime = DateFormat('h:mm a').format(start);
+    final endTime = DateFormat('h:mm a').format(end);
+    return '$startTime - $endTime';
   }
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = _formatDate(widget.event.startTime);
+    final timeRange = _formatTimeRange(widget.event.startTime, widget.event.endTime);
 
     return Container(
       decoration: BoxDecoration(
@@ -279,80 +316,88 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Container(
-                  width: 23,
-                  height: 23,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: NetworkImage(widget.club?.logoUrl ?? ''),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF173240),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        color: Color(0xFFAEE7FF),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (widget.event.venue != null && widget.event.venue!.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF173240),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.location_on,
-                          color: Color(0xFFAEE7FF),
-                          size: 12,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          widget.event.venue!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
+                        Container(
+                          width: 25,
+                          height: 25,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              image: NetworkImage(widget.club?.logoUrl ?? ''),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(width: 13),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF173240),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                timeRange,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (widget.event.venue != null && widget.event.venue!.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF173240),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFFAEE7FF),
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.3,
+                                  ),
+                                  child: Text(
+                                    widget.event.venue!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                ],
-                const Spacer(),
-                if (widget.isPastEvent && widget.event.feedbackLink != null)
+                ),
+                if (widget.isPastEvent && widget.event.feedbackLink != null) ...[
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0E668A),
@@ -386,8 +431,9 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  )
-                else if (!widget.isPastEvent && widget.event.registrationLink != null)
+                  ),
+                ] else if (!widget.isPastEvent && widget.event.registrationLink != null) ...[
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0E668A),
@@ -422,6 +468,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ],

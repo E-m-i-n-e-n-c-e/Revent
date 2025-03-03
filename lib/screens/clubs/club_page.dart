@@ -62,6 +62,22 @@ class _ClubPageState extends ConsumerState<ClubPage> {
     return announcements..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  Map<DateTime, List<Event>> _groupEventsByDate(List<Event> events) {
+    final Map<DateTime, List<Event>> groupedEvents = {};
+    for (var event in events) {
+      final date = DateTime(
+        event.startTime.year,
+        event.startTime.month,
+        event.startTime.day,
+      );
+      if (!groupedEvents.containsKey(date)) {
+        groupedEvents[date] = [];
+      }
+      groupedEvents[date]!.add(event);
+    }
+    return groupedEvents;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the live club data from the provider
@@ -307,6 +323,9 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                               final upcomingEvents = _getUpcomingEvents(clubEvents);
                               final pastEvents = _getPastEvents(clubEvents);
 
+                              final upcomingGrouped = _groupEventsByDate(upcomingEvents);
+                              final pastGrouped = _groupEventsByDate(pastEvents);
+
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -314,16 +333,26 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                     _buildSectionHeader(
                                         'Upcoming Events', upcomingEvents.length),
                                     const SizedBox(height: 10),
-                                    ...upcomingEvents
-                                        .map((event) => _buildEventCard(event)),
+                                    ...upcomingGrouped.entries.expand((entry) => [
+                                          buildDateSeparator(entry.key),
+                                          ...entry.value.map((event) => Padding(
+                                                padding: const EdgeInsets.only(bottom: 12),
+                                                child: _buildEventCard(event),
+                                              )),
+                                        ]),
                                     const SizedBox(height: 20),
                                   ],
                                   if (pastEvents.isNotEmpty) ...[
                                     _buildSectionHeader(
                                         'Past Events', pastEvents.length),
                                     const SizedBox(height: 10),
-                                    ...pastEvents
-                                        .map((event) => _buildEventCard(event)),
+                                    ...pastGrouped.entries.expand((entry) => [
+                                          buildDateSeparator(entry.key),
+                                          ...entry.value.map((event) => Padding(
+                                                padding: const EdgeInsets.only(bottom: 12),
+                                                child: _buildEventCard(event),
+                                              )),
+                                        ]),
                                   ],
                                 ],
                               );
@@ -558,17 +587,205 @@ class _ClubPageState extends ConsumerState<ClubPage> {
   }
 
   Widget _buildEventCard(Event event) {
-    final formattedDate = DateFormat('MMM d, y').format(event.startTime);
-    final formattedTime = DateFormat('h:mm a').format(event.startTime);
     final bool isPastEvent = DateTime.now().isAfter(event.endTime);
+    final timeRange = _formatTimeRange(event.startTime, event.endTime);
 
-    return ExpandableEventCard(
-      event: event,
-      formattedDate: formattedDate,
-      formattedTime: formattedTime,
-      isPastEvent: isPastEvent,
-      onLaunchUrl: launchUrlExternal,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F2026),
+        borderRadius: BorderRadius.circular(17),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x40000000),
+            blurRadius: 5.1,
+            offset: Offset(0, 2),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            event.title,
+            style: const TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            event.description,
+            style: const TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 14,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF173240),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              color: Color(0xFFAEE7FF),
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              timeRange,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (event.venue != null && event.venue!.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF173240),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Color(0xFFAEE7FF),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.3,
+                                ),
+                                child: Text(
+                                  event.venue!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              if (isPastEvent && event.feedbackLink != null) ...[
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Colors.white.withValues(alpha:0.1);
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  onPressed: () => launchUrlExternal(event.feedbackLink!),
+                  child: const Text(
+                    'FEEDBACK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ] else if (!isPastEvent && event.registrationLink != null) ...[
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Colors.white.withValues(alpha:0.1);
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  onPressed: () => launchUrlExternal(event.registrationLink!),
+                  child: const Text(
+                    'REGISTER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
+  }
+
+  String _formatTimeRange(DateTime start, DateTime end) {
+    final startTime = DateFormat('h:mm a').format(start);
+    final endTime = DateFormat('h:mm a').format(end);
+    return '$startTime - $endTime';
   }
 
   Widget _buildAnnouncementCard(Announcement announcement) {

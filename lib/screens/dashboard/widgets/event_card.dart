@@ -109,33 +109,82 @@ class EventItem extends ConsumerWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(51),
-                child: Image.network(
-                  getClubLogo(ref, event.clubId),
-                  width: 25,
-                  height: 25,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 13),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF17323D),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  formatTimeRange(context, event.startTime, event.endTime),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w400,
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(51),
+                        child: Image.network(
+                          getClubLogo(ref, event.clubId),
+                          width: 23,
+                          height: 23,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF17323D),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              formatTimeRange(context, event.startTime, event.endTime),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (event.venue != null && event.venue!.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF17323D),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Color(0xFFAEE7FF),
+                                size: 9,
+                              ),
+                              const SizedBox(width: 4),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.3,
+                                ),
+                                child: Text(
+                                  event.venue!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-              const Spacer(),
-              if (isPastEvent && event.feedbackLink != null)
+              if (isPastEvent && event.feedbackLink != null) ...[
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => launchUrlExternal(event.feedbackLink!),
                   style: ElevatedButton.styleFrom(
@@ -151,7 +200,7 @@ class EventItem extends ConsumerWidget {
                   ).copyWith(
                     overlayColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) => states.contains(WidgetState.pressed)
-                          ? Colors.white.withValues(alpha:0.1)
+                          ? Colors.white.withOpacity(0.1)
                           : null,
                     ),
                   ),
@@ -163,8 +212,9 @@ class EventItem extends ConsumerWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                )
-              else if (!isPastEvent && event.registrationLink != null)
+                ),
+              ] else if (!isPastEvent && event.registrationLink != null) ...[
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => launchUrlExternal(event.registrationLink!),
                   style: ElevatedButton.styleFrom(
@@ -180,7 +230,7 @@ class EventItem extends ConsumerWidget {
                   ).copyWith(
                     overlayColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) => states.contains(WidgetState.pressed)
-                          ? Colors.white.withValues(alpha:0.1)
+                          ? Colors.white.withOpacity(0.1)
                           : null,
                     ),
                   ),
@@ -193,6 +243,7 @@ class EventItem extends ConsumerWidget {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ],

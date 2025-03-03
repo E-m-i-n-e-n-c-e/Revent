@@ -52,6 +52,7 @@ dependencies:
   google_generative_ai: ^0.4.6
   flutter_markdown: ^0.7.6+1
   url_launcher: ^6.3.1
+  markdown: ^7.3.0
 
 dev_dependencies:
   flutter_test:
