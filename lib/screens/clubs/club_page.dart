@@ -1,5 +1,4 @@
 import 'package:events_manager/utils/common_utils.dart';
-import 'package:events_manager/utils/firedata.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/club.dart';
@@ -8,11 +7,9 @@ import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/providers/stream_providers.dart' as providers;
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
+import 'package:events_manager/screens/clubs/edit_club_form.dart';
 
 class ClubPage extends ConsumerStatefulWidget {
   final Club club;
@@ -27,7 +24,7 @@ class _ClubPageState extends ConsumerState<ClubPage> {
   String _selectedTab = 'EVENTS';
   final ScrollController _scrollController = ScrollController();
   bool _isHeaderCollapsed = false;
-  bool _isUploading = false;
+  final bool _isUploading = false;
 
   @override
   void initState() {
@@ -49,50 +46,6 @@ class _ClubPageState extends ConsumerState<ClubPage> {
     }
   }
 
-  Future<void> _pickAndUploadImage() async {
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-      if (pickedFile != null) {
-        setState(() => _isUploading = true);
-
-        final file = File(pickedFile.path);
-        final fileExt = pickedFile.path.split('.').last;
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-
-        // Upload to Supabase
-        final supabase = Supabase.instance.client;
-        await supabase.storage
-            .from('assets')
-            .upload('clubs/${widget.club.id}/$fileName', file);
-
-        final imageUrl = supabase.storage
-            .from('assets')
-            .getPublicUrl('clubs/${widget.club.id}/$fileName');
-
-        // Update club in Firestore
-        await updateClubBackground(widget.club.id, imageUrl);
-
-        setState(() => _isUploading = false);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Background image updated successfully')),
-          );
-        }
-      }
-    } catch (e) {
-      setState(() => _isUploading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading image: $e')),
-        );
-      }
-    }
-  }
-
   List<Event> _getUpcomingEvents(List<Event> events) {
     final now = DateTime.now();
     return events.where((event) => event.startTime.isAfter(now)).toList()
@@ -111,341 +64,360 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(providers.eventsStreamProvider);
-    final announcements = ref.watch(providers.announcementsStreamProvider);
+    // Get the live club data from the provider
+    final clubs = ref.watch(providers.clubsStreamProvider);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor:
-            _isHeaderCollapsed ? const Color(0xFF06222F) : Colors.transparent,
-        elevation: _isHeaderCollapsed ? 4 : 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: _isHeaderCollapsed
-            ? Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundImage: NetworkImage(widget.club.logoUrl),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    widget.club.name,
-                    style: const TextStyle(
-                      color: Color(0xFFAEE7FF),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Color(0xFFAEE7FF)),
-            onPressed: _isUploading ? null : _pickAndUploadImage,
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF07181F), Color(0xFF000000)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF06222F),
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          widget.club.backgroundImageUrl.isNotEmpty
-                              ? widget.club.backgroundImageUrl
-                              : widget.club.logoUrl,
-                        ),
-                        fit: BoxFit.cover,
-                        opacity: 0.3,
+    return clubs.when(
+      data: (clubsList) {
+        // Find the current club from the live data
+        final currentClub = clubsList.firstWhere((club) => club.id == widget.club.id);
+
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: _isHeaderCollapsed ? const Color(0xFF06222F) : Colors.transparent,
+            elevation: _isHeaderCollapsed ? 4 : 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: _isHeaderCollapsed
+                ? Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundImage: NetworkImage(currentClub.logoUrl),
                       ),
+                      const SizedBox(width: 12),
+                      Text(
+                        currentClub.name,
+                        style: const TextStyle(
+                          color: Color(0xFFAEE7FF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFFAEE7FF)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditClubForm(club: currentClub),
                     ),
-                    child: Stack(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                const Color(0xFF07181F).withValues(alpha: 0.8),
-                              ],
+                  );
+                },
+              ),
+            ],
+          ),
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF07181F), Color(0xFF000000)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF06222F),
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              currentClub.backgroundImageUrl.isNotEmpty
+                                  ? currentClub.backgroundImageUrl
+                                  : currentClub.logoUrl,
                             ),
+                            fit: BoxFit.cover,
+                            opacity: 0.3,
                           ),
                         ),
-                        if (_isUploading)
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFFAEE7FF)),
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Uploading image...',
-                                    style: TextStyle(
-                                      color: Color(0xFFAEE7FF),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: 27,
-                    right: 27,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        child: Stack(
                           children: [
                             Container(
-                              width: 88,
-                              height: 88,
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF71C2E4),
-                                  width: 2,
-                                ),
-                                image: DecorationImage(
-                                  image: NetworkImage(widget.club.logoUrl),
-                                  fit: BoxFit.cover,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    const Color(0xFF07181F).withValues(alpha: 0.8),
+                                  ],
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.club.name,
-                                    style: const TextStyle(
-                                      color: Color(0xFF61E7FF),
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                            if (_isUploading)
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
+                                  child: const Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      _buildMetricItem(
-                                        FontAwesomeIcons.users,
-                                        '1.2K',
-                                        'Members',
+                                      CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                            Color(0xFFAEE7FF)),
                                       ),
-                                      const SizedBox(width: 16),
-                                      _buildMetricItem(
-                                        FontAwesomeIcons.calendar,
-                                        '24',
-                                        'Events',
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'Uploading image...',
+                                        style: TextStyle(
+                                          color: Color(0xFFAEE7FF),
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildSocialButton(
-                          FontAwesomeIcons.discord,
-                          'DISCORD',
-                          onTap: () {},
-                        ),
-                        _buildSocialButton(
-                          FontAwesomeIcons.whatsapp,
-                          'WHATSAPP',
-                          onTap: () {},
-                        ),
-                        _buildSocialButton(
-                          FontAwesomeIcons.link,
-                          'LINKTREE',
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildTabButton('EVENTS'),
-                          _buildTabButton('ANNOUNCEMENTS'),
-                          _buildTabButton('ABOUT'),
-                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_selectedTab == 'EVENTS') ...[
-                      events.when(
-                        data: (eventsList) {
-                          final clubEvents = eventsList
-                              .where((event) => event.clubId == widget.club.id)
-                              .toList();
-                          final upcomingEvents = _getUpcomingEvents(clubEvents);
-                          final pastEvents = _getPastEvents(clubEvents);
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (upcomingEvents.isNotEmpty) ...[
-                                _buildSectionHeader(
-                                    'Upcoming Events', upcomingEvents.length),
-                                const SizedBox(height: 10),
-                                ...upcomingEvents
-                                    .map((event) => _buildEventCard(event)),
-                                const SizedBox(height: 20),
-                              ],
-                              if (pastEvents.isNotEmpty) ...[
-                                _buildSectionHeader(
-                                    'Past Events', pastEvents.length),
-                                const SizedBox(height: 10),
-                                ...pastEvents
-                                    .map((event) => _buildEventCard(event)),
-                              ],
-                            ],
-                          );
-                        },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (error, stack) => Center(
-                          child: Text('Error loading events: $error',
-                              style: const TextStyle(color: Colors.red)),
-                        ),
-                      ),
-                    ] else if (_selectedTab == 'ANNOUNCEMENTS') ...[
-                      announcements.when(
-                        data: (announcementsList) {
-                          final clubAnnouncements = announcementsList
-                              .where((announcement) =>
-                                  announcement.clubId == widget.club.id)
-                              .toList();
-                          final recentAnnouncements =
-                              _getRecentAnnouncements(clubAnnouncements);
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionHeader(
-                                  'Announcements', recentAnnouncements.length),
-                              const SizedBox(height: 10),
-                              ...recentAnnouncements.map((announcement) =>
-                                  _buildAnnouncementCard(announcement)),
-                            ],
-                          );
-                        },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (error, stack) => Center(
-                          child: Text('Error loading announcements: $error',
-                              style: const TextStyle(color: Colors.red)),
-                        ),
-                      ),
-                    ] else if (_selectedTab == 'ABOUT') ...[
-                      _buildSectionHeader('About Us', null),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F2026),
-                          borderRadius: BorderRadius.circular(17),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x40000000),
-                              blurRadius: 5.1,
-                              offset: Offset(0, 2),
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: const Column(
+                      Positioned(
+                        bottom: 20,
+                        left: 27,
+                        right: 27,
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Welcome to our club!',
-                              style: TextStyle(
-                                color: Color(0xFFAEE7FF),
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'We\'re a group of students passionate about organizing events, workshops, and discussions. Join us to grow your skills and connect with others in the community.',
-                              style: TextStyle(
-                                color: Color(0xFFAEE7FF),
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  width: 88,
+                                  height: 88,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF71C2E4),
+                                      width: 2,
+                                    ),
+                                    image: DecorationImage(
+                                      image: NetworkImage(currentClub.logoUrl),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        currentClub.name,
+                                        style: const TextStyle(
+                                          color: Color(0xFF61E7FF),
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          _buildMetricItem(
+                                            FontAwesomeIcons.users,
+                                            '1.2K',
+                                            'Members',
+                                          ),
+                                          const SizedBox(width: 16),
+                                          _buildMetricItem(
+                                            FontAwesomeIcons.calendar,
+                                            '24',
+                                            'Events',
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildSocialButton(
+                              FontAwesomeIcons.discord,
+                              'DISCORD',
+                              onTap: () {},
+                            ),
+                            _buildSocialButton(
+                              FontAwesomeIcons.whatsapp,
+                              'WHATSAPP',
+                              onTap: () {},
+                            ),
+                            _buildSocialButton(
+                              FontAwesomeIcons.link,
+                              'LINKTREE',
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildTabButton('EVENTS'),
+                              _buildTabButton('ANNOUNCEMENTS'),
+                              _buildTabButton('ABOUT'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_selectedTab == 'EVENTS') ...[
+                          ref.watch(providers.eventsStreamProvider).when(
+                            data: (eventsList) {
+                              final clubEvents = eventsList
+                                  .where((event) => event.clubId == currentClub.id)
+                                  .toList();
+                              final upcomingEvents = _getUpcomingEvents(clubEvents);
+                              final pastEvents = _getPastEvents(clubEvents);
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (upcomingEvents.isNotEmpty) ...[
+                                    _buildSectionHeader(
+                                        'Upcoming Events', upcomingEvents.length),
+                                    const SizedBox(height: 10),
+                                    ...upcomingEvents
+                                        .map((event) => _buildEventCard(event)),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  if (pastEvents.isNotEmpty) ...[
+                                    _buildSectionHeader(
+                                        'Past Events', pastEvents.length),
+                                    const SizedBox(height: 10),
+                                    ...pastEvents
+                                        .map((event) => _buildEventCard(event)),
+                                  ],
+                                ],
+                              );
+                            },
+                            loading: () =>
+                                const Center(child: CircularProgressIndicator()),
+                            error: (error, stack) => Center(
+                              child: Text('Error loading events: $error',
+                                  style: const TextStyle(color: Colors.red)),
+                            ),
+                          ),
+                        ] else if (_selectedTab == 'ANNOUNCEMENTS') ...[
+                          ref.watch(providers.announcementsStreamProvider).when(
+                            data: (announcementsList) {
+                              final clubAnnouncements = announcementsList
+                                  .where((announcement) =>
+                                      announcement.clubId == currentClub.id)
+                                  .toList();
+                              final recentAnnouncements =
+                                  _getRecentAnnouncements(clubAnnouncements);
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionHeader(
+                                      'Announcements', recentAnnouncements.length),
+                                  const SizedBox(height: 10),
+                                  ...recentAnnouncements.map((announcement) =>
+                                      _buildAnnouncementCard(announcement)),
+                                ],
+                              );
+                            },
+                            loading: () =>
+                                const Center(child: CircularProgressIndicator()),
+                            error: (error, stack) => Center(
+                              child: Text('Error loading announcements: $error',
+                                  style: const TextStyle(color: Colors.red)),
+                            ),
+                          ),
+                        ] else if (_selectedTab == 'ABOUT') ...[
+                          _buildSectionHeader('About Us', null),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F2026),
+                              borderRadius: BorderRadius.circular(17),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x40000000),
+                                  blurRadius: 5.1,
+                                  offset: Offset(0, 2),
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Welcome to ${currentClub.name}!',
+                                  style: const TextStyle(
+                                    color: Color(0xFFAEE7FF),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  currentClub.about.isNotEmpty
+                                      ? currentClub.about
+                                      : 'We\'re a group of students passionate about organizing events, workshops, and discussions. Join us to grow your skills and connect with others in the community.',
+                                  style: const TextStyle(
+                                    color: Color(0xFFAEE7FF),
+                                    fontSize: 14,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Text('Error loading club: $error', style: const TextStyle(color: Colors.red)),
       ),
     );
   }
@@ -928,9 +900,7 @@ class _ExpandableAnnouncementCardState
                     maxHeight: isExpanded ? double.infinity : 100,
                   ),
                   child: SingleChildScrollView(
-                    physics: isExpanded
-                        ? const AlwaysScrollableScrollPhysics()
-                        : const NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     child: MarkdownBody(
                       data: widget.announcement.description,
                       styleSheet: MarkdownStyleSheet(

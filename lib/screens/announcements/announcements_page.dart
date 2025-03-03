@@ -263,9 +263,7 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                     maxHeight: isExpanded ? double.infinity : 100,
                   ),
                   child: SingleChildScrollView(
-                    physics: isExpanded
-                        ? const AlwaysScrollableScrollPhysics()
-                        : const NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     child: MarkdownBody(
                       data: widget.announcement.description,
                       styleSheet: MarkdownStyleSheet(

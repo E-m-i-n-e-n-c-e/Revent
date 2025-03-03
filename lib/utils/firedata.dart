@@ -200,6 +200,45 @@ Future<void> updateClubBackground(String clubId, String imageUrl) async {
   await firestore.collection('clubs').doc(clubId).update({'backgroundImageUrl': imageUrl});
 }
 
+Future<void> updateClubLogo(String clubId, String imageUrl) async {
+  final firestore = FirebaseFirestore.instance;
+  await firestore.collection('clubs').doc(clubId).update({'logoUrl': imageUrl});
+}
+
+Future<void> updateClubDetails(String clubId, {
+  String? name,
+  String? about,
+  List<String>? adminEmails,
+}) async {
+  final firestore = FirebaseFirestore.instance;
+  final Map<String, dynamic> updateData = {};
+
+  if (name != null) updateData['name'] = name;
+  if (about != null) updateData['about'] = about;
+  if (adminEmails != null) updateData['adminEmails'] = adminEmails;
+
+  if (updateData.isNotEmpty) {
+    await firestore.collection('clubs').doc(clubId).update(updateData);
+  }
+}
+
+Future<String> uploadClubImage(String clubId, String filePath, String type) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'clubs/$clubId/${type}_$fileName';
+
+    await supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+
+    return imageUrl;
+  } catch (e) {
+    rethrow;
+  }
+}
+
 Future<void> updateEventLinks(String eventId, {String? registrationLink, String? feedbackLink}) async {
   try {
     final firestore = FirebaseFirestore.instance;
