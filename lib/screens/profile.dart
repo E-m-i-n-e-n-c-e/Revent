@@ -1,8 +1,10 @@
 import 'package:events_manager/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:events_manager/providers/stream_providers.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   final User? user;
 
   const ProfileScreen({super.key, required this.user});
@@ -24,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final rollNumber =
         user?.email != null ? extractRollNumber(user!.email!) : "Unknown";
 
@@ -91,6 +93,8 @@ class ProfileScreen extends StatelessWidget {
                 onPressed: () async {
                   // Perform logout
                   await AuthService().signOut();
+                  // Invalidate all providers after signing out
+                  invalidateAllProviders(ref);
                   if (!context.mounted) return;
                   Navigator.popUntil(context, (route) => route.isFirst);
                 },

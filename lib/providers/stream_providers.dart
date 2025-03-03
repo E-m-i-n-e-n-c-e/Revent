@@ -137,3 +137,13 @@ final clubsStreamProvider = StreamProvider<List<Club>>((ref) {
 final mapMarkersProvider = FutureProvider<List<MapMarker>>((ref) async {
   return loadMapMarkers();
 });
+
+// Add a function to invalidate all providers
+void invalidateAllProviders(WidgetRef ref) {
+  ref.invalidate(eventsStreamProvider);
+  ref.invalidate(todaysEventsStreamProvider);
+  ref.invalidate(announcementsStreamProvider);
+  ref.invalidate(clubsStreamProvider);
+  ref.invalidate(searchResultsProvider);
+  ref.invalidate(mapMarkersProvider);
+}
