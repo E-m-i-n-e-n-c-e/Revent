@@ -200,7 +200,7 @@ class EventItem extends ConsumerWidget {
                   ).copyWith(
                     overlayColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) => states.contains(WidgetState.pressed)
-                          ? Colors.white.withOpacity(0.1)
+                          ? Colors.white.withValues(alpha:0.1)
                           : null,
                     ),
                   ),
@@ -230,7 +230,7 @@ class EventItem extends ConsumerWidget {
                   ).copyWith(
                     overlayColor: WidgetStateProperty.resolveWith<Color?>(
                       (states) => states.contains(WidgetState.pressed)
-                          ? Colors.white.withOpacity(0.1)
+                          ? Colors.white.withValues(alpha:0.1)
                           : null,
                     ),
                   ),

@@ -3,6 +3,8 @@ import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:events_manager/models/map_marker.dart';
+import 'package:events_manager/utils/firedata.dart';
 
 Stream<List<Map<String, dynamic>>> loadEventsStream() {
   final firestore = FirebaseFirestore.instance;
@@ -130,4 +132,8 @@ final clubsStreamProvider = StreamProvider<List<Club>>((ref) {
     (clubsList) =>
         clubsList.map((clubData) => Club.fromJson(clubData)).toList(),
   );
+});
+
+final mapMarkersProvider = FutureProvider<List<MapMarker>>((ref) async {
+  return loadMapMarkers();
 });
