@@ -6,6 +6,107 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/map_marker.dart';
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/utils/firedata.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+const minZoom = 17.0;
+const maxZoom = 21.0;
+const initialZoom = 17.5;
+
+// Define map boundaries using min/max coordinates
+const minLat = 9.750682; // Southwest corner latitude
+const maxLat = 9.758735; // Northeast corner latitude (updated)
+const minLong = 76.646042; // Southwest corner longitude
+const maxLong = 76.653665; // Northeast corner longitude (updated)
+
+final mapBounds = LatLngBounds(
+  LatLng(minLat, minLong), // Southwest corner
+  LatLng(maxLat, maxLong), // Northeast corner
+);
+
+class MapTileCacheManager extends CacheManager {
+  static const key = 'mapTileCache';
+
+  static MapTileCacheManager? _instance;
+
+  factory MapTileCacheManager() {
+    _instance ??= MapTileCacheManager._();
+    return _instance!;
+  }
+
+  MapTileCacheManager._() : super(
+    Config(
+      key,
+      stalePeriod: const Duration(days: 1),
+      maxNrOfCacheObjects: 1000,
+      repo: JsonCacheInfoRepository(databaseName: key),
+      fileService: HttpFileService(),
+    ),
+  );
+}
+
+class MapImageCacheManager extends CacheManager {
+  static const key = 'mapImageCache';
+
+  static MapImageCacheManager? _instance;
+
+  factory MapImageCacheManager() {
+    _instance ??= MapImageCacheManager._();
+    return _instance!;
+  }
+
+  MapImageCacheManager._() : super(
+    Config(
+      key,
+      stalePeriod: const Duration(days: 1),
+      maxNrOfCacheObjects: 200,
+      repo: JsonCacheInfoRepository(databaseName: key),
+      fileService: HttpFileService(),
+    ),
+  );
+}
+
+class CachedTileProvider extends TileProvider {
+  final MapTileCacheManager cacheManager;
+  final Set<String> _cachedUrls = {};
+  int _cachedTilesCount = 0;
+
+  // Define zoom levels to cache relative to initialZoom
+  final Set<int>zoomLevelsToCache = {
+    initialZoom.floor(),           // 17.0
+    initialZoom.ceil(),    // 18.0
+    initialZoom.floor()-1, // 16.0
+    initialZoom.ceil()+1, // 19.0
+  };
+
+  CachedTileProvider() : cacheManager = MapTileCacheManager();
+
+  bool _shouldCacheZoomLevel(int zoom) {
+    return zoomLevelsToCache.contains(zoom);
+  }
+
+  @override
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
+    final url = getTileUrl(coordinates, options);
+
+    // Only use CachedNetworkImageProvider for zoom levels we want to cache
+    if (_shouldCacheZoomLevel(coordinates.z)) {
+      if (!_cachedUrls.contains(url)) {
+        _cachedUrls.add(url);
+        _cachedTilesCount++;
+        debugPrint('New tile cached at zoom ${coordinates.z}! Total tiles cached this session: $_cachedTilesCount');
+        debugPrint('Tile coordinates: x=${coordinates.x}, y=${coordinates.y}');
+      }
+      return CachedNetworkImageProvider(
+        url,
+        cacheManager: cacheManager,
+      );
+    } else {
+      // Use regular NetworkImage for other zoom levels
+      return NetworkImage(url);
+    }
+  }
+}
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -18,6 +119,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final MapController mapController = MapController();
   bool _isSatelliteMode = true;
   final ImagePicker _imagePicker = ImagePicker();
+  late final MapImageCacheManager _imageCacheManager;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageCacheManager = MapImageCacheManager();
+  }
+
+  Widget _buildCachedNetworkImage(String imageUrl) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      cacheManager: _imageCacheManager,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      errorWidget: (context, url, error) => const Icon(Icons.error),
+    );
+  }
 
   Future<void> _addMarker(LatLng position) async {
     showDialog(
@@ -35,10 +155,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Container(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
                     if (imageUrl != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -47,9 +167,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
                     ],
                     TextField(
                       style: const TextStyle(color: Color(0xFFAEE7FF)),
@@ -68,10 +188,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       onChanged: (value) => title = value,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+            TextField(
                       style: const TextStyle(color: Color(0xFFAEE7FF)),
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
+              decoration: const InputDecoration(
+                labelText: 'Description',
                         labelStyle: TextStyle(color: Color(0xFF83ACBD)),
                         hintText: 'Enter location description',
                         hintStyle: TextStyle(color: Color(0xFF83ACBD)),
@@ -81,11 +201,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Color(0xFFAEE7FF)),
                         ),
-                      ),
-                      maxLines: 3,
+              ),
+              maxLines: 3,
                       onChanged: (value) => description = value,
-                    ),
-                    const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 16),
                     TextButton.icon(
                       onPressed: () async {
                         final XFile? image = await _imagePicker.pickImage(
@@ -120,8 +240,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
+              children: [
+                TextButton(
                           onPressed: () => Navigator.of(context).pop(),
                           child: const Text(
                             'Cancel',
@@ -320,7 +440,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               ),
                             ),
                             const SizedBox(width: 16),
-                            ElevatedButton(
+                ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFAEE7FF),
                                 foregroundColor: const Color(0xFF06222F),
@@ -359,16 +479,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                     }
                                   }
                                 }
-                              },
-                              child: const Text('Save'),
+                  },
+                  child: const Text('Save'),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
-              ),
+              ],
+            ),
+          ],
+        ),
+      ),
             );
           },
         );
@@ -380,7 +500,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     final markersAsync = ref.watch(mapMarkersProvider);
 
+
     return Scaffold(
+      backgroundColor: const Color(0xFF06222F),
       appBar: AppBar(
         title: const Text('Map'),
         backgroundColor: const Color(0xFF06222F),
@@ -396,185 +518,273 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
         ],
       ),
-      body: markersAsync.when(
-        data: (markers) {
-          return FlutterMap(
-            mapController: mapController,
-            options: MapOptions(
-              initialCenter: LatLng(9.754969, 76.650201),
-              initialZoom: 17.0,
-              onTap: (tapPosition, point) => _addMarker(point),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: _isSatelliteMode
-                    ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
-                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.app',
-                tileProvider: NetworkTileProvider(),
-              ),
-              MarkerLayer(
-                markers: markers.map((marker) {
-                  return Marker(
-                    width: 150.0,
-                    height: 80.0,
-                    point: marker.position,
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) => Container(
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF06222F),
-                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      height: 4,
-                                      width: 40,
-                                      margin: const EdgeInsets.symmetric(vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF83ACBD),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
+      body: Stack(
+        children: [
+          markersAsync.when(
+            data: (markers) {
+              return FlutterMap(
+                mapController: mapController,
+                options: MapOptions(
+                  initialCenter: LatLng(9.754969, 76.650201),
+                  initialZoom: initialZoom,
+                  onTap: (tapPosition, point) => _addMarker(point),
+                  minZoom: minZoom,
+                  maxZoom: maxZoom,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all,
+                  ),
+                  keepAlive: true,
+                  backgroundColor: const Color(0xFF04161D),
+                  cameraConstraint: CameraConstraint.contain(bounds: mapBounds),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: _isSatelliteMode
+                        ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+                        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'events_manager',
+                    tileProvider: CachedTileProvider(),
+                    minZoom: minZoom,
+                    maxZoom: maxZoom,
+                    keepBuffer: 8,
+                  ),
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: [
+                          LatLng(mapBounds.south, mapBounds.west), // Southwest
+                          LatLng(mapBounds.south, mapBounds.east), // Southeast
+                          LatLng(mapBounds.north, mapBounds.east), // Northeast
+                          LatLng(mapBounds.north, mapBounds.west), // Northwest
+                          LatLng(mapBounds.south, mapBounds.west), // Back to Southwest to close the rectangle
+                        ],
+                        color: Colors.blue,
+                        strokeWidth: 2,
+                      ),
+                    ],
+                  ),
+                  MarkerLayer(
+                    markers: markers.map((marker) {
+                      return Marker(
+                        width: 150.0,
+                        height: 80.0,
+                        point: marker.position,
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => Container(
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF06222F),
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                                     ),
-                                    if (marker.imageUrl != null)
-                                      Container(
-                                        height: 200,
-                                        width: double.infinity,
-                                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.network(
-                                            marker.imageUrl!,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            marker.title,
-                                            style: const TextStyle(
-                                              color: Color(0xFFAEE7FF),
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold,
+                                          Container(
+                                            height: 4,
+                                            width: 40,
+                                            margin: const EdgeInsets.symmetric(vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF83ACBD),
+                                              borderRadius: BorderRadius.circular(2),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            marker.description,
-                                            style: const TextStyle(
-                                              color: Color(0xFF83ACBD),
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.location_on,
-                                                color: Color(0xFF83ACBD),
-                                                size: 16,
+                                          if (marker.imageUrl != null)
+                                            Container(
+                                              height: 200,
+                                              width: double.infinity,
+                                              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: _buildCachedNetworkImage(marker.imageUrl!),
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${marker.position.latitude.toStringAsFixed(6)}, ${marker.position.longitude.toStringAsFixed(6)}',
-                                                style: const TextStyle(
-                                                  color: Color(0xFF83ACBD),
-                                                  fontSize: 14,
+                                            ),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  marker.title,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFFAEE7FF),
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  marker.description,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF83ACBD),
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 16),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.location_on,
+                                                      color: Color(0xFF83ACBD),
+                                                      size: 16,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '${marker.position.latitude.toStringAsFixed(6)}, ${marker.position.longitude.toStringAsFixed(6)}',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF83ACBD),
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
+                                  ),
+                                );
+                              },
+                              onLongPress: () => _editMarker(marker),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFAEE7FF),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF06222F).withValues(alpha:0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
-                          onLongPress: () => _editMarker(marker),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFAEE7FF),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF06222F).withValues(alpha:0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFF06222F),
+                                  size: 24.0,
                                 ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(6),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Color(0xFF06222F),
-                              size: 24.0,
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          child: Container(
-                            constraints: const BoxConstraints(
-                              maxWidth: 140,
-                            ),
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF06222F).withValues(alpha:0.9),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF17323D)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha:0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IntrinsicWidth(
-                              child: Text(
-                                marker.title,
-                                style: const TextStyle(
-                                  color: Color(0xFFAEE7FF),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
-                                  height: 1.2,
-                                ),
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                                softWrap: true,
                               ),
                             ),
-                          ),
+                            Flexible(
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 140,
+                                ),
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF06222F).withValues(alpha:0.9),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF17323D)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha:0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IntrinsicWidth(
+                                  child: Text(
+                                    marker.title,
+                                    style: const TextStyle(
+                                      color: Color(0xFFAEE7FF),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      height: 1.2,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                    softWrap: true,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              );
+            },
+            loading: () => Container(
+              color: const Color(0xFF06222F),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFAEE7FF),
+                ),
               ),
-            ],
-          );
-        },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stack) => Center(
-          child: Text('Error loading markers: $error'),
-        ),
+            ),
+            error: (error, stack) => Center(
+              child: Text('Error loading markers: $error'),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 100,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF06222F),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha:0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        color: const Color(0xFFAEE7FF),
+                        onPressed: () {
+                          final currentZoom = mapController.camera.zoom;
+                          mapController.move(
+                            mapController.camera.center,
+                            currentZoom + 1,
+                          );
+                        },
+                      ),
+                      Container(
+                        height: 1,
+                        width: 24,
+                        color: const Color(0xFF17323D),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        color: const Color(0xFFAEE7FF),
+                        onPressed: () {
+                          final currentZoom = mapController.camera.zoom;
+                          mapController.move(
+                            mapController.camera.center,
+                            currentZoom - 1,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
