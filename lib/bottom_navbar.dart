@@ -34,12 +34,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
               index: 2,
             ),
             _buildNavItem(
-              iconPath: 'assets/icons_1/stories.svg',
+              iconPath: 'assets/icons_1/map.svg',
               index: 3,
-            ),
-            _buildNavItem(
-              iconPath: 'assets/icons_1/chat.svg',
-              index: 4,
             ),
           ],
         ),

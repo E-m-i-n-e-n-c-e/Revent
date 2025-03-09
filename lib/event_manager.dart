@@ -22,7 +22,6 @@ class _EventManagerState extends State<EventManager> {
       DashboardScreen(user: widget.user),
       const EventsScreen(),
       const SearchScreen(),
-      const ResourcesScreen(),
       const MapScreen(),
     ];
   }
