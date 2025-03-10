@@ -132,10 +132,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       imageUrl: imageUrl,
       cacheManager: _imageCacheManager,
       fit: BoxFit.cover,
-      placeholder: (context, url) => const Center(
-        child: CircularProgressIndicator(),
+      errorWidget: (context, url, error) => const Icon(
+        Icons.error,
+        color: Color(0xFFAEE7FF),
       ),
-      errorWidget: (context, url, error) => const Icon(Icons.error),
     );
   }
 
@@ -541,7 +541,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   TileLayer(
                     urlTemplate: _isSatelliteMode
                         ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
-                        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
                     userAgentPackageName: 'events_manager',
                     tileProvider: CachedTileProvider(),
                     minZoom: minZoom,
@@ -564,7 +564,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ],
                   ),
                   MarkerLayer(
-                    markers: markers.map((marker) {
+                    markers: _isSatelliteMode ? markers.map((marker) {
                       return Marker(
                         width: 150.0,
                         height: 80.0,
@@ -714,7 +714,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }).toList() : [],
                   ),
                 ],
               );
