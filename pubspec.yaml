@@ -55,6 +55,8 @@ dependencies:
   markdown: ^7.3.0
   flutter_map: ^8.1.0
   latlong2: ^0.9.1
+  flutter_cache_manager: ^3.4.1
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +89,7 @@ flutter:
     - assets/icons_1/home.svg
     - assets/icons_1/search.svg
     - assets/icons_1/stories.svg
+    - assets/icons_1/map.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
