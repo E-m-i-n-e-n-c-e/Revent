@@ -61,7 +61,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
             colorFilter: ColorFilter.mode(
               isSelected ? const Color(0xff71C2E4) : Color(0xff71C2E4),
               BlendMode.srcIn,
-            ),),
+            ),
+          ),
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             height: 2,

@@ -4,7 +4,9 @@ import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/map_marker.dart';
+import 'package:events_manager/models/user.dart';
 import 'package:events_manager/utils/firedata.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 Stream<List<Map<String, dynamic>>> loadEventsStream() {
   final firestore = FirebaseFirestore.instance;
@@ -118,7 +120,6 @@ final searchResultsProvider = Provider<List<dynamic>>((ref) {
   return results;
 });
 
-// Add clubs stream provider
 Stream<List<Map<String, dynamic>>> loadClubsStream() {
   final firestore = FirebaseFirestore.instance;
   return firestore
@@ -138,7 +139,15 @@ final mapMarkersProvider = FutureProvider<List<MapMarker>>((ref) async {
   return loadMapMarkers();
 });
 
-// Add a function to invalidate all providers
+
+final currentUserProvider = StreamProvider<AppUser?>((ref) {
+  final auth = FirebaseAuth.instance;
+  return auth.authStateChanges().asyncMap((user) async {
+    if (user == null) return null;
+    return AppUser.fromUid(user.uid);
+  });
+});
+
 void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(eventsStreamProvider);
   ref.invalidate(todaysEventsStreamProvider);
@@ -146,4 +155,5 @@ void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(clubsStreamProvider);
   ref.invalidate(searchResultsProvider);
   ref.invalidate(mapMarkersProvider);
+  ref.invalidate(currentUserProvider);
 }

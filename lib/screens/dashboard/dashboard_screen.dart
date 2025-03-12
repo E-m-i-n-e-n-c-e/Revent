@@ -52,10 +52,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(eventsStreamProvider);
+    final events = ref.watch(todaysEventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
     bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
+
+    final currentUserAsync = ref.watch(currentUserProvider);
     return Scaffold(
       body: SafeArea(
         child: isLoading
@@ -143,31 +145,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           const Spacer(),
-                          IconButton(
-                            style: IconButton.styleFrom(
-                              padding: EdgeInsets.all(0),
-                            ),
-                            onPressed: () async {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddAnnouncementForm(
-                                    addAnnouncement: _addAnnouncement,
+                          currentUserAsync.when(
+                            data: (user) => (user != null && user.clubId != null && user.clubId!.isNotEmpty) ? IconButton(
+                              style: IconButton.styleFrom(
+                                padding: EdgeInsets.all(0),
+                              ),
+                              onPressed: () async {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddAnnouncementForm(
+                                      addAnnouncement: _addAnnouncement,
+                                      clubId: user.clubId!,
+                                    ),
                                   ),
+                                );
+                              },
+                              icon: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
                                 ),
-                              );
-                            },
-                            icon: Container(
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.black,
+                                  size: 20,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.add,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                            ),
+                            ) : const SizedBox(),
+                            loading: () => const SizedBox(),
+                            error: (error, stack) => const SizedBox(),
                           ),
                         ],
                       ),
