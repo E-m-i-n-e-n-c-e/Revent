@@ -19,21 +19,25 @@ class LoginPageState extends State<LoginPage> {
       isSigningIn = true;
     });
 
-    final GoogleSignInAccount? user = await AuthService().signInWithGoogle();
-    if (user != null &&
-        !user.email.endsWith("iiitkottayam.ac.in") &&
-        context.mounted) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in with your IIIT Kottayam account'),
-        ),
-      );
-    }
+    try {
+      final GoogleSignInAccount? user = await AuthService().signInWithGoogle();
 
-    setState(() {
-      isSigningIn = false;
-    });
+      if (!mounted) return;  // Early return if widget is unmounted
+
+      if (user != null && !user.email.endsWith("iiitkottayam.ac.in")) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please sign in with your IIIT Kottayam account'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {  // Only update state if still mounted
+        setState(() {
+          isSigningIn = false;
+        });
+      }
+    }
   }
 
   @override

@@ -46,7 +46,7 @@ class AuthService {
         rollNumber = '20$year$branch$number';
       }
     }
-    createOrUpdateUser(userCredential, googleUser, rollNumber);
+    await createOrUpdateUser(userCredential, googleUser, rollNumber);
     // Return the signed-in user
     return googleUser;
   }

@@ -87,9 +87,14 @@ class AppUser {
 
   static Future<AppUser?> fromUid(String uid) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (doc.exists) {
-        return AppUser.fromFirestore(doc);
+      for (int i = 0; i < 100; i++) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (doc.exists) {
+          return AppUser.fromFirestore(doc);
+        }
+        if (i < 99) {
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
       }
       return null;
     } catch (e) {
