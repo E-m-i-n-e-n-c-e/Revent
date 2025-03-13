@@ -14,6 +14,7 @@ import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/screens/events/events_page.dart';
+import 'package:events_manager/screens/clubs/all_clubs_page.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({
@@ -95,7 +96,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           'Today ${DateFormat('MMM d').format(DateTime.now())}',
                       profileImage: widget.user.photoURL ?? '',
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.only(left: 14),
                       child: Row(
@@ -179,7 +180,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 5),
                     announcements.when(
                       data: (announcementsList) {
                         if (announcementsList.isEmpty) {
@@ -234,7 +234,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AllClubsPage(),
+                              ),
+                            );
+                          },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

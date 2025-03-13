@@ -7,14 +7,105 @@ import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart'
 import 'package:intl/intl.dart';
 import 'package:events_manager/models/announcement.dart';
 
-class AnnouncementsPage extends ConsumerWidget {
+class AnnouncementsPage extends ConsumerStatefulWidget {
   const AnnouncementsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final announcements = ref.watch(announcementsStreamProvider);
+  ConsumerState<AnnouncementsPage> createState() => _AnnouncementsPageState();
+}
+
+class _AnnouncementsPageState extends ConsumerState<AnnouncementsPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Reset filter state when screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(announcementsSearchQueryProvider.notifier).state = '';
+      ref.read(announcementsFilterClubProvider.notifier).state = 'All Clubs';
+      ref.read(announcementsSortOptionProvider.notifier).state = 'Newest First';
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filteredAnnouncements = ref.watch(filteredAnnouncementsProvider);
+    final clubs = ref.watch(clubsStreamProvider);
+    final sortOption = ref.watch(announcementsSortOptionProvider);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Announcements',
+          style: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFFAEE7FF),
+          ),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.sort, color: Color(0xFFAEE7FF)),
+                const SizedBox(width: 4),
+                Text(
+                  sortOption == 'Newest First' ? 'Newest' : 'Oldest',
+                  style: const TextStyle(
+                    color: Color(0xFFAEE7FF),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            onSelected: (value) {
+              ref.read(announcementsSortOptionProvider.notifier).state = value;
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                enabled: false,
+                height: 30,
+                child: Text(
+                  'Sort by',
+                  style: TextStyle(
+                    color: Color(0xFF83ACBD),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'Newest First',
+                child: Text('Newest', style: TextStyle(color: Color(0xFFAEE7FF))),
+              ),
+              const PopupMenuItem(
+                value: 'Oldest First',
+                child: Text('Oldest', style: TextStyle(color: Color(0xFFAEE7FF))),
+              ),
+            ],
+            color: const Color(0xFF0F2026),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFF17323D)),
+            ),
+          ),
+        ],
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -27,61 +118,146 @@ class AnnouncementsPage extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Color(0xFFAEE7FF),
+                    // Search bar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F2026),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF17323D),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: Color(0xFFAEE7FF)),
+                          decoration: const InputDecoration(
+                            hintText: 'Search announcements...',
+                            hintStyle: TextStyle(color: Color(0xFF83ACBD)),
+                            prefixIcon: Icon(Icons.search, color: Color(0xFF83ACBD)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onChanged: (value) {
+                            ref.read(announcementsSearchQueryProvider.notifier).state = value;
+                          },
+                        ),
                       ),
                     ),
-                    const Text(
-                      'Announcements',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFAEE7FF),
-                      ),
+
+                    // Club filter
+                    clubs.when(
+                      data: (clubsList) {
+                        if (clubsList.isEmpty) {
+                          return const SizedBox();
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildFilterChip('All Clubs'),
+                                ...clubsList.map((club) => _buildFilterChip(club.id, clubName: club.name)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox(),
+                      error: (_, __) => const SizedBox(),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: announcements.when(
-                  data: (announcementsList) {
-                    if (announcementsList.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No announcements yet',
-                          style: TextStyle(color: Colors.white),
+
+              // Results count and list
+              clubs.when(
+                data: (clubsList) {
+                  if (filteredAnnouncements.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              color: Color(0xFF83ACBD),
+                              size: 48,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No announcements found',
+                              style: TextStyle(
+                                color: Color(0xFFAEE7FF),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'Try selecting a different club'
+                                  : 'Try a different search term',
+                              style: const TextStyle(
+                                color: Color(0xFF83ACBD),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: announcementsList.length,
-                      itemBuilder: (context, index) {
-                        final announcement = announcementsList[index];
-                        return MarkdownAnnouncementCard(
-                          announcement: announcement,
-                        );
-                      },
+                      ),
                     );
-                  },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == 0) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Found ${filteredAnnouncements.length} announcement${filteredAnnouncements.length != 1 ? 's' : ''}',
+                                style: const TextStyle(
+                                  color: Color(0xFF83ACBD),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }
+                          final announcement = filteredAnnouncements[index - 1];
+                          return MarkdownAnnouncementCard(
+                            announcement: announcement,
+                          );
+                        },
+                        childCount: filteredAnnouncements.length + 1,
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAEE7FF)),
+                    ),
                   ),
-                  error: (error, stack) => Center(
+                ),
+                error: (error, stack) => SliverFillRemaining(
+                  child: Center(
                     child: Text(
                       'Error loading announcements: $error',
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   ),
                 ),
@@ -89,6 +265,38 @@ class AnnouncementsPage extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String clubId, {String? clubName}) {
+    final selectedClub = ref.watch(announcementsFilterClubProvider);
+    final isSelected = selectedClub == clubId;
+    final displayName = clubName ?? clubId;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(
+          displayName == clubId ? 'All Clubs' : displayName,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
+            fontSize: 12,
+          ),
+        ),
+        backgroundColor: const Color(0xFF0F2026),
+        selectedColor: const Color(0xFF17323D),
+        checkmarkColor: const Color(0xFFAEE7FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
+          ),
+        ),
+        onSelected: (selected) {
+          ref.read(announcementsFilterClubProvider.notifier).state = selected ? clubId : 'All Clubs';
+        },
       ),
     );
   }

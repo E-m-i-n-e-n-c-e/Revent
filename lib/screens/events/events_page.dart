@@ -6,19 +6,31 @@ import 'package:events_manager/models/event.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:intl/intl.dart';
 
-class EventsPage extends ConsumerWidget {
+class EventsPage extends ConsumerStatefulWidget {
   const EventsPage({super.key});
 
-  List<Event> _getUpcomingEvents(List<Event> events) {
-    final now = DateTime.now();
-    return events.where((event) => event.startTime.isAfter(now)).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  @override
+  ConsumerState<EventsPage> createState() => _EventsPageState();
+}
+
+class _EventsPageState extends ConsumerState<EventsPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Reset filter state when screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(eventsSearchQueryProvider.notifier).state = '';
+      ref.read(eventsFilterClubProvider.notifier).state = 'All Clubs';
+      ref.read(eventsViewOptionProvider.notifier).state = 'All Events';
+    });
   }
 
-  List<Event> _getPastEvents(List<Event> events) {
-    final now = DateTime.now();
-    return events.where((event) => event.startTime.isBefore(now)).toList()
-      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Map<DateTime, List<Event>> _groupEventsByDate(List<Event> events) {
@@ -37,46 +49,30 @@ class EventsPage extends ConsumerWidget {
     return groupedEvents;
   }
 
-  Widget _buildSectionHeader(String title, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 11, bottom: 8),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF173240),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              count.toString(),
-              style: const TextStyle(
-                color: Color(0xFFAEE7FF),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(eventsStreamProvider);
+  Widget build(BuildContext context) {
+    final filteredEvents = ref.watch(filteredEventsProvider);
     final clubs = ref.watch(clubsStreamProvider);
+    final viewOption = ref.watch(eventsViewOptionProvider);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Events',
+          style: TextStyle(
+            color: Color(0xFFAEE7FF),
+            fontSize: 23,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -89,114 +85,199 @@ class EventsPage extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Color(0xFFAEE7FF),
+                    // Search bar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F2026),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF17323D),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: Color(0xFFAEE7FF)),
+                          decoration: const InputDecoration(
+                            hintText: 'Search events...',
+                            hintStyle: TextStyle(color: Color(0xFF83ACBD)),
+                            prefixIcon: Icon(Icons.search, color: Color(0xFF83ACBD)),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onChanged: (value) {
+                            ref.read(eventsSearchQueryProvider.notifier).state = value;
+                          },
+                        ),
                       ),
                     ),
-                    const Text(
-                      'Events',
-                      style: TextStyle(
-                        color: Color(0xFFAEE7FF),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+
+                    // Filter options
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Row(
+                        children: [
+                          // View filter (All/Upcoming/Past)
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildViewFilterChip('All Events'),
+                                  _buildViewFilterChip('Upcoming Events'),
+                                  _buildViewFilterChip('Past Events'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+
+                    // Club filter
+                    clubs.when(
+                      data: (clubsList) {
+                        if (clubsList.isEmpty) {
+                          return const SizedBox();
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildClubFilterChip('All Clubs'),
+                                ...clubsList.map((club) => _buildClubFilterChip(club.id, clubName: club.name)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox(),
+                      error: (_, __) => const SizedBox(),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: events.when(
-                  data: (eventsList) {
-                    if (eventsList.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No events available',
-                          style: TextStyle(
-                            color: Color(0xFFAEE7FF),
-                            fontSize: 16,
-                          ),
+
+              // Results count and list
+              clubs.when(
+                data: (clubsList) {
+                  if (filteredEvents.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              color: Color(0xFF83ACBD),
+                              size: 48,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No events found',
+                              style: TextStyle(
+                                color: Color(0xFFAEE7FF),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'Try selecting different filters'
+                                  : 'Try a different search term',
+                              style: const TextStyle(
+                                color: Color(0xFF83ACBD),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    }
-
-                    final upcomingEvents = _getUpcomingEvents(eventsList);
-                    final pastEvents = _getPastEvents(eventsList);
-
-                    final upcomingGrouped = _groupEventsByDate(upcomingEvents);
-                    final pastGrouped = _groupEventsByDate(pastEvents);
-
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 11),
-                      children: [
-                        if (upcomingEvents.isNotEmpty) ...[
-                          _buildSectionHeader('Upcoming Events', upcomingEvents.length),
-                          ...upcomingGrouped.entries.expand((entry) => [
-                                buildDateSeparator(entry.key),
-                                ...entry.value.map((event) {
-                                  final club = clubs.value?.firstWhere(
-                                    (club) => club.id == event.clubId,
-                                    orElse: () => Club(
-                                      id: '',
-                                      name: '',
-                                      logoUrl: '',
-                                      backgroundImageUrl: '',
-                                    ),
-                                  );
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ExpandableEventCard(
-                                      event: event,
-                                      club: club,
-                                      isPastEvent: false,
-                                    ),
-                                  );
-                                }),
-                              ]),
-                          const SizedBox(height: 24),
-                        ],
-                        if (pastEvents.isNotEmpty) ...[
-                          _buildSectionHeader('Past Events', pastEvents.length),
-                          ...pastGrouped.entries.expand((entry) => [
-                                buildDateSeparator(entry.key),
-                                ...entry.value.map((event) {
-                                  final club = clubs.value?.firstWhere(
-                                    (club) => club.id == event.clubId,
-                                    orElse: () => Club(
-                                      id: '',
-                                      name: '',
-                                      logoUrl: '',
-                                      backgroundImageUrl: '',
-                                    ),
-                                  );
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ExpandableEventCard(
-                                      event: event,
-                                      club: club,
-                                      isPastEvent: true,
-                                    ),
-                                  );
-                                }),
-                              ]),
-                        ],
-                      ],
+                      ),
                     );
-                  },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  }
+
+                  // Group events by date
+                  final groupedEvents = _groupEventsByDate(filteredEvents);
+                  final sortedDates = groupedEvents.keys.toList()
+                    ..sort((a, b) => viewOption == 'Past Events'
+                        ? b.compareTo(a)
+                        : a.compareTo(b));
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == 0) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Found ${filteredEvents.length} event${filteredEvents.length != 1 ? 's' : ''}',
+                                style: const TextStyle(
+                                  color: Color(0xFF83ACBD),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }
+                          final dateIndex = (index - 1) ~/ 2;
+                          final isDateHeader = (index - 1) % 2 == 0;
+
+                          if (isDateHeader) {
+                            final date = sortedDates[dateIndex];
+                            return buildDateSeparator(date);
+                          } else {
+                            final date = sortedDates[dateIndex];
+                            final dateEvents = groupedEvents[date]!;
+                            return Column(
+                              children: dateEvents.map((event) {
+                                final club = clubsList.firstWhere(
+                                  (club) => club.id == event.clubId,
+                                  orElse: () => Club(
+                                    id: '',
+                                    name: '',
+                                    logoUrl: '',
+                                    backgroundImageUrl: '',
+                                  ),
+                                );
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: ExpandableEventCard(
+                                    event: event,
+                                    club: club,
+                                    isPastEvent: DateTime.now().isAfter(event.endTime),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          }
+                        },
+                        childCount: sortedDates.length * 2 + 1,
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAEE7FF)),
+                    ),
                   ),
-                  error: (error, stack) => Center(
+                ),
+                error: (error, stack) => SliverFillRemaining(
+                  child: Center(
                     child: Text(
                       'Error loading events: $error',
                       style: const TextStyle(color: Colors.red),
@@ -207,6 +288,69 @@ class EventsPage extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildClubFilterChip(String clubId, {String? clubName}) {
+    final selectedClub = ref.watch(eventsFilterClubProvider);
+    final isSelected = selectedClub == clubId;
+    final displayName = clubName ?? clubId;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(
+          displayName == clubId ? 'All Clubs' : displayName,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
+            fontSize: 12,
+          ),
+        ),
+        backgroundColor: const Color(0xFF0F2026),
+        selectedColor: const Color(0xFF17323D),
+        checkmarkColor: const Color(0xFFAEE7FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
+          ),
+        ),
+        onSelected: (selected) {
+          ref.read(eventsFilterClubProvider.notifier).state = selected ? clubId : 'All Clubs';
+        },
+      ),
+    );
+  }
+
+  Widget _buildViewFilterChip(String viewOption) {
+    final selectedView = ref.watch(eventsViewOptionProvider);
+    final isSelected = selectedView == viewOption;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(
+          viewOption,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
+            fontSize: 12,
+          ),
+        ),
+        backgroundColor: const Color(0xFF0F2026),
+        selectedColor: const Color(0xFF17323D),
+        checkmarkColor: const Color(0xFFAEE7FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
+          ),
+        ),
+        onSelected: (selected) {
+          ref.read(eventsViewOptionProvider.notifier).state = selected ? viewOption : 'All Events';
+        },
       ),
     );
   }

@@ -232,108 +232,120 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     final clubs = ref.watch(clubsStreamProvider);
     _isLoading = events.isLoading || clubs.isLoading;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Events Calendar',
-          style: TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentView == CalendarView.day) {
+          setState(() {
+            _currentView = CalendarView.month;
+          });
+          return false;  // Don't pop the screen
+        }
+        return true;  // Allow normal back button behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Revent Calendar',
+            style: TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+          backgroundColor: const Color(0xFF06222F),
+          leading: _currentView == CalendarView.day
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Color(0xFF83ACBD)),
+                  onPressed: () {
+                    setState(() {
+                      _currentView = CalendarView.month;
+                    });
+                  },
+                )
+              : null,
         ),
-        backgroundColor: const Color(0xFF06222F),
-        leading: _currentView == CalendarView.day
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF83ACBD)),
-                onPressed: () {
-                  setState(() {
-                    _currentView = CalendarView.month;
-                  });
-                },
-              )
-            : null,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF07181F),
-              Color(0xFF000000),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF07181F),
+                Color(0xFF000000),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : events.when(
-                data: (eventsList) {
-                  return clubs.when(
-                    data: (clubsList) {
-                      _appointments = eventsList.map((event) {
-                        // Find the club for this event
-                        final club = clubsList.firstWhere(
-                          (club) => club.id == event.clubId,
-                          orElse: () => Club(
-                            id: '',
-                            name: '',
-                            logoUrl: '',
-                            backgroundImageUrl: '',
-                          ),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : events.when(
+                  data: (eventsList) {
+                    return clubs.when(
+                      data: (clubsList) {
+                        _appointments = eventsList.map((event) {
+                          // Find the club for this event
+                          final club = clubsList.firstWhere(
+                            (club) => club.id == event.clubId,
+                            orElse: () => Club(
+                              id: '',
+                              name: '',
+                              logoUrl: '',
+                              backgroundImageUrl: '',
+                            ),
+                          );
+
+                          // Store club logo URL in notes field with a separator
+                          final notesWithLogo = '${event.description}|${club.logoUrl}';
+
+                          return Appointment(
+                            startTime: event.startTime,
+                            endTime: event.endTime,
+                            subject: event.title,
+                            notes: notesWithLogo,
+                            location: event.venue,
+                            resourceIds: [event.clubId],
+                            color: const Color(0xFF0F2027), // Use consistent color for all events
+                            id: event.id,
+                          );
+                        }).toList();
+
+                        return EventsCalendar(
+                          currentView: _currentView,
+                          selectedDate: _selectedDate,
+                          appointments: _appointments,
+                          onTap: (details) => _onCalendarTapped(details, eventsList),
                         );
-
-                        // Store club logo URL in notes field with a separator
-                        final notesWithLogo = '${event.description}|${club.logoUrl}';
-
-                        return Appointment(
-                          startTime: event.startTime,
-                          endTime: event.endTime,
-                          subject: event.title,
-                          notes: notesWithLogo,
-                          location: event.venue,
-                          resourceIds: [event.clubId],
-                          color: const Color(0xFF0F2027), // Use consistent color for all events
-                          id: event.id,
-                        );
-                      }).toList();
-
-                      return EventsCalendar(
-                        currentView: _currentView,
-                        selectedDate: _selectedDate,
-                        appointments: _appointments,
-                        onTap: (details) => _onCalendarTapped(details, eventsList),
-                      );
-                    },
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (error, stack) => Center(
-                      child: Text('Error loading clubs: $error',
-                        style: const TextStyle(color: Colors.red)),
-                    ),
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(
-                  child: Text('Error loading events: $error',
-                    style: const TextStyle(color: Colors.red)),
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => Center(
+                        child: Text('Error loading clubs: $error',
+                          style: const TextStyle(color: Colors.red)),
+                      ),
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text('Error loading events: $error',
+                      style: const TextStyle(color: Colors.red)),
+                  ),
                 ),
-              ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_selectedDate != null) {
-            _addEvent();
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please select a date first'),
-                backgroundColor: Color(0xFF06222F),
-              ),
-            );
-          }
-        },
-        backgroundColor: const Color(0xFF0E668A),
-        child: const Icon(Icons.add, color: Color(0xFFAEE7FF)),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (_selectedDate != null) {
+              _addEvent();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please select a date first'),
+                  backgroundColor: Color(0xFF06222F),
+                ),
+              );
+            }
+          },
+          backgroundColor: const Color(0xFF0E668A),
+          child: const Icon(Icons.add, color: Color(0xFFAEE7FF)),
+        ),
       ),
     );
   }

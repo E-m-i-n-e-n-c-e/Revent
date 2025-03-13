@@ -222,9 +222,14 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                       color: const Color(0xFF71C2E4),
                                       width: 2,
                                     ),
-                                    image: DecorationImage(
-                                      image: NetworkImage(currentClub.logoUrl),
-                                      fit: BoxFit.cover,
+                                  ),
+                                  child: Hero(
+                                    tag: 'club-logo-${currentClub.id}',
+                                    child: ClipOval(
+                                      child: Image.network(
+                                        currentClub.logoUrl,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                 ),

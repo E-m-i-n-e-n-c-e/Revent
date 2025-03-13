@@ -504,7 +504,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF06222F),
       appBar: AppBar(
-        title: const Text('Map'),
+        title: const   Text(
+            'Revent Map',
+            style: TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         backgroundColor: const Color(0xFF06222F),
         actions: [
           IconButton(

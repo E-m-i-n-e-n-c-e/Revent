@@ -30,6 +30,62 @@
           }
         },
         {
+          "client_id": "271665798346-b6o20lapjfkjhljamgvh2nctds144bp6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "ef0b0636f9d23241681b489ceac78bd2ecdc00a9"
+          }
+        },
+        {
+          "client_id": "271665798346-df7m2r1lkmff1ajs3kfn560kvcnsvvld.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "01b139a4b511a0ea3d58b2b5d29c001f8d902459"
+          }
+        },
+        {
+          "client_id": "271665798346-fa3uens1uhcqk9q21gjqmclgqrkp1l4a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "d0ca2d7a015b96cf4807b6824b5f611abbec75dc"
+          }
+        },
+        {
+          "client_id": "271665798346-mvitlemb07oenhglq8k4e8rt6luldaeq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "ed17dba8abf32c635aec62d33d88a7826bf7fe6e"
+          }
+        },
+        {
+          "client_id": "271665798346-nb8i4raufha0j87v4icpnil9melqmuqo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "5b7bde28165b1991e48e2aacf5c465a8e966d240"
+          }
+        },
+        {
+          "client_id": "271665798346-nfoeil2k6jhaso98g75787ig56eqa6sn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "f24c938183fa67c2ccad4c089964a5d1459db6f2"
+          }
+        },
+        {
+          "client_id": "271665798346-rltganhh6lks3n19rr9k1l5n6ibqf08b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.events_manager",
+            "certificate_hash": "fd9e39540a152899b56b3323fa79c07012f9057f"
+          }
+        },
+        {
           "client_id": "271665798346-bqalgst3gesb4979nacjplai064dpusf.apps.googleusercontent.com",
           "client_type": 3
         }
