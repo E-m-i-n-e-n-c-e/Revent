@@ -5,7 +5,7 @@ import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/providers/stream_providers.dart';
-import 'package:events_manager/screens/clubs/club_page.dart' hide ExpandableEventCard;
+import 'package:events_manager/screens/clubs/club_page.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -19,6 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   bool _isInitialized = false;
   bool isExpanded = false;
 
@@ -37,165 +38,182 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
   }
 
+  void _submitSearch() {
+    _searchFocusNode.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchResults = ref.watch(searchResultsProvider);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: const Text(
-            'Search',
-            style: TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 23,
-              fontWeight: FontWeight.w600,
+    return PopScope(
+      canPop: !_searchFocusNode.hasFocus,
+      onPopInvokedWithResult: (didPop,result) {
+        if (_searchFocusNode.hasFocus) {
+          _searchFocusNode.unfocus();
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: const Text(
+              'Search',
+              style: TextStyle(
+                color: Color(0xFFAEE7FF),
+                fontSize: 23,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF07181F), Color(0xFF000000)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF07181F), Color(0xFF000000)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2026),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF17323D),
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(color: Color(0xFFAEE7FF)),
-                    decoration: const InputDecoration(
-                      hintText: 'Search Revent',
-                      hintStyle: TextStyle(color: Color(0xFF83ACBD)),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF83ACBD)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onChanged: (value) => ref.read(searchQueryProvider.notifier).state = value,
-                    autofocus: false,
-                  ),
-                ),
-              ),
-
-              // Scrollable content
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    // Filter chips
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Center(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildFilterChip('All'),
-                                _buildFilterChip('Events'),
-                                _buildFilterChip('Announcements'),
-                                _buildFilterChip('Clubs'),
-                              ],
-                            ),
-                          ),
-                        ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F2026),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF17323D),
+                        width: 1,
                       ),
                     ),
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      style: const TextStyle(color: Color(0xFFAEE7FF)),
+                      decoration: const InputDecoration(
+                        hintText: 'Search Revent',
+                        hintStyle: TextStyle(color: Color(0xFF83ACBD)),
+                        prefixIcon: Icon(Icons.search, color: Color(0xFF83ACBD)),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onChanged: (value) =>
+                          ref.read(searchQueryProvider.notifier).state = value,
+                      onSubmitted: (_) => _submitSearch(),
+                      autofocus: false,
+                    ),
+                  ),
+                ),
 
-                    // Results count
-                    if (_isInitialized && searchResults.isNotEmpty)
+                // Scrollable content
+                Expanded(
+                  child: CustomScrollView(
+                    slivers: [
+                      // Filter chips
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Found ${searchResults.length} result${searchResults.length != 1 ? 's' : ''}',
-                                style: const TextStyle(
-                                  color: Color(0xFF83ACBD),
-                                  fontSize: 14,
-                                ),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Center(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildFilterChip('All'),
+                                  _buildFilterChip('Events'),
+                                  _buildFilterChip('Announcements'),
+                                  _buildFilterChip('Clubs'),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
 
-                    // Results list
-                    !_isInitialized || searchResults.isEmpty
-                      ? SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                      // Results count
+                      if (_isInitialized && searchResults.isNotEmpty)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: Row(
                               children: [
-                                Icon(
-                                  _searchController.text.isEmpty ? Icons.search : Icons.search_off,
-                                  color: const Color(0xFF83ACBD),
-                                  size: 48,
-                                ),
-                                const SizedBox(height: 16),
                                 Text(
-                                  _searchController.text.isEmpty
-                                    ? 'Search for events, announcements, or clubs'
-                                    : 'No results found',
+                                  'Found ${searchResults.length} result${searchResults.length != 1 ? 's' : ''}',
                                   style: const TextStyle(
-                                    color: Color(0xFFAEE7FF),
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF83ACBD),
+                                    fontSize: 14,
                                   ),
                                 ),
-                                if (_searchController.text.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Try a different search term or filter',
-                                    style: const TextStyle(
-                                      color: Color(0xFF83ACBD),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
-                        )
-                      : SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final result = searchResults[index];
-                                return _buildSearchResultCard(result);
-                              },
-                              childCount: searchResults.length,
-                            ),
-                          ),
                         ),
-                  ],
+
+                      // Results list
+                      !_isInitialized || searchResults.isEmpty
+                          ? SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _searchController.text.isEmpty
+                                          ? Icons.search
+                                          : Icons.search_off,
+                                      color: const Color(0xFF83ACBD),
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _searchController.text.isEmpty
+                                          ? 'Search for events, announcements, or clubs'
+                                          : 'No results found',
+                                      style: const TextStyle(
+                                        color: Color(0xFFAEE7FF),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (_searchController.text.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Try a different search term or filter',
+                                        style: const TextStyle(
+                                          color: Color(0xFF83ACBD),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            )
+                          : SliverPadding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final result = searchResults[index];
+                                    return _buildSearchResultCard(result);
+                                  },
+                                  childCount: searchResults.length,
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -213,7 +231,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
+            color:
+                isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
             fontSize: 12,
           ),
         ),
@@ -223,7 +242,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
+            color:
+                isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
           ),
         ),
         onSelected: (bool selected) {
@@ -252,7 +272,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
 
     final isPastEvent = DateTime.now().isAfter(event.endTime);
-    final timeRange = '${DateFormat('h:mm a').format(event.startTime)} - ${DateFormat('h:mm a').format(event.endTime)}';
+    final timeRange =
+        '${DateFormat('h:mm a').format(event.startTime)} - ${DateFormat('h:mm a').format(event.endTime)}';
     final dateFormatted = DateFormat('EEE, MMM d').format(event.startTime);
 
     return Card(
@@ -265,6 +286,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       elevation: 4,
       child: InkWell(
         onTap: () {
+          _submitSearch();
           showModalBottomSheet(
             context: context,
             backgroundColor: const Color(0xFF0F2027),
@@ -397,7 +419,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         child: const Text('GIVE FEEDBACK'),
                       ),
                     ),
-                  ] else if (!isPastEvent && event.registrationLink != null) ...[
+                  ] else if (!isPastEvent &&
+                      event.registrationLink != null) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -407,7 +430,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        onPressed: () => launchUrlExternal(event.registrationLink!),
+                        onPressed: () =>
+                            launchUrlExternal(event.registrationLink!),
                         child: const Text('REGISTER'),
                       ),
                     ),
@@ -462,9 +486,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isPastEvent ? const Color(0xFF173240) : const Color(0xFF0E668A),
+                      color: isPastEvent
+                          ? const Color(0xFF173240)
+                          : const Color(0xFF0E668A),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -562,6 +589,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
           onTap: () {
+            _submitSearch();
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -585,7 +613,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     CircleAvatar(
                       radius: 16,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: NetworkImage(getClubLogo(ref, announcement.clubId)),
+                      backgroundImage:
+                          NetworkImage(getClubLogo(ref, announcement.clubId)),
                       child: null,
                     ),
                     const SizedBox(width: 12),
@@ -762,7 +791,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           borderRadius: BorderRadius.circular(8),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width - 64, // Account for padding
+                              maxWidth: MediaQuery.of(context).size.width -
+                                  64, // Account for padding
                             ),
                             child: Image.network(
                               uri.toString(),
@@ -795,7 +825,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -816,7 +847,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                             const SizedBox(width: 4),
                             Icon(
-                              isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
+                              isExpanded
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward,
                               size: 12,
                               color: const Color(0xFF83ACBD),
                             ),
@@ -844,6 +877,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       elevation: 4,
       child: InkWell(
         onTap: () {
+          _submitSearch();
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -889,7 +923,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF173240),
                         borderRadius: BorderRadius.circular(12),
@@ -921,6 +956,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 

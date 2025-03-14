@@ -12,7 +12,7 @@ class AllClubsPage extends ConsumerStatefulWidget {
 }
 
 class _AllClubsPageState extends ConsumerState<AllClubsPage> {
-  String _searchQuery = '';
+  final String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   String _sortOption = 'Name A-Z';
 
@@ -28,10 +28,6 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
         return clubs..sort((a, b) => a.name.compareTo(b.name));
       case 'Name Z-A':
         return clubs..sort((a, b) => b.name.compareTo(a.name));
-      case 'Recently Added':
-        // This is a placeholder - we don't have a creation date in the Club model
-        // In a real app, you would sort by creation date
-        return clubs;
       default:
         return clubs;
     }
@@ -54,7 +50,7 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
           'All Clubs',
           style: TextStyle(
             color: Color(0xFFAEE7FF),
-            fontSize: 20,
+            fontSize: 23,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -100,16 +96,6 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
                   ],
                 ),
               ),
-              const PopupMenuItem(
-                value: 'Recently Added',
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time, size: 18, color: Color(0xFFAEE7FF)),
-                    SizedBox(width: 8),
-                    Text('Recently Added', style: TextStyle(color: Color(0xFFAEE7FF))),
-                  ],
-                ),
-              ),
             ],
             color: const Color(0xFF0F2026),
             shape: RoundedRectangleBorder(
@@ -130,35 +116,6 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
         child: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2026),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF17323D),
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(color: Color(0xFFAEE7FF)),
-                    decoration: const InputDecoration(
-                      hintText: 'Search clubs...',
-                      hintStyle: TextStyle(color: Color(0xFF83ACBD)),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF83ACBD)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value.toLowerCase();
-                      });
-                    },
-                  ),
-                ),
-              ),
               Expanded(
                 child: clubs.when(
                   data: (clubsList) {
@@ -209,20 +166,6 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
 
                     return Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Found ${sortedClubs.length} club${sortedClubs.length != 1 ? 's' : ''}',
-                                style: const TextStyle(
-                                  color: Color(0xFF83ACBD),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         Expanded(
                           child: GridView.builder(
                             padding: const EdgeInsets.all(16),

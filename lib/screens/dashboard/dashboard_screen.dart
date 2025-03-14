@@ -119,6 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             onPressed: () {
+                              ref.read(announcementsFilterClubProvider.notifier).state = 'All Clubs';
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -151,7 +152,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               style: IconButton.styleFrom(
                                 padding: EdgeInsets.all(0),
                               ),
-                              onPressed: () async {
+                              onPressed: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -275,7 +276,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         const SizedBox(width: 14),
                         Text(
-                          "Today's Events",
+                          "Upcoming Events",
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(width: 5),
@@ -286,6 +287,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           onPressed: () {
+                            ref.read(eventsFilterClubProvider.notifier).state = 'All Clubs';
                             Navigator.push(
                               context,
                               MaterialPageRoute(

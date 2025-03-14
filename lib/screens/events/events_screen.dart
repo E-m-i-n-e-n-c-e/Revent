@@ -22,20 +22,17 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _onCalendarTapped(CalendarTapDetails details, List<Event> events) {
     if (details.targetElement == CalendarElement.calendarCell) {
-      if (_selectedDate != null &&
+      if (_currentView != CalendarView.day &&
+          _selectedDate != null &&
           details.date!.year == _selectedDate!.year &&
           details.date!.month == _selectedDate!.month &&
           details.date!.day == _selectedDate!.day) {
         // If tapping already selected date, go to day view
         setState(() {
           _currentView = CalendarView.day;
+          debugPrint("Calendar tapped");
         });
       } else {
         // Otherwise just select the new date
@@ -186,7 +183,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     await showDialog<Event>(
       context: context,
       builder: (context) => AddEventDialog(
-        initialDate: selectedDate.add(const Duration(hours: 12)),
+        initialDate: _currentView == CalendarView.day
+            ? selectedDate
+            : selectedDate.add(const Duration(hours: 12)),
         finalDate: _currentView == CalendarView.day
             ? selectedDate.add(const Duration(hours: 1))
             : selectedDate.add(const Duration(hours: 23, minutes: 59)),
@@ -233,15 +232,17 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     _isLoading = events.isLoading || clubs.isLoading;
 
     // ignore: deprecated_member_use
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop:_currentView != CalendarView.day,
+      onPopInvokedWithResult: (didPop,result) async {
         if (_currentView == CalendarView.day) {
           setState(() {
             _currentView = CalendarView.month;
+            _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
           });
-          return false;  // Don't pop the screen
+        await Future.delayed(const Duration(milliseconds: 50));
+        setState(() {});
         }
-        return true;  // Allow normal back button behavior
       },
       child: Scaffold(
         appBar: AppBar(
@@ -260,6 +261,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   onPressed: () {
                     setState(() {
                       _currentView = CalendarView.month;
+                      _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
                     });
                   },
                 )
