@@ -1,9 +1,9 @@
 import 'package:events_manager/providers/stream_providers.dart';
-import 'package:events_manager/screens/events/event_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:events_manager/models/event.dart';
+import 'package:events_manager/models/club.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'event_dialogs.dart';
 import 'events_calendar.dart';
@@ -18,28 +18,28 @@ class EventsScreen extends ConsumerStatefulWidget {
 class _EventsScreenState extends ConsumerState<EventsScreen> {
   List<Appointment> _appointments = [];
   CalendarView _currentView = CalendarView.month;
-  DateTime? _selectedDate;
+  DateTime? _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   bool _isLoading = true;
   String? _errorMessage;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _handleDoubleTap(TapDownDetails details) {
-    if (_selectedDate != null) {
-      setState(() {
-        _currentView = CalendarView.day;
-      });
-    }
-  }
-
   void _onCalendarTapped(CalendarTapDetails details, List<Event> events) {
     if (details.targetElement == CalendarElement.calendarCell) {
-      setState(() {
-        _selectedDate = details.date;
-      });
+      if (_currentView != CalendarView.day &&
+          _selectedDate != null &&
+          details.date!.year == _selectedDate!.year &&
+          details.date!.month == _selectedDate!.month &&
+          details.date!.day == _selectedDate!.day) {
+        // If tapping already selected date, go to day view
+        setState(() {
+          _currentView = CalendarView.day;
+          debugPrint("Calendar tapped");
+        });
+      } else {
+        // Otherwise just select the new date
+        setState(() {
+          _selectedDate = details.date;
+        });
+      }
     } else if (details.targetElement == CalendarElement.appointment) {
       final Appointment tappedAppointment = details.appointments![0];
       final Event selectedEvent = events.firstWhere((event) => event.id == tappedAppointment.id);
@@ -183,7 +183,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     await showDialog<Event>(
       context: context,
       builder: (context) => AddEventDialog(
-        initialDate: selectedDate.add(const Duration(hours: 12)),
+        initialDate: _currentView == CalendarView.day
+            ? selectedDate
+            : selectedDate.add(const Duration(hours: 12)),
         finalDate: _currentView == CalendarView.day
             ? selectedDate.add(const Duration(hours: 1))
             : selectedDate.add(const Duration(hours: 23, minutes: 59)),
@@ -226,67 +228,126 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       );
     }
     final events = ref.watch(eventsStreamProvider);
-    _isLoading = events.isLoading;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events Calendar'),
-        backgroundColor: const Color(0xFF06222F),
-        leading: _currentView == CalendarView.day
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF83ACBD)),
-                onPressed: () {
-                  setState(() {
-                    _currentView = CalendarView.month;
-                  });
-                },
-              )
-            : null,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GestureDetector(
-              onDoubleTapDown: _handleDoubleTap,
-              child: events.when(
-                data: (eventsList) {
-                  _appointments = eventsList.map((event) {
-                    return Appointment(
-                      startTime: event.startTime,
-                      endTime: event.endTime,
-                      subject: event.title,
-                      notes: event.description,
-                      location: event.venue,
-                      resourceIds: [event.clubId],
-                      color: getColorForClub(event.clubId),
-                      id: event.id,
-                    );
-                  }).toList();
-                  return EventsCalendar(
-                    currentView: _currentView,
-                    selectedDate: _selectedDate,
-                    appointments: _appointments,
-                    onTap: (details) => _onCalendarTapped(details, eventsList),
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) =>
-                    Center(child: Text('Error loading events: $error')),
-              ),
+    final clubs = ref.watch(clubsStreamProvider);
+    _isLoading = events.isLoading || clubs.isLoading;
+
+    // ignore: deprecated_member_use
+    return PopScope(
+      canPop:_currentView != CalendarView.day,
+      onPopInvokedWithResult: (didPop,result) async {
+        if (_currentView == CalendarView.day) {
+          setState(() {
+            _currentView = CalendarView.month;
+            _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
+          });
+        await Future.delayed(const Duration(milliseconds: 50));
+        setState(() {});
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Revent Calendar',
+            style: TextStyle(
+              color: Color(0xFFAEE7FF),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_selectedDate != null) {
-            _addEvent();
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please select a date first'),
-                backgroundColor: Color(0xFF06222F),
-              ),
-            );
-          }
-        },
-        backgroundColor: const Color(0xFF83ACBD),
-        child: const Icon(Icons.add),
+          ),
+          backgroundColor: const Color(0xFF06222F),
+          leading: _currentView == CalendarView.day
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Color(0xFF83ACBD)),
+                  onPressed: () {
+                    setState(() {
+                      _currentView = CalendarView.month;
+                      _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
+                    });
+                  },
+                )
+              : null,
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF07181F),
+                Color(0xFF000000),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : events.when(
+                  data: (eventsList) {
+                    return clubs.when(
+                      data: (clubsList) {
+                        _appointments = eventsList.map((event) {
+                          // Find the club for this event
+                          final club = clubsList.firstWhere(
+                            (club) => club.id == event.clubId,
+                            orElse: () => Club(
+                              id: '',
+                              name: '',
+                              logoUrl: '',
+                              backgroundImageUrl: '',
+                            ),
+                          );
+
+                          // Store club logo URL in notes field with a separator
+                          final notesWithLogo = '${event.description}|${club.logoUrl}';
+
+                          return Appointment(
+                            startTime: event.startTime,
+                            endTime: event.endTime,
+                            subject: event.title,
+                            notes: notesWithLogo,
+                            location: event.venue,
+                            resourceIds: [event.clubId],
+                            color: const Color(0xFF0F2027), // Use consistent color for all events
+                            id: event.id,
+                          );
+                        }).toList();
+
+                        return EventsCalendar(
+                          currentView: _currentView,
+                          selectedDate: _selectedDate,
+                          appointments: _appointments,
+                          onTap: (details) => _onCalendarTapped(details, eventsList),
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => Center(
+                        child: Text('Error loading clubs: $error',
+                          style: const TextStyle(color: Colors.red)),
+                      ),
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text('Error loading events: $error',
+                      style: const TextStyle(color: Colors.red)),
+                  ),
+                ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (_selectedDate != null) {
+              _addEvent();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please select a date first'),
+                  backgroundColor: Color(0xFF06222F),
+                ),
+              );
+            }
+          },
+          backgroundColor: const Color(0xFF0E668A),
+          child: const Icon(Icons.add, color: Color(0xFFAEE7FF)),
+        ),
       ),
     );
   }

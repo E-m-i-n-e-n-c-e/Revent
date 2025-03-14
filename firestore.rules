@@ -1,9 +1,69 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 🔹 Helper Functions
+    function isAdmin(clubId) {
+      let clubDoc = get(/databases/$(database)/documents/clubs/$(clubId)).data;
+      return clubDoc.adminEmails != null &&
+             clubDoc.adminEmails is list &&
+             request.auth.token.email in clubDoc.adminEmails;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // 🔹 Users Collection
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      // No delete rule - users shouldn't be able to delete their accounts
+    }
+
+    // 🔹 Clubs Collection
+    match /clubs/{clubId} {
+      allow read: if true;
+      allow update: if isAuthenticated() && isAdmin(clubId);
+      // No create/delete rules - clubs should be managed by backend
+    }
+
+    // 🔹 Events Collection
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+                   isAdmin(request.resource.data.clubId);
+      allow update: if isAuthenticated() &&
+                   isAdmin(request.resource.data.clubId);
+      allow delete: if isAuthenticated() &&
+                   isAdmin(resource.data.clubId);
+    }
+
+    // 🔹 Announcements Collection
+    match /announcements/{clubId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isAdmin(clubId);
+      allow update: if isAuthenticated() && isAdmin(clubId);
+      allow delete: if isAuthenticated() && isAdmin(clubId);
+    }
+
+    // 🔹 Map Markers Collection
+    match /mapMarkers/{markerId} {
+      allow read: if true;
+      // Any authenticated user can create/update/delete markers
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // 🔹 Deny access to any other collections by default
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
-} 
+}

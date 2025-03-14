@@ -326,3 +326,70 @@ Future<String> uploadMapMarkerImage(String filePath) async {
     rethrow;
   }
 }
+
+Future<void> updateUserClubId(String uid, String? clubId) async {
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .update({'clubId': clubId});
+}
+
+Future<String> uploadUserProfileImage(String uid, String filePath) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'users/$uid/profile_$fileName';
+
+    await supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+
+    // Update the user document with the new photo URL
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update({'photoURL': imageUrl});
+
+    return imageUrl;
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<String> uploadUserBackgroundImage(String uid, String filePath) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final file = File(filePath);
+    final fileExt = filePath.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'users/$uid/background_$fileName';
+
+    await supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+
+    // Update the user document with the new background URL
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update({'backgroundImageUrl': imageUrl});
+
+    return imageUrl;
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> updateUserProfile(String uid, {String? name, String? photoURL, String? backgroundImageUrl}) async {
+  final Map<String, dynamic> updates = {};
+  if (name != null) updates['name'] = name;
+  if (photoURL != null) updates['photoURL'] = photoURL;
+  if (backgroundImageUrl != null) updates['backgroundImageUrl'] = backgroundImageUrl;
+
+  if (updates.isNotEmpty) {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update(updates);
+  }
+}

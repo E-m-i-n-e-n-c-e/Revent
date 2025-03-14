@@ -7,7 +7,12 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 class AddAnnouncementForm extends StatefulWidget {
   final Future<void> Function(Announcement) addAnnouncement;
-  const AddAnnouncementForm({super.key, required this.addAnnouncement});
+  final String clubId;
+  const AddAnnouncementForm({
+    super.key,
+    required this.addAnnouncement,
+    required this.clubId,
+  });
 
   @override
   State<AddAnnouncementForm> createState() => _AddAnnouncementFormState();
@@ -155,7 +160,7 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                           venue: '', // Not used anymore
                           time: '', // Not used anymore
                           image: null, // Images are now in markdown
-                          clubId: 'betalabs',
+                          clubId: widget.clubId,
                           date: DateTime.now(),
                         );
 

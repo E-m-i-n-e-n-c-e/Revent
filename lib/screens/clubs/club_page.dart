@@ -222,9 +222,14 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                       color: const Color(0xFF71C2E4),
                                       width: 2,
                                     ),
-                                    image: DecorationImage(
-                                      image: NetworkImage(currentClub.logoUrl),
-                                      fit: BoxFit.cover,
+                                  ),
+                                  child: Hero(
+                                    tag: 'club-logo-${currentClub.id}',
+                                    child: ClipOval(
+                                      child: Image.network(
+                                        currentClub.logoUrl,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -588,204 +593,11 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
   Widget _buildEventCard(Event event) {
     final bool isPastEvent = DateTime.now().isAfter(event.endTime);
-    final timeRange = _formatTimeRange(event.startTime, event.endTime);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F2026),
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x40000000),
-            blurRadius: 5.1,
-            offset: Offset(0, 2),
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            event.title,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            event.description,
-            style: const TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 14,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF173240),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.access_time,
-                              color: Color(0xFFAEE7FF),
-                              size: 12,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              timeRange,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (event.venue != null && event.venue!.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF173240),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Color(0xFFAEE7FF),
-                                size: 12,
-                              ),
-                              const SizedBox(width: 4),
-                              ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context).size.width * 0.3,
-                                ),
-                                child: Text(
-                                  event.venue!,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              if (isPastEvent && event.feedbackLink != null) ...[
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E668A),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ).copyWith(
-                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.pressed)) {
-                          return Colors.white.withValues(alpha:0.1);
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  onPressed: () => launchUrlExternal(event.feedbackLink!),
-                  child: const Text(
-                    'FEEDBACK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ] else if (!isPastEvent && event.registrationLink != null) ...[
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E668A),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ).copyWith(
-                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.pressed)) {
-                          return Colors.white.withValues(alpha:0.1);
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  onPressed: () => launchUrlExternal(event.registrationLink!),
-                  child: const Text(
-                    'REGISTER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
+    return ExpandableEventCard(
+      event: event,
+      isPastEvent: isPastEvent,
     );
-  }
-
-  String _formatTimeRange(DateTime start, DateTime end) {
-    final startTime = DateFormat('h:mm a').format(start);
-    final endTime = DateFormat('h:mm a').format(end);
-    return '$startTime - $endTime';
   }
 
   Widget _buildAnnouncementCard(Announcement announcement) {
@@ -800,18 +612,12 @@ class _ClubPageState extends ConsumerState<ClubPage> {
 
 class ExpandableEventCard extends StatefulWidget {
   final Event event;
-  final String formattedDate;
-  final String formattedTime;
   final bool isPastEvent;
-  final Function(String) onLaunchUrl;
 
   const ExpandableEventCard({
     super.key,
     required this.event,
-    required this.formattedDate,
-    required this.formattedTime,
     required this.isPastEvent,
-    required this.onLaunchUrl,
   });
 
   @override
@@ -821,10 +627,17 @@ class ExpandableEventCard extends StatefulWidget {
 class _ExpandableEventCardState extends State<ExpandableEventCard> {
   bool isExpanded = false;
 
+  String _formatTimeRange(DateTime start, DateTime end) {
+    final startTime = DateFormat('h:mm a').format(start);
+    final endTime = DateFormat('h:mm a').format(end);
+    return '$startTime - $endTime';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final timeRange = _formatTimeRange(widget.event.startTime, widget.event.endTime);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF0F2026),
@@ -886,6 +699,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                           color: Color(0xFF83ACBD),
                         ),
                       ),
+                      const SizedBox(width: 4),
                       Icon(
                         isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
                         size: 12,
@@ -899,127 +713,153 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF17323D),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today,
-                      color: Color(0xFFAEE7FF),
-                      size: 12,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.formattedDate,
-                      style: const TextStyle(
-                        color: Color(0xFFAEE7FF),
-                        fontSize: 12,
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF173240),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              color: Color(0xFFAEE7FF),
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              timeRange,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      if (widget.event.venue != null && widget.event.venue!.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF173240),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Color(0xFFAEE7FF),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.3,
+                                ),
+                                child: Text(
+                                  widget.event.venue!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF17323D),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      color: Color(0xFFAEE7FF),
-                      size: 12,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.formattedTime,
-                      style: const TextStyle(
-                        color: Color(0xFFAEE7FF),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (widget.isPastEvent && widget.event.feedbackLink != null)
+              if (widget.isPastEvent && widget.event.feedbackLink != null) ...[
+                const SizedBox(width: 8),
                 ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0E668A),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      elevation: 0,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.pressed)) {
-                            return Colors.white.withValues(alpha:0.1);
-                          }
-                          return null;
-                        },
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
                     ),
-                    onPressed: () => launchUrlExternal(widget.event.feedbackLink!),
-                    child: const Text(
-                      'FEEDBACK',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  )
-              else if (!widget.isPastEvent &&
-                  widget.event.registrationLink != null)
-                ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0E668A),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      elevation: 0,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ).copyWith(
-                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.pressed)) {
-                            return Colors.white.withValues(alpha:0.1);
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    onPressed: () => launchUrlExternal(widget.event.registrationLink!),
-                    child: const Text(
-                      'REGISTER',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Colors.white.withValues(alpha:0.1);
+                        }
+                        return null;
+                      },
                     ),
                   ),
+                  onPressed: () => launchUrlExternal(widget.event.feedbackLink!),
+                  child: const Text(
+                    'FEEDBACK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ] else if (!widget.isPastEvent && widget.event.registrationLink != null) ...[
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E668A),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ).copyWith(
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Colors.white.withValues(alpha:0.1);
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  onPressed: () => launchUrlExternal(widget.event.registrationLink!),
+                  child: const Text(
+                    'REGISTER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ],

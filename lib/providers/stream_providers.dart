@@ -4,7 +4,9 @@ import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/map_marker.dart';
+import 'package:events_manager/models/user.dart';
 import 'package:events_manager/utils/firedata.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 Stream<List<Map<String, dynamic>>> loadEventsStream() {
   final firestore = FirebaseFirestore.instance;
@@ -15,8 +17,8 @@ Stream<List<Map<String, dynamic>>> loadEventsStream() {
 Stream<List<Map<String, dynamic>>> loadTodaysEventsStream() {
   final firestore = FirebaseFirestore.instance;
   final now = DateTime.now();
-  final startOfDay = DateTime(now.year, now.month, now.day);
-  final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  final startOfDay = now; // Current time
+  final endOfDay = now.add(Duration(hours: 24)); // 24 hours from now
 
   return firestore
       .collection('events')
@@ -91,14 +93,28 @@ final searchResultsProvider = Provider<List<dynamic>>((ref) {
   }
 
   if (filter == 'All' || filter == 'Events') {
-    results.addAll(events.where((event) =>
+    // Filter events by search query
+    var filteredEvents = events.where((event) =>
         event.title.toLowerCase().contains(searchQuery) ||
         event.description.toLowerCase().contains(searchQuery) ||
         event.clubId.toLowerCase().contains(searchQuery) ||
-        getClubName(event.clubId).toLowerCase().contains(searchQuery)));
+        getClubName(event.clubId).toLowerCase().contains(searchQuery)).toList();
+
+    // Sort events: upcoming first (sorted by start time), then past events (sorted by most recent)
+    final now = DateTime.now();
+    final upcomingEvents = filteredEvents.where((event) => event.startTime.isAfter(now)).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime)); // Earliest upcoming first
+    final pastEvents = filteredEvents.where((event) => event.startTime.isBefore(now)).toList()
+      ..sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent past first
+
+    // Combine the sorted lists
+    filteredEvents = [...upcomingEvents, ...pastEvents];
+
+    results.addAll(filteredEvents);
   }
 
   if (filter == 'All' || filter == 'Announcements') {
+    // Announcements are already sorted by date in the announcementsStreamProvider
     results.addAll(announcements.where((announcement) =>
         announcement.title.toLowerCase().contains(searchQuery) ||
         announcement.subtitle.toLowerCase().contains(searchQuery) ||
@@ -110,15 +126,111 @@ final searchResultsProvider = Provider<List<dynamic>>((ref) {
   }
 
   if (filter == 'All' || filter == 'Clubs') {
-    results.addAll(clubs.where((club) =>
+    // Sort clubs alphabetically by name
+    var filteredClubs = clubs.where((club) =>
         club.name.toLowerCase().contains(searchQuery) ||
-        club.id.toLowerCase().contains(searchQuery)));
+        club.id.toLowerCase().contains(searchQuery)).toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    results.addAll(filteredClubs);
   }
 
   return results;
 });
 
-// Add clubs stream provider
+// New providers for events page filtering
+final eventsSearchQueryProvider = StateProvider<String>((ref) => '');
+final eventsFilterClubProvider = StateProvider<String>((ref) => 'All Clubs');
+final eventsViewOptionProvider = StateProvider<String>((ref) => 'All Events');
+
+final filteredEventsProvider = Provider<List<Event>>((ref) {
+  final searchQuery = ref.watch(eventsSearchQueryProvider);
+  final filterClub = ref.watch(eventsFilterClubProvider);
+  final viewOption = ref.watch(eventsViewOptionProvider);
+  final events = ref.watch(eventsStreamProvider).value ?? [];
+
+  // First filter by search query
+  var filtered = searchQuery.isEmpty
+      ? events
+      : events
+          .where((event) =>
+              event.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              event.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              (event.venue != null && event.venue!.toLowerCase().contains(searchQuery.toLowerCase())))
+          .toList();
+
+  // Then filter by club if not "All Clubs"
+  if (filterClub != 'All Clubs') {
+    filtered = filtered.where((event) => event.clubId == filterClub).toList();
+  }
+
+  // Then filter by view option
+  final now = DateTime.now();
+  switch (viewOption) {
+    case 'Upcoming Events':
+      filtered = filtered.where((event) => event.startTime.isAfter(now)).toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime)); // Earliest first
+      break;
+    case 'Past Events':
+      filtered = filtered.where((event) => event.startTime.isBefore(now)).toList()
+        ..sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent first
+      break;
+    case 'All Events':
+    default:
+      // Sort upcoming first, then past events
+      final upcomingEvents = filtered.where((event) => event.startTime.isAfter(now)).toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      final pastEvents = filtered.where((event) => event.startTime.isBefore(now)).toList()
+        ..sort((a, b) => b.startTime.compareTo(a.startTime));
+      filtered = [...upcomingEvents, ...pastEvents];
+      break;
+  }
+
+  return filtered;
+});
+
+// New providers for announcements page filtering
+final announcementsSearchQueryProvider = StateProvider<String>((ref) => '');
+final announcementsFilterClubProvider = StateProvider<String>((ref) => 'All Clubs');
+final announcementsSortOptionProvider = StateProvider<String>((ref) => 'Newest First');
+
+final filteredAnnouncementsProvider = Provider<List<Announcement>>((ref) {
+  final searchQuery = ref.watch(announcementsSearchQueryProvider);
+  final filterClub = ref.watch(announcementsFilterClubProvider);
+  final sortOption = ref.watch(announcementsSortOptionProvider);
+  final announcements = ref.watch(announcementsStreamProvider).value ?? [];
+
+  // First filter by search query
+  var filtered = searchQuery.isEmpty
+      ? announcements
+      : announcements
+          .where((announcement) =>
+              announcement.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              announcement.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              announcement.subtitle.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              (announcement.venue.isNotEmpty && announcement.venue.toLowerCase().contains(searchQuery.toLowerCase())))
+          .toList();
+
+  // Then filter by club if not "All Clubs"
+  if (filterClub != 'All Clubs') {
+    filtered = filtered.where((announcement) => announcement.clubId == filterClub).toList();
+  }
+
+  // Then sort based on sort option
+  switch (sortOption) {
+    case 'Newest First':
+      filtered.sort((a, b) => b.date.compareTo(a.date));
+      break;
+    case 'Oldest First':
+      filtered.sort((a, b) => a.date.compareTo(b.date));
+      break;
+    default:
+      filtered.sort((a, b) => b.date.compareTo(a.date)); // Default to newest first
+  }
+
+  return filtered;
+});
+
 Stream<List<Map<String, dynamic>>> loadClubsStream() {
   final firestore = FirebaseFirestore.instance;
   return firestore
@@ -138,7 +250,17 @@ final mapMarkersProvider = FutureProvider<List<MapMarker>>((ref) async {
   return loadMapMarkers();
 });
 
-// Add a function to invalidate all providers
+
+final currentUserProvider = StreamProvider<AppUser?>((ref) {
+  final auth = FirebaseAuth.instance;
+  return auth.authStateChanges().asyncMap((user) async {
+    if (user == null) return null;
+    return AppUser.fromUid(user.uid);
+  });
+});
+
+
+
 void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(eventsStreamProvider);
   ref.invalidate(todaysEventsStreamProvider);
@@ -146,4 +268,7 @@ void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(clubsStreamProvider);
   ref.invalidate(searchResultsProvider);
   ref.invalidate(mapMarkersProvider);
+  ref.invalidate(currentUserProvider);
+  ref.invalidate(filteredEventsProvider);
+  ref.invalidate(filteredAnnouncementsProvider);
 }

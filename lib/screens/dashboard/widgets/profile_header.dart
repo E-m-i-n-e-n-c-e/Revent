@@ -1,4 +1,4 @@
-import 'package:events_manager/screens/profile.dart';
+import 'package:events_manager/screens/profile/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -84,7 +84,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProfileScreen(user: user),
+                    builder: (context) => ProfileScreen(),
                   ),
                 );
               },

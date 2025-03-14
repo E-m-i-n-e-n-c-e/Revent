@@ -1,13 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/providers/stream_providers.dart';
-import 'package:events_manager/models/club.dart';
 import 'package:events_manager/models/event.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:intl/intl.dart';
 
-class EventsPage extends ConsumerWidget {
+class EventsPage extends ConsumerStatefulWidget {
   const EventsPage({super.key});
+
+  @override
+  ConsumerState<EventsPage> createState() => _EventsPageState();
+}
+
+class _EventsPageState extends ConsumerState<EventsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _isSearchExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reset filter state when screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(eventsSearchQueryProvider.notifier).state = '';
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _submitSearch() {
+    _searchFocusNode.unfocus();
+  }
 
   List<Event> _getUpcomingEvents(List<Event> events) {
     final now = DateTime.now();
@@ -46,7 +74,7 @@ class EventsPage extends ConsumerWidget {
             title,
             style: const TextStyle(
               color: Color(0xFFAEE7FF),
-              fontSize: 18,
+              fontSize: 19,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -61,7 +89,7 @@ class EventsPage extends ConsumerWidget {
               count.toString(),
               style: const TextStyle(
                 color: Color(0xFFAEE7FF),
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -72,163 +100,284 @@ class EventsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(eventsStreamProvider);
+  Widget build(BuildContext context) {
+    final filteredEvents = ref.watch(filteredEventsProvider);
     final clubs = ref.watch(clubsStreamProvider);
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF07181F),
-              Color(0xFF000000),
-            ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return PopScope(
+      canPop: !_isSearchExpanded,
+      onPopInvokedWithResult: (didPop,result) {
+        if (_isSearchExpanded) {
+          setState(() {
+            _isSearchExpanded = false;
+            _searchController.clear();
+            ref.read(eventsSearchQueryProvider.notifier).state = '';
+          });
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: _isSearchExpanded
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
+                  onPressed: () {
+                    setState(() {
+                      _isSearchExpanded = false;
+                      _searchController.clear();
+                      ref.read(eventsSearchQueryProvider.notifier).state = '';
+                    });
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFAEE7FF)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+          title: _isSearchExpanded
+              ? TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  autofocus: false,
+                  style: const TextStyle(color: Color(0xFFAEE7FF)),
+                  decoration: const InputDecoration(
+                    hintText: 'Search events...',
+                    hintStyle: TextStyle(color: Color(0xFF83ACBD)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onChanged: (value) {
+                    ref.read(eventsSearchQueryProvider.notifier).state = value;
+                  },
+                  onSubmitted: (_) => _submitSearch(),
+                )
+              : const Text(
+                  'Events',
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFAEE7FF),
+                  ),
+                ),
+          actions: [
+            if (!_isSearchExpanded)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Color(0xFFAEE7FF),
-                      ),
-                    ),
-                    const Text(
-                      'Events',
-                      style: TextStyle(
-                        color: Color(0xFFAEE7FF),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.only(right:8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.search, color: Color(0xFFAEE7FF)),
+                  onPressed: () {
+                    setState(() {
+                      _isSearchExpanded = true;
+                    });
+                    // Focus the search field when expanding
+                    _searchFocusNode.requestFocus();
+                  },
                 ),
               ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: events.when(
-                  data: (eventsList) {
-                    if (eventsList.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No events available',
-                          style: TextStyle(
-                            color: Color(0xFFAEE7FF),
-                            fontSize: 16,
+          ],
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF07181F),
+                Color(0xFF000000),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+          child: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Club filter
+                      clubs.when(
+                        data: (clubsList) {
+                          if (clubsList.isEmpty) {
+                            return const SizedBox();
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildClubFilterChip('All Clubs'),
+                                  ...clubsList.map((club) => _buildClubFilterChip(club.id, clubName: club.name)),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox(),
+                        error: (_, __) => const SizedBox(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Results list
+                clubs.when(
+                  data: (clubsList) {
+                    if (filteredEvents.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.search_off,
+                                color: Color(0xFF83ACBD),
+                                size: 48,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No events found',
+                                style: TextStyle(
+                                  color: Color(0xFFAEE7FF),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _searchController.text.isEmpty
+                                    ? 'Try selecting a different club'
+                                    : 'Try a different search term',
+                                style: const TextStyle(
+                                  color: Color(0xFF83ACBD),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
                     }
 
-                    final upcomingEvents = _getUpcomingEvents(eventsList);
-                    final pastEvents = _getPastEvents(eventsList);
+                    final upcomingEvents = _getUpcomingEvents(filteredEvents);
+                    final pastEvents = _getPastEvents(filteredEvents);
 
                     final upcomingGrouped = _groupEventsByDate(upcomingEvents);
                     final pastGrouped = _groupEventsByDate(pastEvents);
 
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 11),
-                      children: [
-                        if (upcomingEvents.isNotEmpty) ...[
-                          _buildSectionHeader('Upcoming Events', upcomingEvents.length),
-                          ...upcomingGrouped.entries.expand((entry) => [
-                                buildDateSeparator(entry.key),
-                                ...entry.value.map((event) {
-                                  final club = clubs.value?.firstWhere(
-                                    (club) => club.id == event.clubId,
-                                    orElse: () => Club(
-                                      id: '',
-                                      name: '',
-                                      logoUrl: '',
-                                      backgroundImageUrl: '',
-                                    ),
-                                  );
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ExpandableEventCard(
-                                      event: event,
-                                      club: club,
-                                      isPastEvent: false,
-                                    ),
-                                  );
-                                }),
-                              ]),
-                          const SizedBox(height: 24),
-                        ],
-                        if (pastEvents.isNotEmpty) ...[
-                          _buildSectionHeader('Past Events', pastEvents.length),
-                          ...pastGrouped.entries.expand((entry) => [
-                                buildDateSeparator(entry.key),
-                                ...entry.value.map((event) {
-                                  final club = clubs.value?.firstWhere(
-                                    (club) => club.id == event.clubId,
-                                    orElse: () => Club(
-                                      id: '',
-                                      name: '',
-                                      logoUrl: '',
-                                      backgroundImageUrl: '',
-                                    ),
-                                  );
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ExpandableEventCard(
-                                      event: event,
-                                      club: club,
-                                      isPastEvent: true,
-                                    ),
-                                  );
-                                }),
-                              ]),
-                        ],
-                      ],
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          if (upcomingEvents.isNotEmpty) ...[
+                            _buildSectionHeader('Upcoming Events', upcomingEvents.length),
+                            ...upcomingGrouped.entries.expand((entry) => [
+                              buildDateSeparator(entry.key),
+                              ...entry.value.map((event) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: ExpandableEventCard(
+                                    event: event,
+                                    isPastEvent: false,
+                                  ),
+                                );
+                              }),
+                            ]),
+                          ],
+                          if (pastEvents.isNotEmpty) ...[
+                             const SizedBox(height: 10),
+                            _buildSectionHeader('Past Events', pastEvents.length),
+                            ...pastGrouped.entries.expand((entry) => [
+                              buildDateSeparator(entry.key),
+                              ...entry.value.map((event) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: ExpandableEventCard(
+                                    event: event,
+                                    isPastEvent: true,
+                                  ),
+                                );
+                              }),
+                            ]),
+                          ],
+                        ]),
+                      ),
                     );
                   },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                  loading: () => const SliverFillRemaining(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAEE7FF)),
+                      ),
+                    ),
                   ),
-                  error: (error, stack) => Center(
-                    child: Text(
-                      'Error loading events: $error',
-                      style: const TextStyle(color: Colors.red),
+                  error: (error, stack) => SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'Error loading events: $error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildClubFilterChip(String clubId, {String? clubName}) {
+    final selectedClub = ref.watch(eventsFilterClubProvider);
+    final isSelected = selectedClub == clubId;
+    final displayName = clubName ?? clubId;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isSelected,
+        label: Text(
+          displayName == clubId ? 'All Clubs' : displayName,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFFAEE7FF) : const Color(0xFF83ACBD),
+            fontSize: 12,
+          ),
+        ),
+        backgroundColor: const Color(0xFF0F2026),
+        selectedColor: const Color(0xFF17323D),
+        checkmarkColor: const Color(0xFFAEE7FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF71C2E4) : const Color(0xFF17323D),
+          ),
+        ),
+        onSelected: (selected) {
+          ref.read(eventsFilterClubProvider.notifier).state = selected ? clubId : 'All Clubs';
+        },
+      ),
+    );
+  }
 }
 
-class ExpandableEventCard extends StatefulWidget {
+class ExpandableEventCard extends ConsumerStatefulWidget {
   final Event event;
-  final Club? club;
   final bool isPastEvent;
 
   const ExpandableEventCard({
     super.key,
     required this.event,
-    required this.club,
     required this.isPastEvent,
   });
 
   @override
-  State<ExpandableEventCard> createState() => _ExpandableEventCardState();
+  ConsumerState<ExpandableEventCard> createState() => _ExpandableEventCardState();
 }
 
-class _ExpandableEventCardState extends State<ExpandableEventCard> {
+class _ExpandableEventCardState extends ConsumerState<ExpandableEventCard> {
   bool isExpanded = false;
 
   String _formatTimeRange(DateTime start, DateTime end) {
@@ -303,6 +452,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                             color: Color(0xFF83ACBD),
                           ),
                         ),
+                        const SizedBox(width: 4),
                         Icon(
                           isExpanded ? Icons.arrow_upward : Icons.arrow_downward,
                           size: 12,
@@ -327,7 +477,7 @@ class _ExpandableEventCardState extends State<ExpandableEventCard> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             image: DecorationImage(
-                              image: NetworkImage(widget.club?.logoUrl ?? ''),
+                              image: NetworkImage(getClubLogo(ref, widget.event.clubId)),
                               fit: BoxFit.cover,
                             ),
                           ),

@@ -14,6 +14,7 @@ import 'widgets/profile_header.dart';
 import 'widgets/clubs_container.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/screens/events/events_page.dart';
+import 'package:events_manager/screens/clubs/all_clubs_page.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({
@@ -52,10 +53,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(eventsStreamProvider);
+    final events = ref.watch(todaysEventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
     bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
+
+    final currentUserAsync = ref.watch(currentUserProvider);
     return Scaffold(
       body: SafeArea(
         child: isLoading
@@ -93,7 +96,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           'Today ${DateFormat('MMM d').format(DateTime.now())}',
                       profileImage: widget.user.photoURL ?? '',
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.only(left: 14),
                       child: Row(
@@ -116,6 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             onPressed: () {
+                              ref.read(announcementsFilterClubProvider.notifier).state = 'All Clubs';
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -143,36 +147,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           const Spacer(),
-                          IconButton(
-                            style: IconButton.styleFrom(
-                              padding: EdgeInsets.all(0),
-                            ),
-                            onPressed: () async {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddAnnouncementForm(
-                                    addAnnouncement: _addAnnouncement,
+                          currentUserAsync.when(
+                            data: (user) => (user != null && user.clubId != null && user.clubId!.isNotEmpty) ? IconButton(
+                              style: IconButton.styleFrom(
+                                padding: EdgeInsets.all(0),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddAnnouncementForm(
+                                      addAnnouncement: _addAnnouncement,
+                                      clubId: user.clubId!,
+                                    ),
                                   ),
+                                );
+                              },
+                              icon: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
                                 ),
-                              );
-                            },
-                            icon: Container(
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.black,
+                                  size: 20,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.add,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                            ),
+                            ) : const SizedBox(),
+                            loading: () => const SizedBox(),
+                            error: (error, stack) => const SizedBox(),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 5),
                     announcements.when(
                       data: (announcementsList) {
                         if (announcementsList.isEmpty) {
@@ -227,7 +235,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AllClubsPage(),
+                              ),
+                            );
+                          },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -261,7 +276,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         const SizedBox(width: 14),
                         Text(
-                          "Today's Events",
+                          "Upcoming Events",
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(width: 5),
@@ -272,6 +287,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           onPressed: () {
+                            ref.read(eventsFilterClubProvider.notifier).state = 'All Clubs';
                             Navigator.push(
                               context,
                               MaterialPageRoute(
