@@ -20,8 +20,8 @@ const minLong = 76.646042; // Southwest corner longitude
 const maxLong = 76.653665; // Northeast corner longitude (updated)
 
 final mapBounds = LatLngBounds(
-  LatLng(minLat, minLong), // Southwest corner
-  LatLng(maxLat, maxLong), // Northeast corner
+  const LatLng(minLat, minLong), // Southwest corner
+  const LatLng(maxLat, maxLong), // Northeast corner
 );
 
 class MapTileCacheManager extends CacheManager {
@@ -505,7 +505,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       backgroundColor: const Color(0xFF06222F),
       appBar: AppBar(
         title: const   Text(
-            'Revent Map',
+            'IIITK Map',
             style: TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 20,
@@ -532,7 +532,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               return FlutterMap(
                 mapController: mapController,
                 options: MapOptions(
-                  initialCenter: LatLng(9.754969, 76.650201),
+                  initialCenter: const LatLng(9.754969, 76.650201),
                   initialZoom: initialZoom,
                   onTap: (tapPosition, point) => _addMarker(point),
                   minZoom: minZoom,

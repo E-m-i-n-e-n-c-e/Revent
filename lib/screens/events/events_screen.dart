@@ -1,9 +1,9 @@
 import 'package:events_manager/providers/stream_providers.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:events_manager/models/event.dart';
-import 'package:events_manager/models/club.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'event_dialogs.dart';
 import 'events_calendar.dart';
@@ -228,10 +228,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       );
     }
     final events = ref.watch(eventsStreamProvider);
-    final clubs = ref.watch(clubsStreamProvider);
-    _isLoading = events.isLoading || clubs.isLoading;
+    _isLoading = events.isLoading;
 
-    // ignore: deprecated_member_use
     return PopScope(
       canPop:_currentView != CalendarView.day,
       onPopInvokedWithResult: (didPop,result) async {
@@ -247,7 +245,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
-            'Revent Calendar',
+            'Events Calendar',
             style: TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 20,
@@ -282,22 +280,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               ? const Center(child: CircularProgressIndicator())
               : events.when(
                   data: (eventsList) {
-                    return clubs.when(
-                      data: (clubsList) {
                         _appointments = eventsList.map((event) {
-                          // Find the club for this event
-                          final club = clubsList.firstWhere(
-                            (club) => club.id == event.clubId,
-                            orElse: () => Club(
-                              id: '',
-                              name: '',
-                              logoUrl: '',
-                              backgroundImageUrl: '',
-                            ),
-                          );
 
-                          // Store club logo URL in notes field with a separator
-                          final notesWithLogo = '${event.description}|${club.logoUrl}';
+                          final notesWithLogo = '${event.description}|${getClubLogo(ref, event.clubId)}';
 
                           return Appointment(
                             startTime: event.startTime,
@@ -317,13 +302,6 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                           appointments: _appointments,
                           onTap: (details) => _onCalendarTapped(details, eventsList),
                         );
-                      },
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(
-                        child: Text('Error loading clubs: $error',
-                          style: const TextStyle(color: Colors.red)),
-                      ),
-                    );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(

@@ -1,24 +1,25 @@
 import 'package:events_manager/models/announcement.dart';
+import 'package:events_manager/models/club.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:events_manager/utils/firedata.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
-class AddAnnouncementForm extends StatefulWidget {
+class AddAnnouncementForm extends ConsumerStatefulWidget {
   final Future<void> Function(Announcement) addAnnouncement;
-  final String clubId;
   const AddAnnouncementForm({
     super.key,
     required this.addAnnouncement,
-    required this.clubId,
   });
 
   @override
-  State<AddAnnouncementForm> createState() => _AddAnnouncementFormState();
+  ConsumerState<AddAnnouncementForm> createState() => _AddAnnouncementFormState();
 }
 
-class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
+class _AddAnnouncementFormState extends ConsumerState<AddAnnouncementForm> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -153,21 +154,51 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
                       });
 
                       try {
-                        final newAnnouncement = Announcement(
-                          title: _titleController.text,
-                          subtitle: '', // Not used anymore
-                          description: _descriptionController.text,
-                          venue: '', // Not used anymore
-                          time: '', // Not used anymore
-                          image: null, // Images are now in markdown
-                          clubId: widget.clubId,
-                          date: DateTime.now(),
+                        // Get current user email directly from Firebase Auth
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user == null || user.email == null) {
+                          setState(() {
+                            _errorMessage = 'User not logged in';
+                            _isSaving = false;
+                          });
+                          return;
+                        }
+
+                        final adminClubs = getAdminClubs(ref, user.email!);
+
+                        if (!mounted) return;
+
+                        if (adminClubs.isEmpty) {
+                          _showNoAdminClubsDialog();
+                          return;
+                        }
+
+                        final selectedClub = await showDialog<Club>(
+                          context: context,
+                          builder: (context) => ClubSelectionDialog(clubs: adminClubs),
                         );
 
-                        await widget.addAnnouncement(newAnnouncement);
+                        if (selectedClub != null) {
+                          final announcement = Announcement(
+                            title: _titleController.text,
+                            subtitle: '', // Not used anymore
+                            description: _descriptionController.text,
+                            venue: '', // Not used anymore
+                            time: '', // Not used anymore
+                            image: null, // Images are now in markdown
+                            clubId: selectedClub.id,
+                            date: DateTime.now(),
+                          );
 
-                        if (!context.mounted) return;
-                        Navigator.pop(context, newAnnouncement);
+                          await widget.addAnnouncement(announcement);
+                          if(context.mounted) {
+                            Navigator.pop(context, announcement);
+                          }
+                        } else {
+                          setState(() {
+                            _isSaving = false;
+                          });
+                        }
                       } catch (e) {
                         setState(() {
                           _errorMessage = 'Failed to create announcement: $e';
@@ -200,11 +231,11 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
               // Markdown toolbar
               if (!_isPreviewMode)
                 Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2026),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F2026),
                     border: Border(
                       bottom: BorderSide(
-                        color: const Color(0xFF17323D),
+                        color: Color(0xFF17323D),
                         width: 1.0,
                       ),
                     ),
@@ -297,6 +328,16 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
         ),
       ),
     );
+  }
+
+  void _showNoAdminClubsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const NoAdminClubsDialog(),
+    );
+    setState(() {
+      _isSaving = false;
+    });
   }
 
   Widget _buildEditMode() {
@@ -509,11 +550,11 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
           tableCellsPadding: const EdgeInsets.all(8.0),
 
           // Horizontal rule style
-          horizontalRuleDecoration: BoxDecoration(
+          horizontalRuleDecoration: const BoxDecoration(
             border: Border(
               top: BorderSide(
                 width: 1.0,
-                color: const Color(0xFF2A3F4A),
+                color: Color(0xFF2A3F4A),
               ),
             ),
           ),
@@ -565,5 +606,247 @@ class _AddAnnouncementFormState extends State<AddAnnouncementForm> {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+}
+
+// Club Selection Dialog
+class ClubSelectionDialog extends StatelessWidget {
+  final List<Club> clubs;
+
+  const ClubSelectionDialog({super.key, required this.clubs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F2026),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x40000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFF17323D),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Select Club',
+              style: TextStyle(
+                color: Color(0xFFAEE7FF),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Choose which club to post this announcement for:',
+              style: TextStyle(
+                color: Color(0xFF83ACBD),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            const Divider(
+              color: Color(0xFF17323D),
+              thickness: 1,
+              height: 1,
+            ),
+            const SizedBox(height: 16),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.4,
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: clubs.length,
+                itemBuilder: (context, index) {
+                  final club = clubs[index];
+                  return InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop(club);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF71C2E4),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                club.logoUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              club.name,
+                              style: const TextStyle(
+                                color: Color(0xFFAEE7FF),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Color(0xFF83ACBD),
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF83ACBD),
+              ),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// No Admin Clubs Dialog
+class NoAdminClubsDialog extends StatelessWidget {
+  const NoAdminClubsDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F2026),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x40000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFF17323D),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Color(0xFFAEE7FF),
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Not a Club Admin',
+              style: TextStyle(
+                color: Color(0xFFAEE7FF),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Sorry, you\'re not the admin of any club.',
+              style: TextStyle(
+                color: Color(0xFF83ACBD),
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Contact ',
+                  style: TextStyle(
+                    color: Color(0xFF83ACBD),
+                    fontSize: 16,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    launchUrlExternal('https://wa.me/917036972415');
+                  },
+                  child: const Text(
+                    'Akhil',
+                    style: TextStyle(
+                      color: Color(0xFF71C2E4),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                const Text(
+                  ' if this is a mistake.',
+                  style: TextStyle(
+                    color: Color(0xFF83ACBD),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0E668A),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

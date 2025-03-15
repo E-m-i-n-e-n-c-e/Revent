@@ -136,7 +136,7 @@ class ClubIcon extends StatelessWidget {
           child: Container(
             width: 58,
             height: 58,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.black,
             ),

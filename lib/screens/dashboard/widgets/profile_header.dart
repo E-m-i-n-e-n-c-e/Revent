@@ -3,14 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileHeader extends StatefulWidget {
-  final String userMail;
-  final String date;
   final String profileImage;
 
   const ProfileHeader({
     super.key,
-    required this.userMail,
-    required this.date,
     required this.profileImage,
   });
 
@@ -42,7 +38,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           children: [
             Text(
               _getGreeting(),
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFFAEE7FF),
                 fontSize: 28,
                 fontWeight: FontWeight.w600,
@@ -58,7 +54,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               },
               icon: Stack(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.notifications_outlined,
                     color: Color(0xFF71C2E4),
                     size: 28,
@@ -69,7 +65,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     child: Container(
                       width: 7,
                       height: 7,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Color(0xFFB30000),
                         shape: BoxShape.circle,
                       ),
@@ -84,7 +80,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProfileScreen(),
+                    builder: (context) => const ProfileScreen(),
                   ),
                 );
               },

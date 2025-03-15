@@ -79,10 +79,10 @@ class AnnouncementCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'View more',
                 style: TextStyle(
                   color: Color(0xFF83ACBD),
@@ -91,8 +91,8 @@ class AnnouncementCard extends StatelessWidget {
                   fontWeight: FontWeight.w300,
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(
+              SizedBox(width: 4),
+              Icon(
                 Icons.arrow_forward_ios,
                 color: Color(0xFF83ACBD),
                 size: 10,
@@ -300,11 +300,11 @@ class AnnouncementDetailView extends StatelessWidget {
           tableCellsPadding: const EdgeInsets.all(8.0),
 
           // Horizontal rule style
-          horizontalRuleDecoration: BoxDecoration(
+          horizontalRuleDecoration: const BoxDecoration(
             border: Border(
               top: BorderSide(
                 width: 1.0,
-                color: const Color(0xFF2A3F4A),
+                color: Color(0xFF2A3F4A),
               ),
             ),
           ),
@@ -374,7 +374,7 @@ class CustomLinkBuilder extends MarkdownElementBuilder {
           padding: const EdgeInsets.symmetric(vertical: 2.0),
           child: Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFF71C2E4),
               decoration: TextDecoration.underline,
             ),

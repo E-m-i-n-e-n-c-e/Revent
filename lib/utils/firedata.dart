@@ -327,13 +327,6 @@ Future<String> uploadMapMarkerImage(String filePath) async {
   }
 }
 
-Future<void> updateUserClubId(String uid, String? clubId) async {
-  await FirebaseFirestore.instance
-      .collection('users')
-      .doc(uid)
-      .update({'clubId': clubId});
-}
-
 Future<String> uploadUserProfileImage(String uid, String filePath) async {
   try {
     final supabase = Supabase.instance.client;

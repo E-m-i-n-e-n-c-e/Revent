@@ -1071,11 +1071,11 @@ class _ExpandableAnnouncementCardState
                         tableCellsPadding: const EdgeInsets.all(8.0),
 
                         // Horizontal rule style
-                        horizontalRuleDecoration: BoxDecoration(
+                        horizontalRuleDecoration: const BoxDecoration(
                           border: Border(
                             top: BorderSide(
                               width: 1.0,
-                              color: const Color(0xFF2A3F4A),
+                              color: Color(0xFF2A3F4A),
                             ),
                           ),
                         ),

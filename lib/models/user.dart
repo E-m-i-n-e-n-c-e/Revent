@@ -7,7 +7,6 @@ class AppUser {
   final String? photoURL;
   final String? backgroundImageUrl;
   final String? rollNumber;
-  String? clubId;
   final DateTime createdAt;
   final DateTime lastLogin;
 
@@ -18,7 +17,6 @@ class AppUser {
     this.photoURL,
     this.backgroundImageUrl,
     this.rollNumber,
-    this.clubId,
     required this.createdAt,
     required this.lastLogin,
   });
@@ -29,7 +27,6 @@ class AppUser {
     String? photoURL,
     String? backgroundImageUrl,
     String? rollNumber,
-    String? clubId,
     DateTime? createdAt,
     DateTime? lastLogin,
   }) {
@@ -40,7 +37,6 @@ class AppUser {
       photoURL: photoURL ?? this.photoURL,
       backgroundImageUrl: backgroundImageUrl ?? this.backgroundImageUrl,
       rollNumber: rollNumber ?? this.rollNumber,
-      clubId: clubId ?? this.clubId,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
     );
@@ -54,7 +50,6 @@ class AppUser {
       'photoURL': photoURL,
       'backgroundImageUrl': backgroundImageUrl,
       'rollNumber': rollNumber,
-      'clubId': clubId,
       'createdAt': Timestamp.fromDate(createdAt),
       'lastLogin': Timestamp.fromDate(lastLogin),
     };
@@ -74,7 +69,6 @@ class AppUser {
       photoURL: json['photoURL'] as String?,
       backgroundImageUrl: json['backgroundImageUrl'] as String?,
       rollNumber: json['rollNumber'] as String?,
-      clubId: json['clubId'] as String?,
       createdAt: createdAt,
       lastLogin: lastLogin,
     );

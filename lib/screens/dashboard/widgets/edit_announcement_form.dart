@@ -225,11 +225,11 @@ class _EditAnnouncementFormState extends State<EditAnnouncementForm> {
               // Markdown toolbar
               if (!_isPreviewMode)
                 Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2026),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F2026),
                     border: Border(
                       bottom: BorderSide(
-                        color: const Color(0xFF17323D),
+                        color: Color(0xFF17323D),
                         width: 1.0,
                       ),
                     ),
@@ -534,11 +534,11 @@ class _EditAnnouncementFormState extends State<EditAnnouncementForm> {
           tableCellsPadding: const EdgeInsets.all(8.0),
 
           // Horizontal rule style
-          horizontalRuleDecoration: BoxDecoration(
+          horizontalRuleDecoration: const BoxDecoration(
             border: Border(
               top: BorderSide(
                 width: 1.0,
-                color: const Color(0xFF2A3F4A),
+                color: Color(0xFF2A3F4A),
               ),
             ),
           ),

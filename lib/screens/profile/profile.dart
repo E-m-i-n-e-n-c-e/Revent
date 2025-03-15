@@ -2,10 +2,11 @@ import 'package:events_manager/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/providers/stream_providers.dart';
-import 'package:events_manager/utils/firedata.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:events_manager/screens/profile/edit_profile_form.dart';
+import 'package:events_manager/utils/common_utils.dart';
+import 'package:events_manager/screens/clubs/club_page.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -275,9 +276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           loading: () => const SizedBox(),
                           error: (_, __) => const SizedBox(),
                           data: (clubs) {
-                            final adminClubs = clubs.where(
-                              (club) => club.adminEmails.contains(appUser.email)
-                            ).toList();
+                            final adminClubs = getAdminClubs(ref, appUser.email);
 
                             if (adminClubs.isEmpty) return const SizedBox();
 
@@ -313,94 +312,62 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           fontSize: 14,
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 12),
 
-                                      // Club selection dropdown
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: const Color(0xFF71C2E4).withValues(alpha:0.3)),
-                                          color: const Color(0xFF17323D),
-                                        ),
-                                        child: DropdownButton<String?>(
-                                          value: appUser.clubId ?? '',
-                                          hint: const Text('Select active club',
-                                            style: TextStyle(color: Color(0xFFAEE7FF)),
-                                          ),
-                                          dropdownColor: const Color(0xFF17323D),
-                                          isExpanded: true,
-                                          underline: const SizedBox(),
-                                          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFAEE7FF)),
-                                          items: [
-                                            const DropdownMenuItem<String?>(
-                                              value: '',
-                                              child: Text(
-                                                'None',
-                                                style: TextStyle(color: Color(0xFFAEE7FF)),
-                                              ),
-                                            ),
-                                            ...adminClubs.map((club) {
-                                              return DropdownMenuItem(
-                                                value: club.id,
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: 24,
-                                                      height: 24,
-                                                      decoration: BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        image: DecorationImage(
-                                                          image: NetworkImage(club.logoUrl),
-                                                          fit: BoxFit.cover,
+                                      // Horizontal scrollable row of admin clubs (icons only)
+                                      SizedBox(
+                                        height: 70,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: adminClubs.length,
+                                          itemBuilder: (context, index) {
+                                            final club = adminClubs[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 10),
+                                              child: Tooltip(
+                                                message: club.name,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => ClubPage(club: club),
+                                                      ),
+                                                    );
+                                                  },
+                                                  borderRadius: BorderRadius.circular(30),
+                                                  child: Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFF17323D),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: const Color(0xFF71C2E4).withValues(alpha: 0.3),
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                    child: Hero(
+                                                      tag: 'club-logo-${club.id}',
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.all(2),
+                                                        child: CircleAvatar(
+                                                          backgroundColor: Colors.transparent,
+                                                          backgroundImage: NetworkImage(club.logoUrl),
                                                         ),
                                                       ),
                                                     ),
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      club.name,
-                                                      style: const TextStyle(color: Color(0xFFAEE7FF)),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }),
-                                          ],
-                                          onChanged: (String? newValue) async {
-                                            try {
-                                              await updateUserClubId(appUser.uid, newValue ?? '');
-                                              setState(() {
-                                                appUser.clubId = newValue;
-                                              });
-                                              ref.invalidate(currentUserProvider);
-                                              if (!context.mounted) return;
-                                              ScaffoldMessenger.of(context).clearSnackBars();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    newValue == ''
-                                                        ? 'Club admin role removed'
-                                                        : 'Club admin role updated to ${adminClubs.firstWhere((club) => club.id == newValue).name}',
                                                   ),
-                                                  backgroundColor: const Color(0xFF0E668A),
                                                 ),
-                                              );
-                                            } catch (e) {
-                                              if (!context.mounted) return;
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Failed to update club: $e'),
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                              );
-                                            }
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
 
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 12),
                                       const Text(
-                                        'As a club admin, you can create events and announcements for your club.',
+                                        'As a club admin, you can create events and announcements for your clubs.',
                                         style: TextStyle(
                                           color: Color(0xFF83ACBD),
                                           fontSize: 12,

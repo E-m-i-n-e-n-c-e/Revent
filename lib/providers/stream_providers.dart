@@ -18,7 +18,7 @@ Stream<List<Map<String, dynamic>>> loadTodaysEventsStream() {
   final firestore = FirebaseFirestore.instance;
   final now = DateTime.now();
   final startOfDay = now; // Current time
-  final endOfDay = now.add(Duration(hours: 24)); // 24 hours from now
+  final endOfDay = now.add(const Duration(hours: 24)); // 24 hours from now
 
   return firestore
       .collection('events')

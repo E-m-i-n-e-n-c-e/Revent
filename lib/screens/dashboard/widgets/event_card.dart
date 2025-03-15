@@ -17,7 +17,7 @@ class _EventCardState extends State<EventCard> {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 1),
+        padding: const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
           color: const Color(0xFF06151C),
           borderRadius: BorderRadius.circular(30),
@@ -34,7 +34,7 @@ class _EventCardState extends State<EventCard> {
                 ),
               )
             : Container(
-              padding: EdgeInsets.symmetric(vertical: 5),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               child: SingleChildScrollView(
                   child: Column(
                     children: widget.events.map((event) {

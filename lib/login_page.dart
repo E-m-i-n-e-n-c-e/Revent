@@ -44,7 +44,7 @@ class LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     // Get screen dimensions for responsive sizing
     final Size screenSize = MediaQuery.of(context).size;
-    final double baseWidth = 375.0; // Base width for reference (iPhone X)
+    const double baseWidth = 375.0; // Base width for reference (iPhone X)
     final double scaleFactor = screenSize.width / baseWidth;
 
     // Responsive text sizes

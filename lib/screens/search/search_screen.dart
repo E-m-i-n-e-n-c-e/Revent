@@ -55,12 +55,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       },
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        appBar: AppBar(
+      appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: const Text(
+          title: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
               'Search',
               style: TextStyle(
                 color: Color(0xFFAEE7FF),
@@ -79,7 +79,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
           child: SafeArea(
-            child: Column(
+        child: Column(
               children: [
                 // Search bar
                 Padding(
@@ -94,7 +94,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                     ),
                     child: TextField(
-                      controller: _searchController,
+                  controller: _searchController,
                       focusNode: _searchFocusNode,
                       style: const TextStyle(color: Color(0xFFAEE7FF)),
                       decoration: const InputDecoration(
@@ -104,8 +104,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
-                      onChanged: (value) =>
-                          ref.read(searchQueryProvider.notifier).state = value,
+                  onChanged: (value) =>
+                      ref.read(searchQueryProvider.notifier).state = value,
                       onSubmitted: (_) => _submitSearch(),
                       autofocus: false,
                     ),
@@ -122,18 +122,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                           child: Center(
                             child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildFilterChip('All'),
-                                  _buildFilterChip('Events'),
-                                  _buildFilterChip('Announcements'),
-                                  _buildFilterChip('Clubs'),
-                                ],
-                              ),
-                            ),
+                    children: [
+                      _buildFilterChip('All'),
+                      _buildFilterChip('Events'),
+                      _buildFilterChip('Announcements'),
+                      _buildFilterChip('Clubs'),
+                    ],
+                  ),
+                ),
                           ),
                         ),
                       ),
@@ -185,9 +185,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     ),
                                     if (_searchController.text.isNotEmpty) ...[
                                       const SizedBox(height: 8),
-                                      Text(
+                                      const Text(
                                         'Try a different search term or filter',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: Color(0xFF83ACBD),
                                           fontSize: 14,
                                         ),
@@ -202,17 +202,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               sliver: SliverList(
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
-                                    final result = searchResults[index];
-                                    return _buildSearchResultCard(result);
-                                  },
+                        final result = searchResults[index];
+                        return _buildSearchResultCard(result);
+                      },
                                   childCount: searchResults.length,
                                 ),
                               ),
                             ),
                     ],
-                  ),
-                ),
-              ],
+                    ),
+            ),
+          ],
             ),
           ),
         ),
@@ -316,8 +316,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                             Text(
                               event.title,
                               style: const TextStyle(
@@ -339,8 +339,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    event.description,
+            Text(
+              event.description,
                     style: const TextStyle(
                       color: Color(0xFFAEE7FF),
                       fontSize: 14,
@@ -485,10 +485,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ],
                     ),
                   ),
-                  Container(
+            Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
+              decoration: BoxDecoration(
                       color: isPastEvent
                           ? const Color(0xFF173240)
                           : const Color(0xFF0E668A),
@@ -537,10 +537,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   const SizedBox(width: 4),
                   Text(
                     timeRange,
-                    style: const TextStyle(
+                style: const TextStyle(
                       color: Color(0xFF83ACBD),
-                      fontSize: 12,
-                    ),
+                  fontSize: 12,
+                ),
                   ),
                   if (event.venue != null && event.venue!.isNotEmpty) ...[
                     const SizedBox(width: 12),
@@ -558,9 +558,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+              ),
+            ),
+          ],
                 ],
               ),
             ],
@@ -588,20 +588,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
-          onTap: () {
+      onTap: () {
             _submitSearch();
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AnnouncementDetailView(
-                  title: announcement.title,
-                  description: announcement.description,
-                  clubId: announcement.clubId,
-                  date: announcement.date,
-                ),
-              ),
-            );
-          },
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AnnouncementDetailView(
+              title: announcement.title,
+              description: announcement.description,
+              clubId: announcement.clubId,
+              date: announcement.date,
+            ),
+          ),
+        );
+      },
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -637,8 +637,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             _formatDate(announcement.date),
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF83ACBD),
-                            ),
+            color: Color(0xFF83ACBD),
+          ),
                           ),
                         ],
                       ),
@@ -647,7 +647,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  announcement.title,
+            announcement.title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -769,11 +769,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         tableCellsPadding: const EdgeInsets.all(8.0),
 
                         // Horizontal rule style
-                        horizontalRuleDecoration: BoxDecoration(
+                        horizontalRuleDecoration: const BoxDecoration(
                           border: Border(
                             top: BorderSide(
                               width: 1.0,
-                              color: const Color(0xFF2A3F4A),
+                              color: Color(0xFF2A3F4A),
                             ),
                           ),
                         ),
@@ -914,7 +914,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      club.name,
+          club.name,
                       style: const TextStyle(
                         color: Color(0xFF61E7FF),
                         fontSize: 18,

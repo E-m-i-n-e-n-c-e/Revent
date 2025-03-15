@@ -7,7 +7,6 @@ import 'package:events_manager/utils/firedata.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'widgets/event_card.dart';
 import 'widgets/profile_header.dart';
@@ -56,14 +55,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final events = ref.watch(todaysEventsStreamProvider);
     final announcements = ref.watch(announcementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
-    bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading;
-
     final currentUserAsync = ref.watch(currentUserProvider);
+
+    bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading || currentUserAsync.isLoading;
+
     return Scaffold(
       body: SafeArea(
         child: isLoading
             ? Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       Color(0xFF07181F),
@@ -73,7 +73,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Center(child: CircularProgressIndicator()))
+                child: const Center(child: CircularProgressIndicator()))
             : Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -91,12 +91,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     const SizedBox(height: 2),
                     ProfileHeader(
-                      userMail: widget.user.email ?? '',
-                      date:
-                          'Today ${DateFormat('MMM d').format(DateTime.now())}',
-                      profileImage: widget.user.photoURL ?? '',
+                      profileImage: currentUserAsync.value?.photoURL ?? widget.user.photoURL ?? ''
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     Padding(
                       padding: const EdgeInsets.only(left: 14),
                       child: Row(
@@ -127,7 +124,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 ),
                               );
                             },
-                            child: Row(
+                            child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -147,10 +144,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           const Spacer(),
-                          currentUserAsync.when(
-                            data: (user) => (user != null && user.clubId != null && user.clubId!.isNotEmpty) ? IconButton(
+                            IconButton(
                               style: IconButton.styleFrom(
-                                padding: EdgeInsets.all(0),
+                                padding: const EdgeInsets.all(0),
                               ),
                               onPressed: () {
                                 Navigator.push(
@@ -158,7 +154,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   MaterialPageRoute(
                                     builder: (context) => AddAnnouncementForm(
                                       addAnnouncement: _addAnnouncement,
-                                      clubId: user.clubId!,
                                     ),
                                   ),
                                 );
@@ -174,17 +169,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   size: 20,
                                 ),
                               ),
-                            ) : const SizedBox(),
-                            loading: () => const SizedBox(),
-                            error: (error, stack) => const SizedBox(),
-                          ),
+                            ) ,
                         ],
                       ),
                     ),
                     announcements.when(
                       data: (announcementsList) {
                         if (announcementsList.isEmpty) {
-                          return SizedBox(
+                          return const SizedBox(
                             height: 200,
                             child: AnnouncementCard(
                               title: 'You have no announcements',
@@ -243,7 +235,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                             );
                           },
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
@@ -295,7 +287,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                             );
                           },
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(

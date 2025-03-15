@@ -22,8 +22,8 @@ void main() async {
   );
   await supabase.Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
   runApp(
-    ProviderScope(
-      child: const MyApp(),
+    const ProviderScope(
+      child: MyApp(),
     ),
   );
 }
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme().copyWith(
           titleTextStyle:
               const TextStyle(color: Color(0xffAEE7FF), fontSize: 21),
-          backgroundColor: Color(0xff1A2C34),
+          backgroundColor: const Color(0xff1A2C34),
           foregroundColor: kcolorscheme.shadow,
         ),
         scaffoldBackgroundColor: kcolorscheme.onSurface,
@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
             foregroundColor: WidgetStateProperty.all(kcolorscheme.primary),
           ),
         ),
-        textTheme: TextTheme(
+        textTheme: const TextTheme(
           headlineLarge: TextStyle(
             color: Color(0xffAEE7FF),
             fontSize: 26,
@@ -91,7 +91,7 @@ class MyApp extends StatelessWidget {
             var user = snapshot.data;
             return EventManager(user: user as User);
           }
-          return LoginPage();
+          return const LoginPage();
         },
       ),
     );
