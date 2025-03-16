@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/models/admin_log.dart';
 import 'package:events_manager/providers/stream_providers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -18,7 +17,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   bool _isSearchExpanded = false;
-  bool _isCreatingDummyData = false;
 
   @override
   void initState() {
@@ -40,131 +38,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   void _submitSearch() {
     _searchFocusNode.unfocus();
-  }
-
-  Future<void> _createDummyLogData() async {
-    if (_isCreatingDummyData) return;
-
-    setState(() {
-      _isCreatingDummyData = true;
-    });
-
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final user = FirebaseAuth.instance.currentUser;
-
-      // Create dummy log entries for different operations and collections
-      final dummyLogs = [
-        {
-          'collection': 'events',
-          'documentId': 'dummy-event-1',
-          'operation': 'create_events',
-          'timestamp': Timestamp.now(),
-          'userId': user?.uid ?? 'system',
-          'userEmail': user?.email ?? 'system',
-          'beforeData': null,
-          'afterData': {
-            'title': 'Sample Event',
-            'description': 'This is a sample event created for testing',
-            'startTime': Timestamp.now(),
-            'endTime': Timestamp.fromDate(DateTime.now().add(const Duration(hours: 2))),
-            'clubId': 'test-club',
-          }
-        },
-        {
-          'collection': 'announcements',
-          'documentId': 'test-club',
-          'operation': 'update_announcements',
-          'timestamp': Timestamp.fromDate(DateTime.now().subtract(const Duration(hours: 2))),
-          'userId': user?.uid ?? 'system',
-          'userEmail': user?.email ?? 'system',
-          'beforeData': {
-            'announcementsList': [
-              {'title': 'Old Announcement', 'description': 'Old description'}
-            ]
-          },
-          'afterData': {
-            'announcementsList': [
-              {'title': 'New Announcement', 'description': 'Updated description'}
-            ]
-          }
-        },
-        {
-          'collection': 'clubs',
-          'documentId': 'test-club',
-          'operation': 'update_clubs',
-          'timestamp': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))),
-          'userId': user?.uid ?? 'system',
-          'userEmail': user?.email ?? 'system',
-          'beforeData': {
-            'name': 'Test Club',
-            'adminEmails': ['admin@example.com']
-          },
-          'afterData': {
-            'name': 'Test Club',
-            'adminEmails': ['admin@example.com', 'newadmin@example.com']
-          }
-        },
-        {
-          'collection': 'mapMarkers',
-          'documentId': 'marker-1',
-          'operation': 'delete_mapMarkers',
-          'timestamp': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 2))),
-          'userId': user?.uid ?? 'system',
-          'userEmail': user?.email ?? 'system',
-          'beforeData': {
-            'title': 'Old Marker',
-            'description': 'This marker was deleted',
-            'latitude': 12.345,
-            'longitude': 67.890
-          },
-          'afterData': null
-        },
-        {
-          'collection': 'users',
-          'documentId': user?.uid ?? 'dummy-user',
-          'operation': 'update_users',
-          'timestamp': Timestamp.fromDate(DateTime.now().subtract(const Duration(hours: 5))),
-          'userId': user?.uid ?? 'system',
-          'userEmail': user?.email ?? 'system',
-          'beforeData': {
-            'name': 'Old Name',
-            'photoURL': 'https://example.com/old.jpg'
-          },
-          'afterData': {
-            'name': 'New Name',
-            'photoURL': 'https://example.com/new.jpg'
-          }
-        }
-      ];
-
-      // Add dummy logs to Firestore
-      for (final log in dummyLogs) {
-        await firestore.collection('admin_logs').add(log);
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Dummy log data created successfully'),
-            backgroundColor: Color(0xFF0E668A),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error creating dummy data: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isCreatingDummyData = false;
-      });
-    }
   }
 
   @override
@@ -320,17 +193,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                 ),
               ),
-        floatingActionButton: isUserAdmin
-            ? FloatingActionButton(
-                onPressed: _isCreatingDummyData ? null : _createDummyLogData,
-                backgroundColor: const Color(0xFF0E668A),
-                child: _isCreatingDummyData
-                    ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
-                    : const Icon(Icons.add, color: Color(0xFFAEE7FF)),
-              )
-            : null,
       ),
     );
   }
@@ -452,20 +314,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             style: const TextStyle(
               color: Color(0xFF83ACBD),
               fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _isCreatingDummyData ? null : _createDummyLogData,
-            icon: const Icon(Icons.add),
-            label: const Text('Create Sample Data'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0E668A),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
           ),
         ],

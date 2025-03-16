@@ -53,11 +53,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final events = ref.watch(todaysEventsStreamProvider);
-    final announcements = ref.watch(announcementsStreamProvider);
+    final recentAnnouncements = ref.watch(recentAnnouncementsStreamProvider);
     final clubs = ref.watch(clubsStreamProvider);
     final currentUserAsync = ref.watch(currentUserProvider);
 
-    bool isLoading = announcements.isLoading || events.isLoading || clubs.isLoading || currentUserAsync.isLoading;
+    bool isLoading = recentAnnouncements.isLoading || events.isLoading || clubs.isLoading || currentUserAsync.isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -177,7 +177,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    announcements.when(
+                    recentAnnouncements.when(
                       data: (announcementsList) {
                         if (announcementsList.isEmpty) {
                           return const SizedBox(

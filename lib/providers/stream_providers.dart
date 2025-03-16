@@ -45,6 +45,25 @@ Stream<List<Map<String, dynamic>>> loadAnnouncementsStream() {
     return allAnnouncements;
   });
 }
+Stream<List<Map<String, dynamic>>> loadRecentAnnouncementsStream() {
+  final firestore = FirebaseFirestore.instance;
+  return firestore.collection('announcements').snapshots().map((snapshot) {
+    final List<Map<String, dynamic>> recentAnnouncements = [];
+    for (var doc in snapshot.docs) {
+      if (doc.data().containsKey('announcementsList')) {
+        final List<dynamic> announcementsList = doc.data()['announcementsList'].take(2).toList();
+        recentAnnouncements.addAll(announcementsList.cast<Map<String, dynamic>>());
+      }
+    }
+    recentAnnouncements.retainWhere((announcement) {
+      final announcementDate = DateTime.parse(announcement['date'] ?? DateTime.now().toIso8601String());
+      final oneWeekAgo = DateTime.now().subtract(const Duration(days: 7));
+      return announcementDate.isAfter(oneWeekAgo);
+    });
+    recentAnnouncements.sort((a, b) => b['date'].compareTo(a['date'])); //descending
+    return recentAnnouncements;
+  });
+}
 
 final eventsStreamProvider = StreamProvider<List<Event>>((ref) {
   return loadEventsStream().map(
@@ -62,6 +81,14 @@ final todaysEventsStreamProvider = StreamProvider<List<Event>>((ref) {
 
 final announcementsStreamProvider = StreamProvider<List<Announcement>>((ref) {
   return loadAnnouncementsStream().map(
+    (announcementsList) =>
+        announcementsList.map((json) => Announcement.fromJson(json)).toList()
+          ..sort((a, b) => b.date.compareTo(a.date)),
+  );
+});
+
+final recentAnnouncementsStreamProvider = StreamProvider<List<Announcement>>((ref) {
+  return loadRecentAnnouncementsStream().map(
     (announcementsList) =>
         announcementsList.map((json) => Announcement.fromJson(json)).toList()
           ..sort((a, b) => b.date.compareTo(a.date)),
