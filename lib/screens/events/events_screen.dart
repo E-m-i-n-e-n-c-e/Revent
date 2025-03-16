@@ -1,5 +1,6 @@
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/utils/common_utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -56,13 +57,34 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              event.title,
-              style: const TextStyle(
-                color: Color(0xFFAEE7FF),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                SizedBox(width: 10),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: ClipOval(
+                    child: getCachedNetworkImage(
+                      imageUrl: getClubLogo(ref, event.clubId),
+                      imageType: ImageType.club,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    event.title,
+                    style: const TextStyle(
+                      color: Color(0xFFAEE7FF),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -115,10 +137,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to delete event: $e'),
+                      content: Text(
+                        e.toString().contains('permission') || e.toString().contains('denied')
+                            ? "Sorry, you're not an admin of this club"
+                            : 'Failed to delete event: $e'
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
+                  Navigator.pop(context);
                 }
               }
             },
@@ -146,12 +173,26 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               );
               return;
             }
+            final user = FirebaseAuth.instance.currentUser;
+            if (user == null || user.email == null) {
+              throw Exception("User not logged in");
+            }
+
+            final adminClubs = getAdminClubs(ref, user.email!);
+            if (!adminClubs.any((club) => club.id == updatedEvent.clubId)) {
+              throw Exception("permission-denied");
+            }
+
             await updateEvent(event.id!, updatedEvent.toJson());
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Failed to update event: $e'),
+                  content: Text(
+                    e.toString().contains('permission') || e.toString().contains('denied')
+                        ? "Sorry, you're not an admin of this club"
+                        : 'Failed to update event: $e'
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );

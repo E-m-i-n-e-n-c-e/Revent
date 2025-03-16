@@ -364,7 +364,10 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                     CircleAvatar(
                       radius: 16,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage:NetworkImage(getClubLogo(ref, widget.announcement.clubId)),
+                      backgroundImage: getCachedNetworkImageProvider(
+                        imageUrl: getClubLogo(ref, widget.announcement.clubId),
+                        imageType: ImageType.club,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -532,9 +535,6 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                           launchUrlExternal(href);
                         }
                       },
-                      builders: {
-                        'a': CustomLinkBuilder(),
-                      },
                       imageBuilder: (uri, title, alt) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -542,22 +542,21 @@ class _MarkdownAnnouncementCardState extends ConsumerState<MarkdownAnnouncementC
                             constraints: BoxConstraints(
                               maxWidth: MediaQuery.of(context).size.width - 64, // Account for padding
                             ),
-                            child: Image.network(
-                              uri.toString(),
+                            child: getCachedNetworkImage(
+                              imageUrl: uri.toString(),
+                              imageType: ImageType.markdown,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF17323D),
+                              errorWidget: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF17323D),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
                                     'Unable to load image',
                                     style: TextStyle(color: Color(0xFFAEE7FF)),
                                   ),
-                                );
-                              },
+                              ),
                             ),
                           ),
                         );

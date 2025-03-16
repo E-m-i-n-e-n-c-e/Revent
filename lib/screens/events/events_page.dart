@@ -477,7 +477,10 @@ class _ExpandableEventCardState extends ConsumerState<ExpandableEventCard> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             image: DecorationImage(
-                              image: NetworkImage(getClubLogo(ref, widget.event.clubId)),
+                              image: getCachedNetworkImageProvider(
+                                imageUrl: getClubLogo(ref, widget.event.clubId),
+                                imageType: ImageType.club,
+                              ),
                               fit: BoxFit.cover,
                             ),
                           ),

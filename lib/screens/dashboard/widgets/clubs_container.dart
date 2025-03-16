@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/screens/clubs/club_page.dart';
+import 'package:events_manager/utils/common_utils.dart';
 
 class ClubsContainer extends StatefulWidget {
   const ClubsContainer({super.key, required this.clubs});
@@ -142,8 +143,9 @@ class ClubIcon extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(500),
-              child: Image.network(
-                club.logoUrl,
+              child: getCachedNetworkImage(
+                imageUrl: club.logoUrl,
+                imageType: ImageType.club,
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,

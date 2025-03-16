@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/providers/stream_providers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:events_manager/utils/cache_managers.dart';
 
 /// Launches a URL in the external browser
 /// Handles URLs without schemes by adding https:// prefix
@@ -91,7 +93,6 @@ String getClubName(WidgetRef ref, String clubId) {
   }
 }
 
-
 /// Gets a list of clubs where the user is an admin
 /// Uses the WidgetRef to access the clubs provider
 List<Club> getAdminClubs(WidgetRef ref, String userEmail) {
@@ -112,7 +113,6 @@ List<Club> getAdminClubs(WidgetRef ref, String userEmail) {
 
     // Cache the results in both directions for future use
     _userAdminClubsCache[userEmail] = adminClubs;
-
 
     return adminClubs;
   } catch (e) {
@@ -161,3 +161,69 @@ Widget buildDateSeparator(DateTime date) {
       ),
     );
   }
+
+/// Returns a CachedNetworkImage with the appropriate cache manager based on the image type
+Widget getCachedNetworkImage({
+  required String imageUrl,
+  required ImageType imageType,
+  double? width,
+  double? height,
+  BoxFit fit = BoxFit.cover,
+  Widget? placeholder,
+  Widget? errorWidget,
+}) {
+  // Default placeholder is now transparent instead of a loading indicator
+  final defaultPlaceholder = const SizedBox.shrink();
+
+  final defaultErrorWidget = Icon(
+    Icons.broken_image,
+    color: const Color(0xFF83ACBD),
+    size: 24,
+  );
+
+  // Select the appropriate cache manager based on image type
+  final cacheManager = _getCacheManagerForType(imageType);
+
+  return CachedNetworkImage(
+    imageUrl: imageUrl,
+    width: width,
+    height: height,
+    fit: fit,
+    cacheManager: cacheManager,
+    placeholder: (context, url) => placeholder ?? defaultPlaceholder,
+    errorWidget: (context, url, error) => errorWidget ?? defaultErrorWidget,
+  );
+}
+
+/// Returns a CachedNetworkImageProvider with the appropriate cache manager based on the image type
+CachedNetworkImageProvider getCachedNetworkImageProvider({
+  required String imageUrl,
+  required ImageType imageType,
+}) {
+  return CachedNetworkImageProvider(
+    imageUrl,
+    cacheManager: _getCacheManagerForType(imageType),
+  );
+}
+
+/// Enum for different types of images in the app
+enum ImageType {
+  profile,
+  markdown,
+  mapMarker,
+  club,
+}
+
+/// Returns the appropriate cache manager for the given image type
+dynamic _getCacheManagerForType(ImageType imageType) {
+  switch (imageType) {
+    case ImageType.profile:
+      return ProfileImageCacheManager();
+    case ImageType.markdown:
+      return MarkdownImageCacheManager();
+    case ImageType.mapMarker:
+      return MapImageCacheManager();
+    case ImageType.club:
+      return ClubImageCacheManager();
+  }
+}

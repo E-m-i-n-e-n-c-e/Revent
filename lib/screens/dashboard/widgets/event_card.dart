@@ -116,8 +116,9 @@ class EventItem extends ConsumerWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(51),
-                        child: Image.network(
-                          getClubLogo(ref, event.clubId),
+                        child: getCachedNetworkImage(
+                          imageUrl: getClubLogo(ref, event.clubId),
+                          imageType: ImageType.club,
                           width: 23,
                           height: 23,
                           fit: BoxFit.cover,

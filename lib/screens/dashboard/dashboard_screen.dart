@@ -90,8 +90,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 2),
-                    ProfileHeader(
-                      profileImage: currentUserAsync.value?.photoURL ?? widget.user.photoURL ?? ''
+                    currentUserAsync.when(
+                      data: (user) => ProfileHeader(
+                        profileImage: user?.photoURL ?? widget.user.photoURL ?? '',
+                      ),
+                      loading: () => const ProfileHeader(profileImage: ''),
+                      error: (_, __) => const ProfileHeader(profileImage: ''),
                     ),
                     const SizedBox(height: 18),
                     Padding(

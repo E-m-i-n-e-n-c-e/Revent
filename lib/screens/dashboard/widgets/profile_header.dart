@@ -1,6 +1,6 @@
 import 'package:events_manager/screens/profile/profile.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileHeader extends StatefulWidget {
   final String profileImage;
@@ -28,7 +28,6 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,8 +89,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
-                    image: user?.photoURL != null
-                        ? NetworkImage(user!.photoURL!)
+                    image: widget.profileImage != ''
+                        ? getCachedNetworkImageProvider(
+                            imageUrl: widget.profileImage,
+                            imageType: ImageType.profile,
+                          )
                         : const AssetImage('assets/default_avatar.png') as ImageProvider,
                     fit: BoxFit.cover,
                   ),

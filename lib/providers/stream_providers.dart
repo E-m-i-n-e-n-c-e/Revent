@@ -7,6 +7,7 @@ import 'package:events_manager/models/map_marker.dart';
 import 'package:events_manager/models/user.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:events_manager/models/admin_log.dart';
 
 Stream<List<Map<String, dynamic>>> loadEventsStream() {
   final firestore = FirebaseFirestore.instance;
@@ -259,7 +260,89 @@ final currentUserProvider = StreamProvider<AppUser?>((ref) {
   });
 });
 
+// Admin logs providers
+Stream<List<AdminLog>> loadAdminLogsStream() {
+  final firestore = FirebaseFirestore.instance;
+  return firestore
+      .collection('admin_logs')
+      .orderBy('timestamp', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => AdminLog.fromFirestore(doc)).toList());
+}
 
+final adminLogsStreamProvider = StreamProvider<List<AdminLog>>((ref) {
+  return loadAdminLogsStream();
+});
+
+// Admin logs filter providers
+final adminLogsSearchQueryProvider = StateProvider<String>((ref) => '');
+final adminLogsCollectionFilterProvider = StateProvider<String>((ref) => 'All');
+final adminLogsOperationFilterProvider = StateProvider<String>((ref) => 'All');
+final adminLogsSortOptionProvider = StateProvider<String>((ref) => 'Newest First');
+
+final filteredAdminLogsProvider = Provider<List<AdminLog>>((ref) {
+  final searchQuery = ref.watch(adminLogsSearchQueryProvider);
+  final collectionFilter = ref.watch(adminLogsCollectionFilterProvider);
+  final operationFilter = ref.watch(adminLogsOperationFilterProvider);
+  final sortOption = ref.watch(adminLogsSortOptionProvider);
+  final logs = ref.watch(adminLogsStreamProvider).value ?? [];
+
+  // Filter by search query
+  var filtered = searchQuery.isEmpty
+      ? logs
+      : logs.where((log) =>
+          log.collection.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          log.documentId.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          log.operation.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          log.userEmail.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          log.changeDescription.toLowerCase().contains(searchQuery.toLowerCase())).toList();
+
+  // Filter by collection
+  if (collectionFilter != 'All') {
+    filtered = filtered.where((log) => log.collection == collectionFilter).toList();
+  }
+
+  // Filter by operation type
+  if (operationFilter != 'All') {
+    String operationPrefix;
+    switch (operationFilter) {
+      case 'Create':
+        operationPrefix = 'create_';
+        break;
+      case 'Update':
+        operationPrefix = 'update_';
+        break;
+      case 'Delete':
+        operationPrefix = 'delete_';
+        break;
+      default:
+        operationPrefix = '';
+    }
+    filtered = filtered.where((log) => log.operation.startsWith(operationPrefix)).toList();
+  }
+
+  // Sort logs
+  switch (sortOption) {
+    case 'Oldest First':
+      filtered.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      break;
+    case 'Newest First':
+    default:
+      filtered.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      break;
+  }
+
+  return filtered;
+});
+
+// Check if user is admin of any club
+final isUserAdminProvider = Provider<bool>((ref) {
+  final currentUser = ref.watch(currentUserProvider).value;
+  if (currentUser == null) return false;
+
+  final clubs = ref.watch(clubsStreamProvider).value ?? [];
+  return clubs.any((club) => club.adminEmails.contains(currentUser.email));
+});
 
 void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(eventsStreamProvider);
@@ -271,4 +354,7 @@ void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(currentUserProvider);
   ref.invalidate(filteredEventsProvider);
   ref.invalidate(filteredAnnouncementsProvider);
+  ref.invalidate(adminLogsStreamProvider);
+  ref.invalidate(filteredAdminLogsProvider);
+  ref.invalidate(isUserAdminProvider);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/map_marker.dart';
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/utils/firedata.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:events_manager/utils/common_utils.dart';
 
 const minZoom = 17.0;
 const maxZoom = 21.0;
@@ -119,24 +120,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final MapController mapController = MapController();
   bool _isSatelliteMode = true;
   final ImagePicker _imagePicker = ImagePicker();
-  late final MapImageCacheManager _imageCacheManager;
 
   @override
   void initState() {
     super.initState();
-    _imageCacheManager = MapImageCacheManager();
-  }
-
-  Widget _buildCachedNetworkImage(String imageUrl) {
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
-      cacheManager: _imageCacheManager,
-      fit: BoxFit.cover,
-      errorWidget: (context, url, error) => const Icon(
-        Icons.error,
-        color: Color(0xFFAEE7FF),
-      ),
-    );
   }
 
   Future<void> _addMarker(LatLng position) async {
@@ -162,8 +149,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     if (imageUrl != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imageUrl!,
+                        child: getCachedNetworkImage(
+                          imageUrl: imageUrl!,
+                          imageType: ImageType.mapMarker,
                           height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -326,8 +314,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     if (imageUrl != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imageUrl!,
+                        child: getCachedNetworkImage(
+                          imageUrl: imageUrl!,
+                          imageType: ImageType.mapMarker,
                           height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -609,7 +598,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                                               child: ClipRRect(
                                                 borderRadius: BorderRadius.circular(12),
-                                                child: _buildCachedNetworkImage(marker.imageUrl!),
+                                                child: getCachedNetworkImage(
+                                                  imageUrl: marker.imageUrl!,
+                                                  imageType: ImageType.mapMarker,
+                                                  fit: BoxFit.cover,
+                                                ),
                                               ),
                                             ),
                                           Padding(

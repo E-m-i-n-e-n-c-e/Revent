@@ -308,7 +308,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           image: DecorationImage(
-                            image: NetworkImage(club.logoUrl),
+                            image: getCachedNetworkImageProvider(
+                              imageUrl: club.logoUrl,
+                              imageType: ImageType.club,
+                            ),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -455,7 +458,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       image: DecorationImage(
-                        image: NetworkImage(club.logoUrl),
+                        image: getCachedNetworkImageProvider(
+                          imageUrl: club.logoUrl,
+                          imageType: ImageType.club,
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -613,8 +619,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     CircleAvatar(
                       radius: 16,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage:
-                          NetworkImage(getClubLogo(ref, announcement.clubId)),
+                      backgroundImage: getCachedNetworkImageProvider(
+                        imageUrl: getClubLogo(ref, announcement.clubId),
+                        imageType: ImageType.club,
+                      ),
                       child: null,
                     ),
                     const SizedBox(width: 12),
@@ -783,9 +791,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           launchUrlExternal(href);
                         }
                       },
-                      builders: {
-                        'a': CustomLinkBuilder(),
-                      },
                       imageBuilder: (uri, title, alt) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -794,11 +799,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               maxWidth: MediaQuery.of(context).size.width -
                                   64, // Account for padding
                             ),
-                            child: Image.network(
-                              uri.toString(),
+                            child: getCachedNetworkImage(
+                              imageUrl: uri.toString(),
+                              imageType: ImageType.markdown,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
+                              errorWidget:
+                                  Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF17323D),
@@ -808,8 +814,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     'Unable to load image',
                                     style: TextStyle(color: Color(0xFFAEE7FF)),
                                   ),
-                                );
-                              },
+                                )
+
                             ),
                           ),
                         );
@@ -902,7 +908,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       width: 2,
                     ),
                     image: DecorationImage(
-                      image: NetworkImage(club.logoUrl),
+                      image: getCachedNetworkImageProvider(
+                        imageUrl: club.logoUrl,
+                        imageType: ImageType.club,
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),

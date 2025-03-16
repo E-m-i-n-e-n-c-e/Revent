@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/utils/firedata.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -155,7 +156,10 @@ class _EditClubFormState extends State<EditClubForm> {
                     title: 'Club Logo',
                     currentImage: _logoFile != null
                         ? FileImage(File(_logoFile!))
-                        : NetworkImage(widget.club.logoUrl) as ImageProvider,
+                        : getCachedNetworkImageProvider(
+                            imageUrl: widget.club.logoUrl,
+                            imageType: ImageType.club,
+                          ),
                     onTap: () => _pickImage('logo'),
                     isCircular: true,
                   ),
@@ -167,9 +171,12 @@ class _EditClubFormState extends State<EditClubForm> {
                     title: 'Club Background',
                     currentImage: _backgroundFile != null
                         ? FileImage(File(_backgroundFile!))
-                        : NetworkImage(widget.club.backgroundImageUrl.isNotEmpty
-                            ? widget.club.backgroundImageUrl
-                            : widget.club.logoUrl) as ImageProvider,
+                        : getCachedNetworkImageProvider(
+                            imageUrl: widget.club.backgroundImageUrl.isNotEmpty
+                                ? widget.club.backgroundImageUrl
+                                : widget.club.logoUrl,
+                            imageType: ImageType.club,
+                          ),
                     onTap: () => _pickImage('background'),
                     isCircular: false,
                   ),

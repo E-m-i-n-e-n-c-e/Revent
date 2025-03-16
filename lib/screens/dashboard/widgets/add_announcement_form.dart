@@ -6,7 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:events_manager/utils/markdown_renderer.dart';
+import 'package:events_manager/utils/common_dialogs.dart';
 
 class AddAnnouncementForm extends ConsumerStatefulWidget {
   final Future<void> Function(Announcement) addAnnouncement;
@@ -142,11 +143,22 @@ class _AddAnnouncementFormState extends ConsumerState<AddAnnouncementForm> {
             },
             tooltip: _isPreviewMode ? 'Edit' : 'Preview',
           ),
-          IconButton(
-            icon: const Icon(Icons.check, color: Color(0xff83ACBD)),
-            onPressed: _isSaving
-                ? null
-                : () async {
+          if (_isSaving)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFAEE7FF)),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.check, color: Color(0xff83ACBD)),
+              onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       setState(() {
                         _isSaving = true;
@@ -439,166 +451,12 @@ class _AddAnnouncementFormState extends ConsumerState<AddAnnouncementForm> {
             // Description preview
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: _buildMarkdownContent(),
+              child: MarkdownRenderer(data: _descriptionController.text),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildMarkdownContent() {
-    try {
-      return MarkdownBody(
-        data: _descriptionController.text.isEmpty
-            ? '_No content yet_'
-            : _descriptionController.text,
-        styleSheet: MarkdownStyleSheet(
-          // Text styles
-          p: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 16,
-            height: 1.5,
-          ),
-          h1: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-          h2: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          h3: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-          h4: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-          h5: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-          h6: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-
-          // List styles
-          listBullet: const TextStyle(
-            color: Color(0xFFAEE7FF),
-          ),
-          listIndent: 20.0,
-
-          // Code styles
-          code: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            backgroundColor: Color(0xFF17323D),
-            fontFamily: 'monospace',
-          ),
-          codeblockDecoration: BoxDecoration(
-            color: const Color(0xFF17323D),
-            borderRadius: BorderRadius.circular(4),
-          ),
-
-          // Emphasis styles
-          em: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontStyle: FontStyle.italic,
-          ),
-          strong: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontWeight: FontWeight.bold,
-          ),
-
-          // Quote styles
-          blockquote: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontStyle: FontStyle.italic,
-          ),
-          blockquoteDecoration: BoxDecoration(
-            color: const Color(0xFF17323D),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFF2A3F4A)),
-          ),
-
-          // Link style - using the same color as in the preview
-          a: const TextStyle(
-            color: Color(0xFF71C2E4),
-            decoration: TextDecoration.underline,
-          ),
-
-          // Table styles
-          tableHead: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontWeight: FontWeight.bold,
-          ),
-          tableBody: const TextStyle(
-            color: Color(0xFFAEE7FF),
-          ),
-          tableBorder: TableBorder.all(
-            color: const Color(0xFF2A3F4A),
-            width: 1,
-          ),
-          tableCellsPadding: const EdgeInsets.all(8.0),
-
-          // Horizontal rule style
-          horizontalRuleDecoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                width: 1.0,
-                color: Color(0xFF2A3F4A),
-              ),
-            ),
-          ),
-        ),
-        selectable: true,
-        onTapLink: (text, href, title) {
-          if (href != null) {
-            launchUrlExternal(href);
-          }
-        },
-        imageBuilder: (uri, title, alt) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              uri.toString(),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF17323D),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Unable to load image',
-                    style: TextStyle(color: Color(0xFFAEE7FF)),
-                  ),
-                );
-              },
-            ),
-          );
-        },
-      );
-    } catch (e) {
-      // Fallback to plain text if markdown parsing fails
-      return Text(
-        _descriptionController.text,
-        style: const TextStyle(
-          color: Color(0xFFAEE7FF),
-          fontSize: 16,
-          height: 1.5,
-        ),
-      );
-    }
   }
 
   @override
@@ -606,247 +464,5 @@ class _AddAnnouncementFormState extends ConsumerState<AddAnnouncementForm> {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-}
-
-// Club Selection Dialog
-class ClubSelectionDialog extends StatelessWidget {
-  final List<Club> clubs;
-
-  const ClubSelectionDialog({super.key, required this.clubs});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F2026),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x40000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: const Color(0xFF17323D),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Club',
-              style: TextStyle(
-                color: Color(0xFFAEE7FF),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Choose which club to post this announcement for:',
-              style: TextStyle(
-                color: Color(0xFF83ACBD),
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            const Divider(
-              color: Color(0xFF17323D),
-              thickness: 1,
-              height: 1,
-            ),
-            const SizedBox(height: 16),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.4,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: clubs.length,
-                itemBuilder: (context, index) {
-                  final club = clubs[index];
-                  return InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop(club);
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFF71C2E4),
-                                width: 2,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: Image.network(
-                                club.logoUrl,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              club.name,
-                              style: const TextStyle(
-                                color: Color(0xFFAEE7FF),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Color(0xFF83ACBD),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF83ACBD),
-              ),
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// No Admin Clubs Dialog
-class NoAdminClubsDialog extends StatelessWidget {
-  const NoAdminClubsDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F2026),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x40000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: const Color(0xFF17323D),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Color(0xFFAEE7FF),
-              size: 48,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Not a Club Admin',
-              style: TextStyle(
-                color: Color(0xFFAEE7FF),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Sorry, you\'re not the admin of any club.',
-              style: TextStyle(
-                color: Color(0xFF83ACBD),
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Contact ',
-                  style: TextStyle(
-                    color: Color(0xFF83ACBD),
-                    fontSize: 16,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    launchUrlExternal('https://wa.me/917036972415');
-                  },
-                  child: const Text(
-                    'Akhil',
-                    style: TextStyle(
-                      color: Color(0xFF71C2E4),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-                const Text(
-                  ' if this is a mistake.',
-                  style: TextStyle(
-                    color: Color(0xFF83ACBD),
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0E668A),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

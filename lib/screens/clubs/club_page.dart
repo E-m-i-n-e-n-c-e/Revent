@@ -102,7 +102,10 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundImage: NetworkImage(currentClub.logoUrl),
+                        backgroundImage: getCachedNetworkImageProvider(
+                          imageUrl: currentClub.logoUrl,
+                          imageType: ImageType.club,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -150,10 +153,11 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF06222F),
                           image: DecorationImage(
-                            image: NetworkImage(
-                              currentClub.backgroundImageUrl.isNotEmpty
+                            image: getCachedNetworkImageProvider(
+                              imageUrl: currentClub.backgroundImageUrl.isNotEmpty
                                   ? currentClub.backgroundImageUrl
                                   : currentClub.logoUrl,
+                              imageType: ImageType.club,
                             ),
                             fit: BoxFit.cover,
                             opacity: 0.3,
@@ -226,9 +230,9 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                   child: Hero(
                                     tag: 'club-logo-${currentClub.id}',
                                     child: ClipOval(
-                                      child: Image.network(
-                                        currentClub.logoUrl,
-                                        fit: BoxFit.cover,
+                                      child: getCachedNetworkImage(
+                                        imageUrl: currentClub.logoUrl,
+                                        imageType: ImageType.club,
                                       ),
                                     ),
                                   ),
@@ -1093,22 +1097,21 @@ class _ExpandableAnnouncementCardState
                               maxWidth: MediaQuery.of(context).size.width -
                                   64, // Account for padding
                             ),
-                            child: Image.network(
-                              uri.toString(),
+                            child: getCachedNetworkImage(
+                              imageUrl: uri.toString(),
+                              imageType: ImageType.markdown,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF17323D),
+                              errorWidget: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF17323D),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
                                     'Unable to load image',
                                     style: TextStyle(color: Color(0xFFAEE7FF)),
                                   ),
-                                );
-                              },
+                              ),
                             ),
                           ),
                         );

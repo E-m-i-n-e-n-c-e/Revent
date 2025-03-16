@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:events_manager/models/event.dart';
-import 'package:events_manager/data/clubs_data.dart';
+import 'package:events_manager/models/club.dart';
+import 'package:events_manager/utils/common_utils.dart';
+import 'package:events_manager/utils/common_dialogs.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddEventDialog extends StatefulWidget {
+class AddEventDialog extends ConsumerStatefulWidget {
   final DateTime initialDate;
   final Function(Event) onEventAdded;
   final DateTime finalDate;
@@ -15,25 +19,24 @@ class AddEventDialog extends StatefulWidget {
   });
 
   @override
-  State<AddEventDialog> createState() => _AddEventDialogState();
+  ConsumerState<AddEventDialog> createState() => _AddEventDialogState();
 }
 
-class _AddEventDialogState extends State<AddEventDialog> {
+class _AddEventDialogState extends ConsumerState<AddEventDialog> {
   late DateTime _startTime;
   late DateTime _endTime;
-  late String _selectedClubId;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _venueController = TextEditingController();
   final TextEditingController _registrationLinkController = TextEditingController();
   final TextEditingController _feedbackLinkController = TextEditingController();
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _startTime = widget.initialDate;
     _endTime = widget.finalDate;
-    _selectedClubId = sampleClubs.first.id;
   }
 
   Widget _buildTimePicker(
@@ -71,6 +74,21 @@ class _AddEventDialogState extends State<AddEventDialog> {
           ),
         ),
       ],
+    );
+  }
+
+  // Show visual feedback when a link is entered
+  void _showLinkFeedback(String linkType) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$linkType link added'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF0E668A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
     );
   }
 
@@ -114,33 +132,28 @@ class _AddEventDialogState extends State<AddEventDialog> {
               decoration: const InputDecoration(
                 labelText: 'Registration Link (Optional)',
                 labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+                suffixIcon: Icon(Icons.link, color: Color(0xFF71C2E4)),
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
+              onChanged: (value) {
+                if (value.isNotEmpty && value.startsWith('http')) {
+                  _showLinkFeedback('Registration');
+                }
+              },
             ),
             TextField(
               controller: _feedbackLinkController,
               decoration: const InputDecoration(
                 labelText: 'Feedback Link (Optional)',
                 labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+                suffixIcon: Icon(Icons.link, color: Color(0xFF71C2E4)),
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedClubId,
-              dropdownColor: const Color(0xFF06222F),
-              items: sampleClubs.map((club) {
-                return DropdownMenuItem(
-                  value: club.id,
-                  child: Text(club.name,
-                      style: const TextStyle(color: Color(0xFFAEE7FF))),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedClubId = value!),
-              decoration: const InputDecoration(
-                labelText: 'Club',
-                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
-              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && value.startsWith('http')) {
+                  _showLinkFeedback('Feedback');
+                }
+              },
             ),
             const SizedBox(height: 16),
             _buildTimePicker('Start Time', _startTime,
@@ -161,25 +174,96 @@ class _AddEventDialogState extends State<AddEventDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF83ACBD),
           ),
-          onPressed: () {
-            final event = Event(
-              title: _titleController.text,
-              description: _descriptionController.text,
-              startTime: _startTime,
-              endTime: _endTime,
-              clubId: _selectedClubId,
-              venue: _venueController.text,
-              registrationLink: _registrationLinkController.text.isNotEmpty
-                  ? _registrationLinkController.text
-                  : null,
-              feedbackLink: _feedbackLinkController.text.isNotEmpty
-                  ? _feedbackLinkController.text
-                  : null,
-            );
-            widget.onEventAdded(event);
-            Navigator.pop(context, event);
+          onPressed: _isSaving ? null : () async {
+            setState(() {
+              _isSaving = true;
+            });
+
+            try {
+              // Get current user email directly from Firebase Auth
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null || user.email == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('User not logged in'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                setState(() {
+                  _isSaving = false;
+                });
+                return;
+              }
+
+              final adminClubs = getAdminClubs(ref, user.email!);
+
+              if (!mounted) return;
+
+              if (adminClubs.isEmpty) {
+                await showDialog(
+                  context: context,
+                  builder: (context) => const NoAdminClubsDialog(),
+                );
+                setState(() {
+                  _isSaving = false;
+                });
+                return;
+              }
+
+              final selectedClub = await showDialog<Club>(
+                context: context,
+                builder: (context) => ClubSelectionDialog(clubs: adminClubs),
+              );
+
+              if (selectedClub != null) {
+                final event = Event(
+                  title: _titleController.text,
+                  description: _descriptionController.text,
+                  startTime: _startTime,
+                  endTime: _endTime,
+                  clubId: selectedClub.id,
+                  venue: _venueController.text,
+                  registrationLink: _registrationLinkController.text.isNotEmpty
+                      ? _registrationLinkController.text
+                      : null,
+                  feedbackLink: _feedbackLinkController.text.isNotEmpty
+                      ? _feedbackLinkController.text
+                      : null,
+                );
+                widget.onEventAdded(event);
+                if(context.mounted){
+                  Navigator.pop(context, event);
+                }
+
+              } else {
+                setState(() {
+                  _isSaving = false;
+                });
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              setState(() {
+                _isSaving = false;
+              });
+            }
           },
-          child: const Text('Add'),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text('Add'),
         ),
       ],
     );
@@ -196,7 +280,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
   }
 }
 
-class EditEventDialog extends StatefulWidget {
+class EditEventDialog extends ConsumerStatefulWidget {
   final Event event;
   final Function(Event) onEventEdited;
 
@@ -207,10 +291,10 @@ class EditEventDialog extends StatefulWidget {
   });
 
   @override
-  State<EditEventDialog> createState() => _EditEventDialogState();
+  ConsumerState<EditEventDialog> createState() => _EditEventDialogState();
 }
 
-class _EditEventDialogState extends State<EditEventDialog> {
+class _EditEventDialogState extends ConsumerState<EditEventDialog> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _venueController;
@@ -218,7 +302,8 @@ class _EditEventDialogState extends State<EditEventDialog> {
   late TextEditingController _feedbackLinkController;
   late DateTime _startTime;
   late DateTime _endTime;
-  late String _selectedClubId;
+  late String _clubId;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -231,7 +316,22 @@ class _EditEventDialogState extends State<EditEventDialog> {
     _feedbackLinkController = TextEditingController(text: widget.event.feedbackLink ?? '');
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
-    _selectedClubId = widget.event.clubId;
+    _clubId = widget.event.clubId;
+  }
+
+  // Show visual feedback when a link is entered
+  void _showLinkFeedback(String linkType) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$linkType link updated'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF0E668A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
   }
 
   Widget _buildDateTimePicker(
@@ -319,33 +419,28 @@ class _EditEventDialogState extends State<EditEventDialog> {
               decoration: const InputDecoration(
                 labelText: 'Registration Link (Optional)',
                 labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+                suffixIcon: Icon(Icons.link, color: Color(0xFF71C2E4)),
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
+              onChanged: (value) {
+                if (value.isNotEmpty && value.startsWith('http')) {
+                  _showLinkFeedback('Registration');
+                }
+              },
             ),
             TextField(
               controller: _feedbackLinkController,
               decoration: const InputDecoration(
                 labelText: 'Feedback Link (Optional)',
                 labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
+                suffixIcon: Icon(Icons.link, color: Color(0xFF71C2E4)),
               ),
               style: const TextStyle(color: Color(0xFFAEE7FF)),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedClubId,
-              dropdownColor: const Color(0xFF06222F),
-              items: sampleClubs.map((club) {
-                return DropdownMenuItem(
-                  value: club.id,
-                  child: Text(club.name,
-                      style: const TextStyle(color: Color(0xFFAEE7FF))),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedClubId = value!),
-              decoration: const InputDecoration(
-                labelText: 'Club',
-                labelStyle: TextStyle(color: Color(0xFFAEE7FF)),
-              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && value.startsWith('http')) {
+                  _showLinkFeedback('Feedback');
+                }
+              },
             ),
             const SizedBox(height: 16),
             _buildDateTimePicker('Start Time', _startTime,
@@ -366,13 +461,17 @@ class _EditEventDialogState extends State<EditEventDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF83ACBD),
           ),
-          onPressed: () {
+          onPressed: _isSaving ? null : () {
+            setState(() {
+              _isSaving = true;
+            });
+
             final updatedEvent = Event(
               title: _titleController.text,
               description: _descriptionController.text,
               startTime: _startTime,
               endTime: _endTime,
-              clubId: _selectedClubId,
+              clubId: _clubId, // Keep the original club ID
               venue: _venueController.text,
               registrationLink: _registrationLinkController.text.isNotEmpty
                   ? _registrationLinkController.text
@@ -384,7 +483,16 @@ class _EditEventDialogState extends State<EditEventDialog> {
             widget.onEventEdited(updatedEvent);
             Navigator.pop(context, updatedEvent);
           },
-          child: const Text('Save'),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text('Save'),
         ),
       ],
     );

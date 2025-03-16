@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:events_manager/models/user.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'package:events_manager/utils/firedata.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -166,7 +167,10 @@ class _EditProfileFormState extends State<EditProfileForm> {
                           )
                         : widget.user.backgroundImageUrl != null
                             ? DecorationImage(
-                                image: NetworkImage(widget.user.backgroundImageUrl!),
+                                image: getCachedNetworkImageProvider(
+                                  imageUrl: widget.user.backgroundImageUrl!,
+                                  imageType: ImageType.profile,
+                                ),
                                 fit: BoxFit.cover,
                                 opacity: 0.7,
                               )
@@ -226,7 +230,10 @@ class _EditProfileFormState extends State<EditProfileForm> {
                                 )
                               : widget.user.photoURL != null
                                   ? DecorationImage(
-                                      image: NetworkImage(widget.user.photoURL!),
+                                      image: getCachedNetworkImageProvider(
+                                        imageUrl: widget.user.photoURL!,
+                                        imageType: ImageType.profile,
+                                      ),
                                       fit: BoxFit.cover,
                                     )
                                   : null,

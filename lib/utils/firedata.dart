@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/map_marker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 Future<List<Map<String, dynamic>>> loadEvents() async {
   final firestore = FirebaseFirestore.instance;
@@ -178,17 +178,13 @@ Future<void> deleteAnnouncement(String clubId, int index) async {
 // Supabase Storage Function
 Future<String> uploadAnnouncementImage(String filePath) async {
   try {
-    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-    await supabase.storage
-        .from('assets')
-        .upload('announcements/$fileName', file);
-
-    final imageUrl =
-        supabase.storage.from('assets').getPublicUrl('announcements/$fileName');
+    final storageRef = FirebaseStorage.instance.ref('announcements/$fileName');
+    await storageRef.putFile(file);
+    final imageUrl = await storageRef.getDownloadURL();
 
     return imageUrl;
   } catch (e) {
@@ -225,14 +221,14 @@ Future<void> updateClubDetails(String clubId, {
 
 Future<String> uploadClubImage(String clubId, String filePath, String type) async {
   try {
-    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final path = 'clubs/$clubId/${type}_$fileName';
 
-    await supabase.storage.from('assets').upload(path, file);
-    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+    final storageRef = FirebaseStorage.instance.ref(path);
+    await storageRef.putFile(file);
+    final imageUrl = await storageRef.getDownloadURL();
 
     return imageUrl;
   } catch (e) {
@@ -312,14 +308,14 @@ Future<void> deleteMapMarker(String markerId) async {
 
 Future<String> uploadMapMarkerImage(String filePath) async {
   try {
-    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final path = 'mapMarkers/$fileName';
 
-    await supabase.storage.from('assets').upload(path, file);
-    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+    final storageRef = FirebaseStorage.instance.ref(path);
+    await storageRef.putFile(file);
+    final imageUrl = await storageRef.getDownloadURL();
 
     return imageUrl;
   } catch (e) {
@@ -329,14 +325,13 @@ Future<String> uploadMapMarkerImage(String filePath) async {
 
 Future<String> uploadUserProfileImage(String uid, String filePath) async {
   try {
-    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final path = 'users/$uid/profile_$fileName';
+    final path = 'users/$uid/profile.$fileExt';
 
-    await supabase.storage.from('assets').upload(path, file);
-    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+    final storageRef = FirebaseStorage.instance.ref(path);
+    await storageRef.putFile(file);
+    final imageUrl = await storageRef.getDownloadURL();
 
     // Update the user document with the new photo URL
     await FirebaseFirestore.instance
@@ -352,14 +347,13 @@ Future<String> uploadUserProfileImage(String uid, String filePath) async {
 
 Future<String> uploadUserBackgroundImage(String uid, String filePath) async {
   try {
-    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final path = 'users/$uid/background_$fileName';
+    final path = 'users/$uid/background.$fileExt';
 
-    await supabase.storage.from('assets').upload(path, file);
-    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
+    final storageRef = FirebaseStorage.instance.ref(path);
+    await storageRef.putFile(file);
+    final imageUrl = await storageRef.getDownloadURL();
 
     // Update the user document with the new background URL
     await FirebaseFirestore.instance

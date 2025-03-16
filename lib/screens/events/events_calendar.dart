@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:events_manager/utils/common_utils.dart';
 import 'appointment_data_source.dart';
 
-class EventsCalendar extends StatelessWidget {
+class EventsCalendar extends ConsumerWidget {
   final CalendarView currentView;
   final DateTime? selectedDate;
   final List<Appointment> appointments;
@@ -18,7 +20,7 @@ class EventsCalendar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SfCalendar(
       key: ValueKey(currentView),
       view: currentView,
@@ -33,14 +35,14 @@ class EventsCalendar extends StatelessWidget {
         // For month view's agenda section specifically
         // This is the only place where we want to show the detailed card
         if (currentView == CalendarView.month && details.bounds.height > 30) {
-          return _buildAgendaAppointment(context, details);
+          return _buildAgendaAppointment(context, details, ref);
         }
 
         // For all other cases, use the appropriate view-specific builder
         if (currentView == CalendarView.day) {
-          return _buildDayViewAppointment(context, details);
+          return _buildDayViewAppointment(context, details, ref);
         } else {
-          return _buildMonthViewAppointment(context, details);
+          return _buildMonthViewAppointment(context, details, ref);
         }
       },
       monthViewSettings: MonthViewSettings(
@@ -145,7 +147,7 @@ class EventsCalendar extends StatelessWidget {
   }
 
   // For month view cells, show only club icon
-  Widget _buildMonthViewAppointment(BuildContext context, CalendarAppointmentDetails details) {
+  Widget _buildMonthViewAppointment(BuildContext context, CalendarAppointmentDetails details, WidgetRef ref) {
     final appointment = details.appointments.first;
     final clubLogoUrl = _extractClubLogo(appointment);
 
@@ -164,7 +166,10 @@ class EventsCalendar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
-                    image: NetworkImage(clubLogoUrl),
+                    image: getCachedNetworkImageProvider(
+                      imageUrl: clubLogoUrl,
+                      imageType: ImageType.club,
+                    ),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -183,7 +188,7 @@ class EventsCalendar extends StatelessWidget {
   }
 
   // For day view, show only title and logo
-  Widget _buildDayViewAppointment(BuildContext context, CalendarAppointmentDetails details) {
+  Widget _buildDayViewAppointment(BuildContext context, CalendarAppointmentDetails details, WidgetRef ref) {
     final appointment = details.appointments.first;
     final clubLogoUrl = _extractClubLogo(appointment);
 
@@ -204,7 +209,10 @@ class EventsCalendar extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 image: DecorationImage(
-                  image: NetworkImage(clubLogoUrl),
+                  image: getCachedNetworkImageProvider(
+                    imageUrl: clubLogoUrl,
+                    imageType: ImageType.club,
+                  ),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -227,7 +235,7 @@ class EventsCalendar extends StatelessWidget {
   }
 
   // For agenda view, show detailed card
-  Widget _buildAgendaAppointment(BuildContext context, CalendarAppointmentDetails details) {
+  Widget _buildAgendaAppointment(BuildContext context, CalendarAppointmentDetails details, WidgetRef ref) {
     final appointment = details.appointments.first;
     final clubLogoUrl = _extractClubLogo(appointment);
 
@@ -271,7 +279,10 @@ class EventsCalendar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
-                    image: NetworkImage(clubLogoUrl),
+                    image: getCachedNetworkImageProvider(
+                      imageUrl: clubLogoUrl,
+                      imageType: ImageType.club,
+                    ),
                     fit: BoxFit.cover,
                   ),
                 ),

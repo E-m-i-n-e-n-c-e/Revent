@@ -1,12 +1,13 @@
-import 'package:events_manager/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/providers/stream_providers.dart';
+import 'package:events_manager/utils/common_utils.dart';
+import 'package:events_manager/screens/clubs/club_page.dart';
+import 'package:events_manager/screens/admin/admin_dashboard.dart';
+import 'package:events_manager/services/auth_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:events_manager/screens/profile/edit_profile_form.dart';
-import 'package:events_manager/utils/common_utils.dart';
-import 'package:events_manager/screens/clubs/club_page.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -130,8 +131,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF06222F),
                           image: DecorationImage(
-                            image: NetworkImage(
-                              appUser.backgroundImageUrl ?? appUser.photoURL ?? 'https://via.placeholder.com/400x200/0F2026/71C2E4?text=Profile',
+                            image: getCachedNetworkImageProvider(
+                              imageUrl: appUser.backgroundImageUrl ?? appUser.photoURL ?? 'https://via.placeholder.com/400x200/0F2026/71C2E4?text=Profile',
+                              imageType: ImageType.profile,
                             ),
                             fit: BoxFit.cover,
                             opacity: 0.3,
@@ -173,8 +175,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       width: 2,
                                     ),
                                     image: DecorationImage(
-                                      image: NetworkImage(
-                                        appUser.photoURL ?? 'https://via.placeholder.com/150/0F2026/71C2E4?text=User',
+                                      image: getCachedNetworkImageProvider(
+                                        imageUrl: appUser.photoURL ?? 'https://via.placeholder.com/150/0F2026/71C2E4?text=User',
+                                        imageType: ImageType.profile,
                                       ),
                                       fit: BoxFit.cover,
                                     ),
@@ -187,9 +190,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-              Text(
+                                    Text(
                                         appUser.name,
-                style: const TextStyle(
+                                        style: const TextStyle(
                                           color: Color(0xFF61E7FF),
                                           fontSize: 26,
                                           fontWeight: FontWeight.bold,
@@ -353,7 +356,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                         padding: const EdgeInsets.all(2),
                                                         child: CircleAvatar(
                                                           backgroundColor: Colors.transparent,
-                                                          backgroundImage: NetworkImage(club.logoUrl),
+                                                          backgroundImage: getCachedNetworkImageProvider(
+                                                            imageUrl: club.logoUrl,
+                                                            imageType: ImageType.profile,
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
@@ -372,6 +378,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           color: Color(0xFF83ACBD),
                                           fontSize: 12,
                                           fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+
+                                      // Admin Dashboard Button
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => const AdminDashboardScreen(),
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(
+                                            FontAwesomeIcons.shieldHalved,
+                                            size: 16,
+                                          ),
+                                          label: const Text('ADMIN DASHBOARD'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF0E668A),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],

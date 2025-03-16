@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:events_manager/models/club.dart';
 import 'package:events_manager/providers/stream_providers.dart';
 import 'package:events_manager/screens/clubs/club_page.dart';
+import 'package:events_manager/utils/common_utils.dart';
 
 class AllClubsPage extends ConsumerStatefulWidget {
   const AllClubsPage({super.key});
@@ -116,6 +117,7 @@ class _AllClubsPageState extends ConsumerState<AllClubsPage> {
         child: SafeArea(
           child: Column(
             children: [
+              const SizedBox(height:15),
               Expanded(
                 child: clubs.when(
                   data: (clubsList) {
@@ -253,10 +255,11 @@ class ClubCard extends StatelessWidget {
                     topRight: Radius.circular(16),
                   ),
                   image: DecorationImage(
-                    image: NetworkImage(
-                      club.backgroundImageUrl.isNotEmpty
+                    image: getCachedNetworkImageProvider(
+                      imageUrl: club.backgroundImageUrl.isNotEmpty
                           ? club.backgroundImageUrl
                           : club.logoUrl,
+                      imageType: ImageType.club,
                     ),
                     fit: BoxFit.cover,
                   ),
@@ -294,7 +297,10 @@ class ClubCard extends StatelessWidget {
                         width: 2,
                       ),
                       image: DecorationImage(
-                        image: NetworkImage(club.logoUrl),
+                        image: getCachedNetworkImageProvider(
+                          imageUrl: club.logoUrl,
+                          imageType: ImageType.club,
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
