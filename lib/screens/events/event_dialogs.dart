@@ -177,6 +177,15 @@ class _AddEventDialogState extends State<AddEventDialog> {
                   : null,
             );
             widget.onEventAdded(event);
+
+            // Show a success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Event "${event.title}" added successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
             Navigator.pop(context, event);
           },
           child: const Text('Add'),

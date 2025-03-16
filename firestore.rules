@@ -14,51 +14,47 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function isUserOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
     // 🔹 Users Collection
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAuthenticated() && isOwner(userId);
-      // No delete rule - users shouldn't be able to delete their accounts
+      allow read, write: if isUserOwner(userId);
     }
 
     // 🔹 Clubs Collection
     match /clubs/{clubId} {
-      allow read: if true;
-      allow update: if isAuthenticated() && isAdmin(clubId);
-      // No create/delete rules - clubs should be managed by backend
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // 🔹 Events Collection
     match /events/{eventId} {
-      allow read: if true;
-      allow create: if isAuthenticated() &&
-                   isAdmin(request.resource.data.clubId);
-      allow update: if isAuthenticated() &&
-                   isAdmin(request.resource.data.clubId);
-      allow delete: if isAuthenticated() &&
-                   isAdmin(resource.data.clubId);
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // 🔹 Announcements Collection
     match /announcements/{clubId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isAdmin(clubId);
-      allow update: if isAuthenticated() && isAdmin(clubId);
-      allow delete: if isAuthenticated() && isAdmin(clubId);
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // 🔹 Map Markers Collection
     match /mapMarkers/{markerId} {
-      allow read: if true;
-      // Any authenticated user can create/update/delete markers
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // 🔹 Notifications Collection
+    match /notifications/{notificationId} {
+      // Allow read access to any authenticated user for now to debug
+      allow read: if isAuthenticated();
+      // Original rules - uncomment after debugging
+      // allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
     // 🔹 Deny access to any other collections by default

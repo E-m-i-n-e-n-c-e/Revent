@@ -1,3 +1,4 @@
+import 'package:events_manager/screens/dashboard/notifi.dart';
 import 'package:events_manager/screens/profile/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,7 +55,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           children: [
             IconButton(
               onPressed: () {
-                // Handle notification
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
+                );
               },
               icon: Stack(
                 children: [

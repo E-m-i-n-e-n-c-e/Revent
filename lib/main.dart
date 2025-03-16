@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/firebase_options.dart';
 import 'package:events_manager/login_page.dart';
+import 'package:events_manager/services/notification_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,15 @@ void main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
   await supabase.Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
+
+  // Initialize notification service after Firebase Auth is initialized
+  FirebaseAuth.instance.authStateChanges().listen((User? user) {
+    if (user != null) {
+      // Only initialize notification service when user is logged in
+      NotificationService().initialize();
+    }
+  });
+
   runApp(
     ProviderScope(
       child: const MyApp(),
