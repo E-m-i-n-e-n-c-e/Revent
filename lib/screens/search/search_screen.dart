@@ -679,6 +679,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: SingleChildScrollView(
                     physics: const NeverScrollableScrollPhysics(),
                     child: MarkdownBody(
+                      softLineBreak: true,
                       data: announcement.description,
                       styleSheet: MarkdownStyleSheet(
                         // Text styles

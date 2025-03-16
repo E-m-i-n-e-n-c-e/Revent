@@ -17,6 +17,7 @@ class MarkdownRenderer extends StatelessWidget {
     try {
       return MarkdownBody(
         data: data.isEmpty ? '_No content yet_' : data,
+        softLineBreak: true,
         styleSheet: MarkdownStyleSheet(
           // Text styles
           p: const TextStyle(

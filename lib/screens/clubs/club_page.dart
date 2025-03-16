@@ -1084,6 +1084,7 @@ class _ExpandableAnnouncementCardState
                   child: SingleChildScrollView(
                     physics: const NeverScrollableScrollPhysics(),
                     child: MarkdownBody(
+                      softLineBreak: true,
                       data: widget.announcement.description,
                       styleSheet: MarkdownStyleSheet(
                         // Text styles
