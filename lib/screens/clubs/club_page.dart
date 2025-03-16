@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:events_manager/screens/dashboard/widgets/announcement_card.dart';
 import 'package:events_manager/screens/clubs/edit_club_form.dart';
+import 'package:events_manager/utils/markdown_renderer.dart';
 
 class ClubPage extends ConsumerStatefulWidget {
   final Club club;
@@ -566,15 +567,10 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  currentClub.about.isNotEmpty
+                                MarkdownRenderer(
+                                  data: currentClub.about.isNotEmpty
                                       ? currentClub.about
                                       : 'We\'re a group of students passionate about organizing events, workshops, and discussions. Join us to grow your skills and connect with others in the community.',
-                                  style: const TextStyle(
-                                    color: Color(0xFFAEE7FF),
-                                    fontSize: 14,
-                                    height: 1.5,
-                                  ),
                                 ),
                               ],
                             ),
