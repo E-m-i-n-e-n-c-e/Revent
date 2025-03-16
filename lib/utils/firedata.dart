@@ -95,7 +95,50 @@ Future<String> sendEvent(Map<String, dynamic> eventJson) async {
   final eventWithMetadata = _addMetadata(eventJson);
   final docRef = await firestore.collection('events').add(eventWithMetadata);
   await docRef.update({'id': docRef.id});
+
+  // Create a notification for the new event
+  await _createEventNotification(eventJson, docRef.id);
+
   return docRef.id;
+}
+
+// Function to create a notification when an event is added
+Future<void> _createEventNotification(Map<String, dynamic> eventJson, String eventId) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final clubId = eventJson['clubId'] as String;
+
+    // Get club name
+    final clubDoc = await firestore.collection('clubs').doc(clubId).get();
+    String clubName = 'Unknown Club';
+    if (clubDoc.exists && clubDoc.data() != null) {
+      final data = clubDoc.data()!;
+      if (data.containsKey('name')) {
+        clubName = data['name'] as String;
+      }
+    }
+
+    // Get all users
+    final usersSnapshot = await firestore.collection('users').get();
+
+    // Create a notification for each user
+    for (var userDoc in usersSnapshot.docs) {
+      final userId = userDoc.id;
+
+      await firestore.collection('notifications').add({
+        'title': 'New Event: ${eventJson['title']}',
+        'message': 'A new event has been added by $clubName',
+        'time': Timestamp.now(),
+        'eventId': eventId,
+        'clubId': clubId,
+        'tags': [clubName],
+        'read': false,
+        'userId': userId,
+      });
+    }
+  } catch (e) {
+    print('Error creating event notification: $e');
+  }
 }
 
 Future<void> updateEvent(String eventId, Map<String, dynamic> eventJson) async {
