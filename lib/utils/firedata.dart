@@ -5,6 +5,7 @@ import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/map_marker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Utility function to get current user metadata
 Map<String, dynamic> _getUserMetadata() {
@@ -239,13 +240,14 @@ Future<void> deleteAnnouncement(String clubId, int index) async {
 // Supabase Storage Function
 Future<String> uploadAnnouncementImage(String filePath) async {
   try {
+    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = 'announcements/$fileName';
 
-    final storageRef = FirebaseStorage.instance.ref('announcements/$fileName');
-    await storageRef.putFile(file);
-    final imageUrl = await storageRef.getDownloadURL();
+    supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
 
     return imageUrl;
   } catch (e) {
@@ -386,14 +388,14 @@ Future<void> deleteMapMarker(String markerId) async {
 
 Future<String> uploadMapMarkerImage(String filePath) async {
   try {
+    final supabase = Supabase.instance.client;
     final file = File(filePath);
     final fileExt = filePath.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final path = 'mapMarkers/$fileName';
 
-    final storageRef = FirebaseStorage.instance.ref(path);
-    await storageRef.putFile(file);
-    final imageUrl = await storageRef.getDownloadURL();
+    supabase.storage.from('assets').upload(path, file);
+    final imageUrl = supabase.storage.from('assets').getPublicUrl(path);
 
     return imageUrl;
   } catch (e) {

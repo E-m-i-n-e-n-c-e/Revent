@@ -393,6 +393,7 @@ class _EditAnnouncementFormState extends State<EditAnnouncementForm> {
 
   Widget _buildPreviewMode() {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Container(
         color: const Color(0xFF0F2026),
         child: Column(

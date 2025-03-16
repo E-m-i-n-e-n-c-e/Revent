@@ -156,7 +156,10 @@ class AnnouncementDetailView extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: _buildDetailView(),
+              child: Container(
+                color: const Color(0xFF0F2026),
+                child: _buildDetailView(),
+              ),
             ),
           ],
         ),
