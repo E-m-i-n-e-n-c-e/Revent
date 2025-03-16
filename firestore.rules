@@ -18,6 +18,16 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    function isServiceAccount() {
+      return request.auth.token.email.matches('.*@.*\\.gserviceaccount\\.com');
+    }
+
+    // 🔹 Admin Logs Collection - Only super admins can read, only Cloud Functions can write
+    match /admin_logs/{logId} {
+      allow read: if true;
+      allow write: if isServiceAccount(); // Allow Cloud Functions service account to write
+    }
+
     // 🔹 Users Collection
     match /users/{userId} {
       allow read: if true;

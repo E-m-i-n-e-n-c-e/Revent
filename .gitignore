@@ -44,3 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /devtools_options.yaml
+
+/functions/node_modules
