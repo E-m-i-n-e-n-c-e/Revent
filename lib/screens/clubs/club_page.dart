@@ -253,16 +253,50 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          _buildMetricItem(
-                                            FontAwesomeIcons.users,
-                                            '1.2K',
-                                            'Members',
+                                          ref.watch(providers.eventsStreamProvider).when(
+                                            data: (eventsList) {
+                                              final clubEvents = eventsList
+                                                  .where((event) => event.clubId == currentClub.id)
+                                                  .length;
+                                              return _buildMetricItem(
+                                                FontAwesomeIcons.calendar,
+                                                clubEvents.toString(),
+                                                'Events',
+                                              );
+                                            },
+                                            loading: () => _buildMetricItem(
+                                              FontAwesomeIcons.calendar,
+                                              '...',
+                                              'Events',
+                                            ),
+                                            error: (_, __) => _buildMetricItem(
+                                              FontAwesomeIcons.calendar,
+                                              '0',
+                                              'Events',
+                                            ),
                                           ),
                                           const SizedBox(width: 16),
-                                          _buildMetricItem(
-                                            FontAwesomeIcons.calendar,
-                                            '24',
-                                            'Events',
+                                          ref.watch(providers.announcementsStreamProvider).when(
+                                            data: (announcementsList) {
+                                              final clubAnnouncements = announcementsList
+                                                  .where((announcement) => announcement.clubId == currentClub.id)
+                                                  .length;
+                                              return _buildMetricItem(
+                                                FontAwesomeIcons.bullhorn,
+                                                clubAnnouncements.toString(),
+                                                'Updates',
+                                              );
+                                            },
+                                            loading: () => _buildMetricItem(
+                                              FontAwesomeIcons.bullhorn,
+                                              '...',
+                                              'Updates',
+                                            ),
+                                            error: (_, __) => _buildMetricItem(
+                                              FontAwesomeIcons.bullhorn,
+                                              '0',
+                                              'Updates',
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -288,17 +322,119 @@ class _ClubPageState extends ConsumerState<ClubPage> {
                             _buildSocialButton(
                               FontAwesomeIcons.discord,
                               'DISCORD',
-                              onTap: () {},
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: const Color(0xFF0F2026),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: const BorderSide(color: Color(0xFF17323D)),
+                                    ),
+                                    title: const Row(
+                                      children: [
+                                        Icon(FontAwesomeIcons.discord, color: Color(0xFFAEE7FF), size: 20),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Discord Link',
+                                          style: TextStyle(color: Color(0xFFAEE7FF)),
+                                        ),
+                                      ],
+                                    ),
+                                    content: const Text(
+                                      'Discord link coming soon!',
+                                      style: TextStyle(color: Color(0xFF83ACBD)),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text(
+                                          'OK',
+                                          style: TextStyle(color: Color(0xFF71C2E4)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                             _buildSocialButton(
                               FontAwesomeIcons.whatsapp,
                               'WHATSAPP',
-                              onTap: () {},
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: const Color(0xFF0F2026),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: const BorderSide(color: Color(0xFF17323D)),
+                                    ),
+                                    title: const Row(
+                                      children: [
+                                        Icon(FontAwesomeIcons.whatsapp, color: Color(0xFFAEE7FF), size: 20),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'WhatsApp Link',
+                                          style: TextStyle(color: Color(0xFFAEE7FF)),
+                                        ),
+                                      ],
+                                    ),
+                                    content: const Text(
+                                      'WhatsApp group link coming soon!',
+                                      style: TextStyle(color: Color(0xFF83ACBD)),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text(
+                                          'OK',
+                                          style: TextStyle(color: Color(0xFF71C2E4)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                             _buildSocialButton(
                               FontAwesomeIcons.link,
                               'LINKTREE',
-                              onTap: () {},
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: const Color(0xFF0F2026),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: const BorderSide(color: Color(0xFF17323D)),
+                                    ),
+                                    title: const Row(
+                                      children: [
+                                        Icon(FontAwesomeIcons.link, color: Color(0xFFAEE7FF), size: 20),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Linktree',
+                                          style: TextStyle(color: Color(0xFFAEE7FF)),
+                                        ),
+                                      ],
+                                    ),
+                                    content: const Text(
+                                      'Linktree profile coming soon!',
+                                      style: TextStyle(color: Color(0xFF83ACBD)),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text(
+                                          'OK',
+                                          style: TextStyle(color: Color(0xFF71C2E4)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),

@@ -316,6 +316,7 @@ Future<void> updateClubDetails(String clubId, {
   String? name,
   String? about,
   List<String>? adminEmails,
+  List<String>? socialLinks,
 }) async {
   final firestore = FirebaseFirestore.instance;
   final Map<String, dynamic> updateData = {};
@@ -323,6 +324,7 @@ Future<void> updateClubDetails(String clubId, {
   if (name != null) updateData['name'] = name;
   if (about != null) updateData['about'] = about;
   if (adminEmails != null) updateData['adminEmails'] = adminEmails;
+  if (socialLinks != null) updateData['socialLinks'] = socialLinks;
 
   if (updateData.isNotEmpty) {
     // Add metadata to the update
