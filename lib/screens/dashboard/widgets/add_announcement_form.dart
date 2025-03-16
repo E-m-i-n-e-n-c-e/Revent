@@ -193,11 +193,7 @@ class _AddAnnouncementFormState extends ConsumerState<AddAnnouncementForm> {
                         if (selectedClub != null) {
                           final announcement = Announcement(
                             title: _titleController.text,
-                            subtitle: '', // Not used anymore
                             description: _descriptionController.text,
-                            venue: '', // Not used anymore
-                            time: '', // Not used anymore
-                            image: null, // Images are now in markdown
                             clubId: selectedClub.id,
                             date: DateTime.now(),
                           );

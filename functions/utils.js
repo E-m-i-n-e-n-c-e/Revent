@@ -19,6 +19,15 @@ exports.createLogEntry = async function({
       userId = context.auth.uid;
       userEmail = context.auth.token.email;
     }
+    // For delete operations, check for delete metadata in beforeData
+    else if (operation.startsWith('delete_') && beforeData && beforeData._deleteMetadata) {
+      const metadata = beforeData._deleteMetadata;
+      if (metadata.userId) userId = metadata.userId;
+      if (metadata.userEmail) userEmail = metadata.userEmail;
+
+      // Remove delete metadata from the logged data to keep it clean
+      delete beforeData._deleteMetadata;
+    }
     // If not available, try to get from metadata in the document
     else if (afterData && afterData._metadata) {
       const metadata = afterData._metadata;

@@ -5,13 +5,11 @@ import 'package:events_manager/utils/common_utils.dart';
 
 class AnnouncementCard extends StatelessWidget {
   final String title;
-  final String subtitle;
   final String image;
 
   const AnnouncementCard({
     super.key,
     required this.title,
-    required this.subtitle,
     required this.image,
   });
 

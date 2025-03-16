@@ -318,56 +318,62 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       const SizedBox(height: 12),
 
                                       // Horizontal scrollable row of admin clubs (icons only)
-                                      SizedBox(
-                                        height: 70,
-                                        child: ListView.builder(
-                                          scrollDirection: Axis.horizontal,
-                                          itemCount: adminClubs.length,
-                                          itemBuilder: (context, index) {
-                                            final club = adminClubs[index];
-                                            return Padding(
-                                              padding: const EdgeInsets.only(right: 10),
-                                              child: Tooltip(
-                                                message: club.name,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) => ClubPage(club: club),
-                                                      ),
-                                                    );
-                                                  },
-                                                  borderRadius: BorderRadius.circular(30),
-                                                  child: Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(0xFF17323D),
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                        color: const Color(0xFF71C2E4).withValues(alpha: 0.3),
-                                                        width: 2,
-                                                      ),
-                                                    ),
-                                                    child: Hero(
-                                                      tag: 'club-logo-${club.id}',
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.all(2),
-                                                        child: CircleAvatar(
-                                                          backgroundColor: Colors.transparent,
-                                                          backgroundImage: getCachedNetworkImageProvider(
-                                                            imageUrl: club.logoUrl,
-                                                            imageType: ImageType.profile,
+                                      Center(
+                                        child: SizedBox(
+                                          height: 70,
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: adminClubs.map((club) {
+                                                  return Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                                                    child: Tooltip(
+                                                      message: club.name,
+                                                      child: InkWell(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) => ClubPage(club: club),
+                                                            ),
+                                                          );
+                                                        },
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        child: Container(
+                                                          width: 60,
+                                                          height: 60,
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xFF17323D),
+                                                            shape: BoxShape.circle,
+                                                            border: Border.all(
+                                                              color: const Color(0xFF71C2E4).withValues(alpha: 0.3),
+                                                              width: 2,
+                                                            ),
+                                                          ),
+                                                          child: Hero(
+                                                            tag: 'club-logo-${club.id}',
+                                                            child: Padding(
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: CircleAvatar(
+                                                                backgroundColor: Colors.transparent,
+                                                                backgroundImage: getCachedNetworkImageProvider(
+                                                                  imageUrl: club.logoUrl,
+                                                                  imageType: ImageType.profile,
+                                                                ),
+                                                              ),
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
                                                     ),
-                                                  ),
-                                                ),
+                                                  );
+                                                }).toList(),
                                               ),
-                                            );
-                                          },
+                                            ),
+                                          ),
                                         ),
                                       ),
 

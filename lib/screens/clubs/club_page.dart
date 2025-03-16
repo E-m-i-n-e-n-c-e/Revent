@@ -938,17 +938,6 @@ class _ExpandableAnnouncementCardState
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (widget.announcement.subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.announcement.subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFFAEE7FF),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 8),
                 const Divider(
                   color: Color(0xFF17323D),
@@ -1188,34 +1177,6 @@ class _ExpandableAnnouncementCardState
                         ],
                       ),
                     ),
-                    if (widget.announcement.venue.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF17323D),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: Color(0xFFAEE7FF),
-                              size: 12,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.announcement.venue,
-                              style: const TextStyle(
-                                color: Color(0xFFAEE7FF),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],

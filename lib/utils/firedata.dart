@@ -4,6 +4,45 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:events_manager/models/announcement.dart';
 import 'package:events_manager/models/map_marker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+// Utility function to get current user metadata
+Map<String, dynamic> _getUserMetadata() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return {
+      'userId': 'system',
+      'userEmail': 'system',
+    };
+  }
+
+  return {
+    'userId': user.uid,
+    'userEmail': user.email ?? 'unknown',
+  };
+}
+
+// Utility function to add metadata to data
+Map<String, dynamic> _addMetadata(Map<String, dynamic> data) {
+  // Create a copy of the data to avoid modifying the original
+  final result = Map<String, dynamic>.from(data);
+  // Add metadata
+  result['_metadata'] = _getUserMetadata();
+  return result;
+}
+
+// Utility function to add delete metadata before deletion
+Future<void> _addDeleteMetadata(String collection, String documentId) async {
+  try {
+    final metadata = _getUserMetadata();
+    await FirebaseFirestore.instance
+        .collection(collection)
+        .doc(documentId)
+        .update({'_deleteMetadata': metadata});
+  } catch (e) {
+    // Silently fail - we don't want to interrupt the main flow if metadata update fails
+  }
+}
 
 Future<List<Map<String, dynamic>>> loadEvents() async {
   final firestore = FirebaseFirestore.instance;
@@ -51,7 +90,9 @@ Future<List<Map<String, dynamic>>> loadEventsByDateRange(
 
 Future<String> sendEvent(Map<String, dynamic> eventJson) async {
   final firestore = FirebaseFirestore.instance;
-  final docRef = await firestore.collection('events').add(eventJson);
+  // Add metadata to the event data
+  final eventWithMetadata = _addMetadata(eventJson);
+  final docRef = await firestore.collection('events').add(eventWithMetadata);
   await docRef.update({'id': docRef.id});
   return docRef.id;
 }
@@ -59,12 +100,19 @@ Future<String> sendEvent(Map<String, dynamic> eventJson) async {
 Future<void> updateEvent(String eventId, Map<String, dynamic> eventJson) async {
   final firestore = FirebaseFirestore.instance;
   eventJson['id'] = eventId;
-  await firestore.collection('events').doc(eventId).update(eventJson);
+  // Add metadata to the event data
+  final eventWithMetadata = _addMetadata(eventJson);
+  await firestore.collection('events').doc(eventId).update(eventWithMetadata);
 }
 
 Future<void> deleteEvent(String eventId) async {
   try {
     final firestore = FirebaseFirestore.instance;
+
+    // First, add delete metadata to the document that's about to be deleted
+    await _addDeleteMetadata('events', eventId);
+
+    // Then delete the document
     await firestore.collection('events').doc(eventId).delete();
   } catch (e) {
     rethrow;
@@ -117,10 +165,14 @@ Future<void> addAnnouncement(Announcement announcement) async {
           List<Map<String, dynamic>>.from(doc.data()!['announcementsList']);
     }
 
+    // Add the announcement without metadata to the list
+    // No need to add metadata to individual announcements
     announcementsList.insert(0, announcement.toJson());
     announcementsList = announcementsList.take(20).toList();
 
-    await docRef.set({'announcementsList': announcementsList});
+    // Add metadata only to the entire document update
+    final dataWithMetadata = _addMetadata({'announcementsList': announcementsList});
+    await docRef.set(dataWithMetadata);
   } catch (e) {
     rethrow;
   }
@@ -143,9 +195,12 @@ Future<void> updateAnnouncement(
       throw Exception('Invalid announcement index');
     }
 
+    // Update the announcement without adding metadata to it
     announcementsList[index] = announcement.toJson();
 
-    await docRef.update({'announcementsList': announcementsList});
+    // Add metadata only to the entire document update
+    final dataWithMetadata = _addMetadata({'announcementsList': announcementsList});
+    await docRef.update(dataWithMetadata);
   } catch (e) {
     rethrow;
   }
@@ -167,9 +222,15 @@ Future<void> deleteAnnouncement(String clubId, int index) async {
       throw Exception('Invalid announcement index');
     }
 
+    // First, add delete metadata to the document
+    await _addDeleteMetadata('announcements', clubId);
+
+    // Then remove the announcement and update
     announcementsList.removeAt(index);
 
-    await docRef.update({'announcementsList': announcementsList});
+    // Add metadata to the entire document update
+    final dataWithMetadata = _addMetadata({'announcementsList': announcementsList});
+    await docRef.update(dataWithMetadata);
   } catch (e) {
     rethrow;
   }
@@ -194,12 +255,16 @@ Future<String> uploadAnnouncementImage(String filePath) async {
 
 Future<void> updateClubBackground(String clubId, String imageUrl) async {
   final firestore = FirebaseFirestore.instance;
-  await firestore.collection('clubs').doc(clubId).update({'backgroundImageUrl': imageUrl});
+  // Add metadata to the update
+  final dataWithMetadata = _addMetadata({'backgroundImageUrl': imageUrl});
+  await firestore.collection('clubs').doc(clubId).update(dataWithMetadata);
 }
 
 Future<void> updateClubLogo(String clubId, String imageUrl) async {
   final firestore = FirebaseFirestore.instance;
-  await firestore.collection('clubs').doc(clubId).update({'logoUrl': imageUrl});
+  // Add metadata to the update
+  final dataWithMetadata = _addMetadata({'logoUrl': imageUrl});
+  await firestore.collection('clubs').doc(clubId).update(dataWithMetadata);
 }
 
 Future<void> updateClubDetails(String clubId, {
@@ -215,7 +280,9 @@ Future<void> updateClubDetails(String clubId, {
   if (adminEmails != null) updateData['adminEmails'] = adminEmails;
 
   if (updateData.isNotEmpty) {
-    await firestore.collection('clubs').doc(clubId).update(updateData);
+    // Add metadata to the update
+    final dataWithMetadata = _addMetadata(updateData);
+    await firestore.collection('clubs').doc(clubId).update(dataWithMetadata);
   }
 }
 
@@ -250,7 +317,9 @@ Future<void> updateEventLinks(String eventId, {String? registrationLink, String?
     }
 
     if (updateData.isNotEmpty) {
-      await firestore.collection('events').doc(eventId).update(updateData);
+      // Add metadata to the update
+      final dataWithMetadata = _addMetadata(updateData);
+      await firestore.collection('events').doc(eventId).update(dataWithMetadata);
     }
   } catch (e) {
     rethrow;
@@ -276,9 +345,11 @@ Future<List<MapMarker>> loadMapMarkers() async {
 Future<void> addMapMarker(MapMarker marker) async {
   try {
     final firestore = FirebaseFirestore.instance;
+    // Add metadata to the marker data
+    final markerWithMetadata = _addMetadata(marker.toJson());
     await firestore.collection('mapMarkers')
         .doc(marker.id)
-        .set(marker.toJson());
+        .set(markerWithMetadata);
   } catch (e) {
     rethrow;
   }
@@ -287,9 +358,11 @@ Future<void> addMapMarker(MapMarker marker) async {
 Future<void> updateMapMarker(MapMarker marker) async {
   try {
     final firestore = FirebaseFirestore.instance;
+    // Add metadata to the marker data
+    final markerWithMetadata = _addMetadata(marker.toJson());
     await firestore.collection('mapMarkers')
         .doc(marker.id)
-        .update(marker.toJson());
+        .update(markerWithMetadata);
   } catch (e) {
     rethrow;
   }
@@ -298,6 +371,11 @@ Future<void> updateMapMarker(MapMarker marker) async {
 Future<void> deleteMapMarker(String markerId) async {
   try {
     final firestore = FirebaseFirestore.instance;
+
+    // First, add delete metadata to the document that's about to be deleted
+    await _addDeleteMetadata('mapMarkers', markerId);
+
+    // Then delete the document
     await firestore.collection('mapMarkers')
         .doc(markerId)
         .delete();
@@ -334,10 +412,12 @@ Future<String> uploadUserProfileImage(String uid, String filePath) async {
     final imageUrl = await storageRef.getDownloadURL();
 
     // Update the user document with the new photo URL
+    final updateData = {'photoURL': imageUrl};
+    final dataWithMetadata = _addMetadata(updateData);
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .update({'photoURL': imageUrl});
+        .update(dataWithMetadata);
 
     return imageUrl;
   } catch (e) {
@@ -356,10 +436,12 @@ Future<String> uploadUserBackgroundImage(String uid, String filePath) async {
     final imageUrl = await storageRef.getDownloadURL();
 
     // Update the user document with the new background URL
+    final updateData = {'backgroundImageUrl': imageUrl};
+    final dataWithMetadata = _addMetadata(updateData);
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .update({'backgroundImageUrl': imageUrl});
+        .update(dataWithMetadata);
 
     return imageUrl;
   } catch (e) {
@@ -374,9 +456,11 @@ Future<void> updateUserProfile(String uid, {String? name, String? photoURL, Stri
   if (backgroundImageUrl != null) updates['backgroundImageUrl'] = backgroundImageUrl;
 
   if (updates.isNotEmpty) {
+    // Add metadata to the update
+    final updatesWithMetadata = _addMetadata(updates);
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .update(updates);
+        .update(updatesWithMetadata);
   }
 }

@@ -44,7 +44,6 @@ class AnnouncementsSlider extends ConsumerWidget {
             final announcement = announcements[index % announcements.length];
             return AnnouncementCard(
               title: announcement.title,
-              subtitle: announcement.subtitle,
               image: getClubLogo(ref, announcement.clubId),
             );
           },

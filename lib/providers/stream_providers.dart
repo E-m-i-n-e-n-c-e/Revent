@@ -118,10 +118,7 @@ final searchResultsProvider = Provider<List<dynamic>>((ref) {
     // Announcements are already sorted by date in the announcementsStreamProvider
     results.addAll(announcements.where((announcement) =>
         announcement.title.toLowerCase().contains(searchQuery) ||
-        announcement.subtitle.toLowerCase().contains(searchQuery) ||
         announcement.description.toLowerCase().contains(searchQuery) ||
-        announcement.venue.toLowerCase().contains(searchQuery) ||
-        announcement.time.toLowerCase().contains(searchQuery) ||
         announcement.clubId.toLowerCase().contains(searchQuery) ||
         getClubName(announcement.clubId).toLowerCase().contains(searchQuery)));
   }
@@ -207,9 +204,7 @@ final filteredAnnouncementsProvider = Provider<List<Announcement>>((ref) {
       : announcements
           .where((announcement) =>
               announcement.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              announcement.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              announcement.subtitle.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              (announcement.venue.isNotEmpty && announcement.venue.toLowerCase().contains(searchQuery.toLowerCase())))
+              announcement.description.toLowerCase().contains(searchQuery.toLowerCase()))
           .toList();
 
   // Then filter by club if not "All Clubs"

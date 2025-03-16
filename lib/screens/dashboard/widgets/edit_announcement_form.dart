@@ -127,10 +127,7 @@ class _EditAnnouncementFormState extends State<EditAnnouncementForm> {
         // Create updated announcement with the same fields except title and description
         final updatedAnnouncement = Announcement(
           title: _titleController.text,
-          subtitle: '', // We're not using subtitle in the new design
           description: _descriptionController.text,
-          venue: '', // We're not using venue in the new design
-          time: '', // We're not using time in the new design
           clubId: widget.clubId,
           date: widget.date, // Do not change date upon updating
         );

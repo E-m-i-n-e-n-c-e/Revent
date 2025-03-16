@@ -184,7 +184,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             height: 200,
                             child: AnnouncementCard(
                               title: 'You have no announcements',
-                              subtitle: 'You have no announcements',
                               image:
                                   'https://i.pinimg.com/originals/c0/88/7d/c0887d39121ff3649f04e249942b8fec.jpg',
                             ),

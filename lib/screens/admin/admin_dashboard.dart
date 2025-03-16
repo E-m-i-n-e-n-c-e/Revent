@@ -256,20 +256,66 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                 ),
                 child: SafeArea(
-                  child: Column(
-                    children: [
+                  child: CustomScrollView(
+                    slivers: [
                       // Filter options
-                      _buildFilterOptions(),
-
-                      // Stats summary
-                      _buildStatsSummary(),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    _buildFilterChip('All', adminLogsCollectionFilterProvider),
+                                    _buildFilterChip('Events', adminLogsCollectionFilterProvider),
+                                    _buildFilterChip('Announcements', adminLogsCollectionFilterProvider),
+                                    _buildFilterChip('Clubs', adminLogsCollectionFilterProvider),
+                                    _buildFilterChip('Users', adminLogsCollectionFilterProvider),
+                                    _buildFilterChip('Map Markers', adminLogsCollectionFilterProvider),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    _buildFilterChip('All', adminLogsOperationFilterProvider),
+                                    _buildFilterChip('Create', adminLogsOperationFilterProvider),
+                                    _buildFilterChip('Update', adminLogsOperationFilterProvider),
+                                    _buildFilterChip('Delete', adminLogsOperationFilterProvider),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       // Logs list
-                      Expanded(
-                        child: filteredLogs.isEmpty
-                            ? _buildEmptyState()
-                            : _buildLogsList(filteredLogs),
-                      ),
+                      filteredLogs.isEmpty
+                          ? SliverFillRemaining(child: _buildEmptyState())
+                          : SliverPadding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final log = filteredLogs[index];
+                                    // Skip id field updates
+                                    if (log.operation.startsWith('update_') &&
+                                        log.getChangedFields().length == 1 &&
+                                        log.getChangedFields().first == 'id') {
+                                      return null;
+                                    }
+                                    return _buildLogCard(log);
+                                  },
+                                  childCount: filteredLogs.length,
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -348,42 +394,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildFilterOptions() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('All', adminLogsCollectionFilterProvider),
-                _buildFilterChip('events', adminLogsCollectionFilterProvider),
-                _buildFilterChip('announcements', adminLogsCollectionFilterProvider),
-                _buildFilterChip('clubs', adminLogsCollectionFilterProvider),
-                _buildFilterChip('users', adminLogsCollectionFilterProvider),
-                _buildFilterChip('mapMarkers', adminLogsCollectionFilterProvider),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('All', adminLogsOperationFilterProvider),
-                _buildFilterChip('Create', adminLogsOperationFilterProvider),
-                _buildFilterChip('Update', adminLogsOperationFilterProvider),
-                _buildFilterChip('Delete', adminLogsOperationFilterProvider),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFilterChip(String label, StateProvider<String> provider) {
     final selectedValue = ref.watch(provider);
     final isSelected = selectedValue == label;
@@ -412,77 +422,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ref.read(provider.notifier).state = selected ? label : 'All';
         },
       ),
-    );
-  }
-
-  Widget _buildStatsSummary() {
-    final logs = ref.watch(adminLogsStreamProvider).value ?? [];
-
-    // Calculate stats
-    final totalLogs = logs.length;
-    final createCount = logs.where((log) => log.operation.startsWith('create_')).length;
-    final updateCount = logs.where((log) => log.operation.startsWith('update_')).length;
-    final deleteCount = logs.where((log) => log.operation.startsWith('delete_')).length;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F2026),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF17323D)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Activity Summary',
-            style: TextStyle(
-              color: Color(0xFFAEE7FF),
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(totalLogs, 'Total Logs', FontAwesomeIcons.listUl),
-              _buildStatItem(createCount, 'Created', FontAwesomeIcons.plus, color: Colors.green),
-              _buildStatItem(updateCount, 'Updated', FontAwesomeIcons.pen, color: Colors.blue),
-              _buildStatItem(deleteCount, 'Deleted', FontAwesomeIcons.trash, color: Colors.red),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(int count, String label, IconData icon, {Color? color}) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: color ?? const Color(0xFF83ACBD),
-          size: 18,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          count.toString(),
-          style: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF83ACBD),
-            fontSize: 12,
-          ),
-        ),
-      ],
     );
   }
 
@@ -531,17 +470,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLogsList(List<AdminLog> logs) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: logs.length,
-      itemBuilder: (context, index) {
-        final log = logs[index];
-        return _buildLogCard(log);
-      },
     );
   }
 
@@ -638,7 +566,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildDataComparisonTable(AdminLog log) {
-    final changedFields = log.getChangedFields();
+    final changedFields = log.getChangedFields().where((field) => field != 'id').toList();
+    final allFields = <String>{};
+
+    if (log.beforeData != null) {
+      allFields.addAll(log.beforeData!.keys.where((key) => key != 'id'));
+    }
+    if (log.afterData != null) {
+      allFields.addAll(log.afterData!.keys.where((key) => key != 'id'));
+    }
 
     if (log.operation.startsWith('create_')) {
       return Column(
@@ -653,7 +589,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildDataTable(log.afterData),
+          _buildDataTable(Map<String, dynamic>.from(log.afterData ?? {})..remove('id')),
         ],
       );
     } else if (log.operation.startsWith('delete_')) {
@@ -669,15 +605,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildDataTable(log.beforeData),
+          _buildDataTable(Map<String, dynamic>.from(log.beforeData ?? {})..remove('id')),
         ],
       );
-    } else if (log.operation.startsWith('update_')) {
+    } else {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Changed Fields:',
+            'All Fields:',
             style: TextStyle(
               color: Color(0xFFAEE7FF),
               fontSize: 14,
@@ -733,7 +669,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                 ],
               ),
-              ...changedFields.map((field) {
+              ...allFields.map((field) {
+                final isChanged = changedFields.contains(field);
                 return TableRow(
                   children: [
                     Padding(
@@ -749,8 +686,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         _formatFieldValue(log.beforeData?[field]),
-                        style: const TextStyle(
-                          color: Colors.red,
+                        style: TextStyle(
+                          color: isChanged ? Colors.red : const Color(0xFFAEE7FF),
                         ),
                       ),
                     ),
@@ -758,8 +695,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         _formatFieldValue(log.afterData?[field]),
-                        style: const TextStyle(
-                          color: Colors.green,
+                        style: TextStyle(
+                          color: isChanged ? Colors.green : const Color(0xFFAEE7FF),
                         ),
                       ),
                     ),
@@ -771,12 +708,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ],
       );
     }
-
-    return const SizedBox.shrink();
   }
 
   Widget _buildDataTable(Map<String, dynamic>? data) {
-    if (data == null) {
+    if (data == null || data.isEmpty) {
       return const Text(
         'No data available',
         style: TextStyle(
@@ -865,7 +800,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       if (value.isEmpty) {
         return '{}';
       }
-      return '{${value.keys.take(3).join(', ')}${value.length > 3 ? ', ...' : ''}}';
+      // For announcements, only show relevant fields
+      final displayMap = Map<String, dynamic>.from(value);
+      displayMap.removeWhere((key, _) => !['title', 'description', 'clubId', 'date'].contains(key));
+      return '{${displayMap.keys.take(3).join(', ')}${displayMap.length > 3 ? ', ...' : ''}}';
     } else {
       return value.toString();
     }
