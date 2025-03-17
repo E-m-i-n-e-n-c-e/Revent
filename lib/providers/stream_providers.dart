@@ -373,6 +373,7 @@ void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(eventsStreamProvider);
   ref.invalidate(todaysEventsStreamProvider);
   ref.invalidate(announcementsStreamProvider);
+  ref.invalidate(recentAnnouncementsStreamProvider);
   ref.invalidate(clubsStreamProvider);
   ref.invalidate(searchResultsProvider);
   ref.invalidate(mapMarkersProvider);

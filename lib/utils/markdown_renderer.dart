@@ -141,7 +141,9 @@ class MarkdownRenderer extends StatelessWidget {
                   label: 'DISMISS',
                   textColor: Colors.white,
                   onPressed: () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    }
                   },
                 ),
               ),

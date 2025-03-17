@@ -35,12 +35,15 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _getGreeting(),
-              style: const TextStyle(
-                color: Color(0xFFAEE7FF),
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                _getGreeting(),
+                style: const TextStyle(
+                  color: Color(0xFFAEE7FF),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
