@@ -174,7 +174,16 @@ class _EditProfileFormState extends State<EditProfileForm> {
                                 fit: BoxFit.cover,
                                 opacity: 0.7,
                               )
-                            : null,
+                            : widget.user.photoURL != null
+                                ? DecorationImage(
+                                    image: getCachedNetworkImageProvider(
+                                      imageUrl: widget.user.photoURL!,
+                                      imageType: ImageType.profile,
+                                    ),
+                                    fit: BoxFit.cover,
+                                    opacity: 0.7,
+                                  )
+                                : null,
                   ),
                   child: Container(
                     decoration: BoxDecoration(

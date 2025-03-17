@@ -49,12 +49,39 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           children: [
             IconButton(
               onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   // MaterialPageRoute(
-                //   //   builder: (context) => const NotificationsScreen(),
-                //   // ),
-                // );
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: const Color(0xFF0F2026),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFF17323D)),
+                    ),
+                    title: const Row(
+                      children: [
+                        Icon(Icons.notifications_outlined, color: Color(0xFFAEE7FF), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Notifications',
+                          style: TextStyle(color: Color(0xFFAEE7FF)),
+                        ),
+                      ],
+                    ),
+                    content: const Text(
+                      'Notification feature coming soon!',
+                      style: TextStyle(color: Color(0xFF83ACBD)),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Color(0xFF71C2E4)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
               icon: Stack(
                 children: [

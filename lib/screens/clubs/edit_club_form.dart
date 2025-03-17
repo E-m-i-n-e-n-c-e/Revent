@@ -147,105 +147,238 @@ class _EditClubFormState extends State<EditClubForm> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Club Logo Section
-                  _buildImageSection(
-                    title: 'Club Logo',
-                    currentImage: _logoFile != null
-                        ? FileImage(File(_logoFile!))
-                        : getCachedNetworkImageProvider(
-                            imageUrl: widget.club.logoUrl,
-                            imageType: ImageType.club,
-                          ),
-                    onTap: () => _pickImage('logo'),
-                    isCircular: true,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Club Background Section
-                  _buildImageSection(
-                    title: 'Club Background',
-                    currentImage: _backgroundFile != null
-                        ? FileImage(File(_backgroundFile!))
-                        : getCachedNetworkImageProvider(
-                            imageUrl: widget.club.backgroundImageUrl.isNotEmpty
-                                ? widget.club.backgroundImageUrl
-                                : widget.club.logoUrl,
-                            imageType: ImageType.club,
-                          ),
-                    onTap: () => _pickImage('background'),
-                    isCircular: false,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Club Name Field
-                  _buildTextField(
-                    label: 'Club Name',
-                    controller: _nameController,
-                    maxLines: 1,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // About Section
-                  _buildTextField(
-                    label: 'About',
-                    controller: _aboutController,
-                    maxLines: 5,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Admin Emails Section
-                  const Text(
-                    'Admin Emails',
-                    style: TextStyle(
-                      color: Color(0xFFAEE7FF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._adminEmailControllers.asMap().entries.map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              label: 'Email ${entry.key + 1}',
-                              controller: entry.value,
-                              maxLines: 1,
+                  // Background Image Section
+                  Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F2026),
+                          image: _backgroundFile != null
+                              ? DecorationImage(
+                                  image: FileImage(File(_backgroundFile!)),
+                                  fit: BoxFit.cover,
+                                  opacity: 0.7,
+                                )
+                              : DecorationImage(
+                                  image: getCachedNetworkImageProvider(
+                                    imageUrl: widget.club.backgroundImageUrl.isNotEmpty
+                                        ? widget.club.backgroundImageUrl
+                                        : widget.club.logoUrl,
+                                    imageType: ImageType.club,
+                                  ),
+                                  fit: BoxFit.cover,
+                                  opacity: 0.7,
+                                ),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                const Color(0xFF07181F).withValues(alpha: 0.8),
+                              ],
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: Colors.red),
-                            onPressed: () => _removeAdminEmail(entry.key),
-                          ),
-                        ],
+                        ),
                       ),
-                    );
-                  }),
-
-                  TextButton.icon(
-                    icon: const Icon(Icons.add, color: Color(0xFF71C2E4)),
-                    label: const Text(
-                      'Add Admin Email',
-                      style: TextStyle(color: Color(0xFF71C2E4)),
-                    ),
-                    onPressed: _addAdminEmail,
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: IconButton(
+                          onPressed: () => _pickImage('background'),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF17323D),
+                            padding: const EdgeInsets.all(12),
+                          ),
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Color(0xFFAEE7FF),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 32),
+                  // Club Logo Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Stack(
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF71C2E4),
+                                  width: 2,
+                                ),
+                                image: _logoFile != null
+                                    ? DecorationImage(
+                                        image: FileImage(File(_logoFile!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : DecorationImage(
+                                        image: getCachedNetworkImageProvider(
+                                          imageUrl: widget.club.logoUrl,
+                                          imageType: ImageType.club,
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: IconButton(
+                                onPressed: () => _pickImage('logo'),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFF17323D),
+                                  padding: const EdgeInsets.all(8),
+                                ),
+                                icon: const Icon(
+                                  Icons.camera_alt,
+                                  color: Color(0xFFAEE7FF),
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextField(
+                            controller: _nameController,
+                            style: const TextStyle(
+                              color: Color(0xFFAEE7FF),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Enter club name',
+                              hintStyle: TextStyle(
+                                color: Color(0xFF71C2E4),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // About Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'About',
+                          style: TextStyle(
+                            color: Color(0xFFAEE7FF),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _aboutController,
+                          maxLines: 5,
+                          style: const TextStyle(color: Color(0xFFAEE7FF)),
+                          decoration: InputDecoration(
+                            hintText: 'Write about your club...',
+                            hintStyle: const TextStyle(color: Color(0xFF71C2E4)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(color: Color(0xFF17323D)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(color: Color(0xFF71C2E4)),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFF0F2027),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Admin Emails Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Admin Emails',
+                          style: TextStyle(
+                            color: Color(0xFFAEE7FF),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ..._adminEmailControllers.asMap().entries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: entry.value,
+                                    style: const TextStyle(color: Color(0xFFAEE7FF)),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter admin email',
+                                      hintStyle: const TextStyle(color: Color(0xFF71C2E4)),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(color: Color(0xFF17323D)),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(color: Color(0xFF71C2E4)),
+                                      ),
+                                      filled: true,
+                                      fillColor: const Color(0xFF0F2027),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                  onPressed: () => _removeAdminEmail(entry.key),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, color: Color(0xFF71C2E4)),
+                          label: const Text(
+                            'Add Admin Email',
+                            style: TextStyle(color: Color(0xFF71C2E4)),
+                          ),
+                          onPressed: _addAdminEmail,
+                        ),
+                      ],
+                    ),
+                  ),
 
                   // Save Button
-                  SizedBox(
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -268,141 +401,6 @@ class _EditClubFormState extends State<EditClubForm> {
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildImageSection({
-    required String title,
-    required ImageProvider currentImage,
-    required VoidCallback onTap,
-    required bool isCircular,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFFAEE7FF),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onTap,
-          child: isCircular
-              ? Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color.fromARGB(255, 157, 188, 201),
-                      width: 2,
-                    ),
-                    image: DecorationImage(
-                      image: currentImage,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withValues(alpha:0.3),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Color(0xFFAEE7FF),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                )
-              : Container(
-                  width: double.infinity,
-                  height: 220,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF06222F),
-                    image: DecorationImage(
-                      image: currentImage,
-                      fit: BoxFit.cover,
-                      opacity: 0.3,
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              const Color(0xFF07181F).withValues(alpha:0.8),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.camera_alt,
-                                color: Color(0xFFAEE7FF),
-                                size: 32,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Change Background',
-                                style: TextStyle(
-                                  color: Color(0xFFAEE7FF),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required int maxLines,
-  }) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      style: const TextStyle(color: Color(0xFFAEE7FF)),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF71C2E4)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF17323D)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF71C2E4)),
-        ),
-        filled: true,
-        fillColor: const Color(0xFF0F2027),
-      ),
     );
   }
 }
