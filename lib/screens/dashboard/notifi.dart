@@ -122,15 +122,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   // Navigate to announcement detail view
-  void _navigateToAnnouncementDetailView(Event event, Club club) {
+  void _navigateToAnnouncementDetailView(String title, String description, String clubId, DateTime date) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AnnouncementDetailView(
-          title: event.title,
-          description: event.description,
-          clubId: club.id,
-          date: event.startTime,
+          title: title,
+          description: description,
+          clubId: clubId,
+          date: date,
         ),
       ),
     );
@@ -326,7 +326,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
-                  _navigateToAnnouncementDetailView(event, club);
+                  _navigateToAnnouncementDetailView(
+                    event.title,
+                    event.description,
+                    club.id,
+                    event.startTime,
+                  );
                 },
                 child: const Text('VIEW ANNOUNCEMENT'),
               ),
@@ -596,6 +601,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final isRead = data['read'] as bool? ?? false;
     final eventId = data['eventId'] as String?;
     final clubId = data['clubId'] as String?;
+    final notificationType = data['type'] as String? ?? 'event'; // Default to event for backward compatibility
 
     // Format time
     final time = timestamp.toDate();
@@ -638,6 +644,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     // Show event details if both event and club are available
                     if (event != null && club != null) {
                       _showEventDetails(event, club);
+                    } else {
+                      // If it's not an event notification, treat it as an announcement
+                      _navigateToAnnouncementDetailView(
+                        title,
+                        message,
+                        clubId ?? '',
+                        time,
+                      );
                     }
                   } catch (e) {
                     print('Error handling notification tap: $e');
@@ -662,7 +676,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               color: const Color(0xFF17323D),
                             ),
                             child: club == null || club.logoUrl.isEmpty
-                                ? const Icon(Icons.notifications, color: Colors.white)
+                                ? Icon(
+                                    notificationType == 'announcement'
+                                        ? Icons.campaign
+                                        : Icons.event,
+                                    color: Colors.white
+                                  )
                                 : ClipOval(
                                     child: CachedNetworkImage(
                                       imageUrl: club.logoUrl,
@@ -677,8 +696,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                           ),
                                         ),
                                       ),
-                                      errorWidget: (context, url, error) => const Icon(
-                                        Icons.notifications,
+                                      errorWidget: (context, url, error) => Icon(
+                                        notificationType == 'announcement'
+                                            ? Icons.campaign
+                                            : Icons.event,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -700,7 +721,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  club != null ? club.name : 'Notification',
+                                  club != null ? club.name : (notificationType == 'announcement' ? 'Announcement' : 'Event'),
                                   style: const TextStyle(
                                     color: Color(0xFF83ACBD),
                                     fontSize: 12,
@@ -709,7 +730,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               ],
                             ),
                           ),
-                          if (event != null)
+                          if (notificationType == 'event' && event != null)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -721,6 +742,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               child: Text(
                                 isPastEvent ? 'Past' : 'Upcoming',
                                 style: const TextStyle(
+                                  color: Color(0xFFAEE7FF),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )
+                          else if (notificationType == 'announcement')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF173240),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Announcement',
+                                style: TextStyle(
                                   color: Color(0xFFAEE7FF),
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,

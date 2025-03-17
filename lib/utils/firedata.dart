@@ -83,19 +83,65 @@ Future<void> _createEventNotification(Map<String, dynamic> eventJson, String eve
     for (var userDoc in usersSnapshot.docs) {
       final userId = userDoc.id;
 
+      // Extract event details for the notification message
+      final eventTitle = eventJson['title'] as String? ?? 'Event';
+      final eventVenue = eventJson['venue'] as String? ?? 'TBA';
+      final startTime = (eventJson['startTime'] as Timestamp).toDate();
+      final formattedDate = '${startTime.day}/${startTime.month}/${startTime.year}';
+
       await firestore.collection('notifications').add({
-        'title': 'New Event: ${eventJson['title']}',
-        'message': 'A new event has been added by $clubName',
+        'title': 'New Event: $eventTitle',
+        'message': '$clubName is hosting "$eventTitle" at $eventVenue on $formattedDate',
         'time': Timestamp.now(),
         'eventId': eventId,
         'clubId': clubId,
-        'tags': [clubName],
+        'tags': [clubName, 'event'],
         'read': false,
         'userId': userId,
+        'type': 'event', // Add type to distinguish between events and announcements
       });
     }
   } catch (e) {
     print('Error creating event notification: $e');
+  }
+}
+
+// Function to create a notification when an announcement is added
+Future<void> createAnnouncementNotification(Announcement announcement) async {
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final clubId = announcement.clubId;
+
+    // Get club name
+    final clubDoc = await firestore.collection('clubs').doc(clubId).get();
+    String clubName = 'Unknown Club';
+    if (clubDoc.exists && clubDoc.data() != null) {
+      final data = clubDoc.data()!;
+      if (data.containsKey('name')) {
+        clubName = data['name'] as String;
+      }
+    }
+
+    // Get all users
+    final usersSnapshot = await firestore.collection('users').get();
+
+    // Create a notification for each user
+    for (var userDoc in usersSnapshot.docs) {
+      final userId = userDoc.id;
+
+      await firestore.collection('notifications').add({
+        'title': 'New Announcement: ${announcement.title}',
+        'message': '$clubName has posted a new announcement: "${announcement.subtitle}"',
+        'time': Timestamp.now(),
+        'clubId': clubId,
+        'tags': [clubName, 'announcement'],
+        'read': false,
+        'userId': userId,
+        'type': 'announcement', // Add type to distinguish between events and announcements
+      });
+    }
+  } catch (e) {
+    print('Error creating announcement notification: $e');
   }
 }
 
@@ -164,6 +210,9 @@ Future<void> addAnnouncement(Announcement announcement) async {
     announcementsList = announcementsList.take(20).toList();
 
     await docRef.set({'announcementsList': announcementsList});
+
+    // Create a notification for the new announcement
+    await createAnnouncementNotification(announcement);
   } catch (e) {
     rethrow;
   }
