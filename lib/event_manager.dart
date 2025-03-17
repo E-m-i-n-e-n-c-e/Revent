@@ -18,7 +18,6 @@ class EventManager extends ConsumerStatefulWidget {
 class _EventManagerState extends ConsumerState<EventManager> {
   int _selectedIndex = 0;
   late final List<Widget> _screens;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,23 +28,6 @@ class _EventManagerState extends ConsumerState<EventManager> {
       const SearchScreen(),
       const MapScreen(),
     ];
-    _initializeData();
-  }
-
-  Future<void> _initializeData() async {
-    // Initialize all required providers
-    await Future.wait([
-      ref.read(currentUserProvider.future),
-      ref.read(clubsStreamProvider.future),
-      ref.read(todaysEventsStreamProvider.future),
-      ref.read(recentAnnouncementsStreamProvider.future),
-    ]);
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
@@ -55,7 +37,14 @@ class _EventManagerState extends ConsumerState<EventManager> {
     const double baseWidth = 375.0;
     final double scaleFactor = screenSize.width / baseWidth;
 
-    if (_isLoading) {
+    // Watch all required providers to check their loading states
+    final currentUser = ref.watch(currentUserProvider);
+    final clubs = ref.watch(clubsStreamProvider);
+    final todaysEvents = ref.watch(todaysEventsStreamProvider);
+    final recentAnnouncements = ref.watch(recentAnnouncementsStreamProvider);
+
+    // Show loading screen if any of the providers are loading
+    if (currentUser.isLoading || clubs.isLoading || todaysEvents.isLoading || recentAnnouncements.isLoading) {
       return Scaffold(
         body: Container(
           decoration: const BoxDecoration(
