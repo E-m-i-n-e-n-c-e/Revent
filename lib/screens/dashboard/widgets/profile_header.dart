@@ -1,4 +1,3 @@
-import 'package:events_manager/screens/dashboard/notifi.dart';
 import 'package:events_manager/screens/profile/profile.dart';
 import 'package:events_manager/utils/common_utils.dart';
 import 'package:flutter/material.dart';
@@ -50,12 +49,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           children: [
             IconButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
-                  ),
-                );
+                // Navigator.push(
+                //   context,
+                //   // MaterialPageRoute(
+                //   //   builder: (context) => const NotificationsScreen(),
+                //   // ),
+                // );
               },
               icon: Stack(
                 children: [

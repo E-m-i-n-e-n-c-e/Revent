@@ -321,7 +321,8 @@ final filteredAdminLogsProvider = Provider<List<AdminLog>>((ref) {
 
   // Filter by collection
   if (collectionFilter != 'All') {
-    filtered = filtered.where((log) => log.collection == collectionFilter).toList();
+    final targetCollection = collectionFilter.toLowerCase();
+    filtered = filtered.where((log) => log.collection.toLowerCase() == targetCollection).toList();
   }
 
   // Filter by operation type
@@ -329,18 +330,20 @@ final filteredAdminLogsProvider = Provider<List<AdminLog>>((ref) {
     String operationPrefix;
     switch (operationFilter) {
       case 'Create':
-        operationPrefix = 'create_';
+        operationPrefix = 'create';
         break;
       case 'Update':
-        operationPrefix = 'update_';
+        operationPrefix = 'update';
         break;
       case 'Delete':
-        operationPrefix = 'delete_';
+        operationPrefix = 'delete';
         break;
       default:
         operationPrefix = '';
     }
-    filtered = filtered.where((log) => log.operation.startsWith(operationPrefix)).toList();
+    filtered = filtered.where((log) =>
+      log.operation.toLowerCase().contains(operationPrefix.toLowerCase())
+    ).toList();
   }
 
   // Sort logs

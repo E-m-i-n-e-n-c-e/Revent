@@ -172,8 +172,6 @@ Widget getCachedNetworkImage({
   Widget? placeholder,
   Widget? errorWidget,
 }) {
-  // Default placeholder is now transparent instead of a loading indicator
-  final defaultPlaceholder = const SizedBox.shrink();
 
   final defaultErrorWidget = Icon(
     Icons.broken_image,
@@ -181,17 +179,16 @@ Widget getCachedNetworkImage({
     size: 24,
   );
 
-  // Select the appropriate cache manager based on image type
-  final cacheManager = _getCacheManagerForType(imageType);
-
-  return CachedNetworkImage(
-    imageUrl: imageUrl,
+  // Use getCachedNetworkImageProvider to get the network image
+  return Image(
+    image: getCachedNetworkImageProvider(
+      imageUrl: imageUrl,
+      imageType: imageType,
+    ),
     width: width,
     height: height,
     fit: fit,
-    cacheManager: cacheManager,
-    placeholder: (context, url) => placeholder ?? defaultPlaceholder,
-    errorWidget: (context, url, error) => errorWidget ?? defaultErrorWidget,
+    errorBuilder: (context, error, stackTrace) => errorWidget ?? defaultErrorWidget,
   );
 }
 

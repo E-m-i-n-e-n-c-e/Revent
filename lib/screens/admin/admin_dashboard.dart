@@ -177,10 +177,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
                                     final log = filteredLogs[index];
-                                    // Skip id field updates
+                                    // Only skip pure ID updates that have no other changes
                                     if (log.operation.startsWith('update_') &&
                                         log.getChangedFields().length == 1 &&
-                                        log.getChangedFields().first == 'id') {
+                                        log.getChangedFields().first == 'id' &&
+                                        log.beforeData?['id'] != null &&
+                                        log.afterData?['id'] != null) {
                                       return null;
                                     }
                                     return _buildLogCard(log);
