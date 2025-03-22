@@ -369,6 +369,13 @@ final isUserAdminProvider = Provider<bool>((ref) {
   return clubs.any((club) => club.adminEmails.contains(currentUser.email));
 });
 
+// Calender screen providers
+final selectedDayProvider = StateProvider<DateTime>((ref) =>
+  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
+);
+
+final calendarViewProvider = StateProvider<String>((ref) => 'month');
+
 void invalidateAllProviders(WidgetRef ref) {
   ref.invalidate(eventsStreamProvider);
   ref.invalidate(todaysEventsStreamProvider);

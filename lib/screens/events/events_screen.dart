@@ -9,46 +9,32 @@ import 'package:events_manager/utils/firedata.dart';
 import 'event_dialogs.dart';
 import 'events_calendar.dart';
 
-class EventsScreen extends ConsumerStatefulWidget {
+class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
 
-  @override
-  ConsumerState<EventsScreen> createState() => _EventsScreenState();
-}
+  void _onCalendarTapped(BuildContext context, CalendarTapDetails details, List<Event> events, WidgetRef ref) {
+    final currentView = ref.read(calendarViewProvider);
+    final selectedDate = ref.read(selectedDayProvider);
 
-class _EventsScreenState extends ConsumerState<EventsScreen> {
-  List<Appointment> _appointments = [];
-  CalendarView _currentView = CalendarView.month;
-  DateTime? _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  void _onCalendarTapped(CalendarTapDetails details, List<Event> events) {
     if (details.targetElement == CalendarElement.calendarCell) {
-      if (_currentView != CalendarView.day &&
-          _selectedDate != null &&
-          details.date!.year == _selectedDate!.year &&
-          details.date!.month == _selectedDate!.month &&
-          details.date!.day == _selectedDate!.day) {
+      if (currentView != 'day' &&
+          details.date!.year == selectedDate.year &&
+          details.date!.month == selectedDate.month &&
+          details.date!.day == selectedDate.day) {
         // If tapping already selected date, go to day view
-        setState(() {
-          _currentView = CalendarView.day;
-          debugPrint("Calendar tapped");
-        });
+        ref.read(calendarViewProvider.notifier).state = 'day';
       } else {
         // Otherwise just select the new date
-        setState(() {
-          _selectedDate = details.date;
-        });
+        ref.read(selectedDayProvider.notifier).state = details.date!;
       }
     } else if (details.targetElement == CalendarElement.appointment) {
       final Appointment tappedAppointment = details.appointments![0];
       final Event selectedEvent = events.firstWhere((event) => event.id == tappedAppointment.id);
-      _showEventOptions(selectedEvent);
+      _showEventOptions(context, selectedEvent, ref);
     }
   }
 
-  void _showEventOptions(Event event) {
+  void _showEventOptions(BuildContext context, Event event, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF06222F),
@@ -59,7 +45,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           children: [
             Row(
               children: [
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 SizedBox(
                   width: 40,
                   height: 40,
@@ -93,7 +79,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   style: TextStyle(color: Color(0xFFAEE7FF))),
               onTap: () {
                 Navigator.pop(context);
-                _editEvent(event);
+                _editEvent(context, event, ref);
               },
             ),
             ListTile(
@@ -102,7 +88,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
-                _deleteEvent(event);
+                _deleteEvent(context, event);
               },
             ),
           ],
@@ -111,7 +97,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     );
   }
 
-  void _deleteEvent(Event event) {
+  void _deleteEvent(BuildContext context, Event event) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -156,7 +142,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     );
   }
 
-  Future<void> _editEvent(Event event) async {
+  Future<void> _editEvent(BuildContext context, Event event, WidgetRef ref) async {
     await showDialog<Event>(
       context: context,
       builder: (context) => EditEventDialog(
@@ -164,7 +150,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         onEventEdited: (updatedEvent) async {
           try {
             if (updatedEvent.startTime.isAfter(updatedEvent.endTime)) {
-              if (!mounted) return;
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Start time cannot be after end time'),
@@ -203,8 +189,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     );
   }
 
-  Future<void> _addEvent() async {
-    final selectedDate = _selectedDate ?? DateTime.now();
+  Future<void> _addEvent(BuildContext context, WidgetRef ref) async {
+    final selectedDate = ref.read(selectedDayProvider);
     final today = DateTime.now();
 
     if (selectedDate.year < today.year ||
@@ -221,19 +207,20 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       return;
     }
 
+    final currentView = ref.read(calendarViewProvider);
     await showDialog<Event>(
       context: context,
       builder: (context) => AddEventDialog(
-        initialDate: _currentView == CalendarView.day
+        initialDate: currentView == 'day'
             ? selectedDate
             : selectedDate.add(const Duration(hours: 12)),
-        finalDate: _currentView == CalendarView.day
+        finalDate: currentView == 'day'
             ? selectedDate.add(const Duration(hours: 1))
             : selectedDate.add(const Duration(hours: 23, minutes: 59)),
         onEventAdded: (event) async {
           try {
             if (event.startTime.isAfter(event.endTime)) {
-              if (!mounted) return;
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Start time cannot be after end time'),
@@ -244,14 +231,13 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             }
             await sendEvent(event.toJson());
           } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to create event: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to create event: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
         },
       ),
@@ -259,28 +245,17 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_errorMessage != null) {
-      return Center(
-        child: Text(
-          _errorMessage!,
-          style: const TextStyle(color: Colors.red),
-        ),
-      );
-    }
+  Widget build(BuildContext context, WidgetRef ref) {
     final events = ref.watch(eventsStreamProvider);
-    _isLoading = events.isLoading;
+    final currentView = ref.watch(calendarViewProvider);
+    final selectedDate = ref.watch(selectedDayProvider);
 
     return PopScope(
-      canPop:_currentView != CalendarView.day,
-      onPopInvokedWithResult: (didPop,result) async {
-        if (_currentView == CalendarView.day) {
-          setState(() {
-            _currentView = CalendarView.month;
-            _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
-          });
-        await Future.delayed(const Duration(milliseconds: 50));
-        setState(() {});
+      canPop: currentView != 'day',
+      onPopInvokedWithResult: (didPop, result) async {
+        if (currentView == 'day') {
+          ref.read(calendarViewProvider.notifier).state = 'month';
+          ref.read(selectedDayProvider.notifier).state = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
         }
       },
       child: Scaffold(
@@ -294,14 +269,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             ),
           ),
           backgroundColor: const Color(0xFF06222F),
-          leading: _currentView == CalendarView.day
+          leading: currentView == 'day'
               ? IconButton(
                   icon: const Icon(Icons.arrow_back, color: Color(0xFF83ACBD)),
                   onPressed: () {
-                    setState(() {
-                      _currentView = CalendarView.month;
-                      _selectedDate = DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
-                    });
+                    ref.read(calendarViewProvider.notifier).state = 'month';
+                    ref.read(selectedDayProvider.notifier).state = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
                   },
                 )
               : null,
@@ -317,53 +290,38 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               end: Alignment.bottomRight,
             ),
           ),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : events.when(
-                  data: (eventsList) {
-                        _appointments = eventsList.map((event) {
+          child: events.when(
+            data: (eventsList) {
+              final appointments = eventsList.map((event) {
+                final notesWithLogo = '${event.description}|${getClubLogo(ref, event.clubId)}';
+                return Appointment(
+                  startTime: event.startTime,
+                  endTime: event.endTime,
+                  subject: event.title,
+                  notes: notesWithLogo,
+                  location: event.venue,
+                  resourceIds: [event.clubId],
+                  color: const Color(0xFF0F2027),
+                  id: event.id,
+                );
+              }).toList();
 
-                          final notesWithLogo = '${event.description}|${getClubLogo(ref, event.clubId)}';
-
-                          return Appointment(
-                            startTime: event.startTime,
-                            endTime: event.endTime,
-                            subject: event.title,
-                            notes: notesWithLogo,
-                            location: event.venue,
-                            resourceIds: [event.clubId],
-                            color: const Color(0xFF0F2027), // Use consistent color for all events
-                            id: event.id,
-                          );
-                        }).toList();
-
-                        return EventsCalendar(
-                          currentView: _currentView,
-                          selectedDate: _selectedDate,
-                          appointments: _appointments,
-                          onTap: (details) => _onCalendarTapped(details, eventsList),
-                        );
-                  },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Text('Error loading events: $error',
-                      style: const TextStyle(color: Colors.red)),
-                  ),
-                ),
+              return EventsCalendar(
+                currentView: currentView == 'day' ? CalendarView.day : CalendarView.month,
+                selectedDate: selectedDate,
+                appointments: appointments,
+                onTap: (details) => _onCalendarTapped(context, details, eventsList, ref),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Text('Error loading events: $error',
+                style: const TextStyle(color: Colors.red)),
+            ),
+          ),
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            if (_selectedDate != null) {
-              _addEvent();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please select a date first'),
-                  backgroundColor: Color(0xFF06222F),
-                ),
-              );
-            }
-          },
+          onPressed: () => _addEvent(context, ref),
           backgroundColor: const Color(0xFF0E668A),
           child: const Icon(Icons.add, color: Color(0xFFAEE7FF)),
         ),

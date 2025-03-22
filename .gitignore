@@ -46,3 +46,13 @@ app.*.map.json
 /devtools_options.yaml
 
 /functions/node_modules
+node_modules
+
+# Firebase
+.firebase/
+
+# Unused Platforms
+windows
+macos
+linux
+

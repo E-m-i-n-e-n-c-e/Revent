@@ -1,4 +1,53 @@
 const admin = require('firebase-admin');
+const nodemailer = require('nodemailer');
+const functions = require('firebase-functions');
+
+// Initialize nodemailer with SMTP config
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  // Using built-in Gmail config
+  auth: {
+    user: functions.config().smtp.user,
+    pass: functions.config().smtp.pass,
+  },
+  tls: {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true
+  }
+});
+
+// Helper function to send email
+exports.sendEmail = async function(to, subject, html) {
+  console.log('Attempting to send email to:', to);
+  console.log('SMTP Config:', {
+    host: functions.config().smtp.host,
+    port: functions.config().smtp.port,
+    user: functions.config().smtp.user,
+    // Don't log the actual password
+    hasPass: !!functions.config().smtp.pass
+  });
+
+  const mailOptions = {
+    from: `Revent <${functions.config().smtp.user}>`,
+    to,
+    subject,
+    html
+  };
+
+  try {
+    console.log('Mail options:', { ...mailOptions, html: 'HTML content hidden for brevity' });
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', result);
+    return true;
+  } catch (error) {
+    console.error('Detailed email error:', {
+      code: error.code,
+      message: error.message,
+      response: error.response,
+      stack: error.stack
+    });
+    return false;
+  }
+};
 
 // Helper function to create a log entry
 exports.createLogEntry = async function({
